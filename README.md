@@ -1,20 +1,76 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+# powerbi-jupyter
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+A Custom Jupyter Widget Library
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## Installation
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+You can install using `pip`:
+
+```bash
+pip install powerbi_widget
+```
+
+Or if you use jupyterlab:
+
+```bash
+pip install powerbi_widget
+jupyter labextension install @jupyter-widgets/jupyterlab-manager
+```
+
+If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
+the nbextension:
+```bash
+jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbi_widget
+```
+
+## Development Installation
+
+
+```bash
+# First install the python package. This will also build the JS packages.
+pip install -e ".[test, examples]"
+```
+
+When developing your extensions, you need to manually enable your extensions with the
+notebook / lab frontend. For lab, this is done by the command:
+
+```
+jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
+jupyter labextension install .
+```
+
+For classic notebook, you can run:
+
+```
+jupyter nbextension install --sys-prefix --symlink --overwrite --py powerbi_widget
+jupyter nbextension enable --sys-prefix --py powerbi_widget
+```
+
+__Note__ that the `--symlink` flag doesn't work on Windows, so you will here have to run
+the `install` command every time that you rebuild your extension. For certain installations
+you might also need another flag instead of `--sys-prefix`, but we won't cover the meaning
+of those flags here.
+
+### How to see your changes
+#### Typescript:
+To continuously monitor the project for changes and automatically trigger a rebuild, start Jupyter in watch mode:
+```bash
+jupyter lab --watch
+```
+
+To execute the project in Jupyter Notebook:
+```bash
+python setup.py sdist
+jupyter notebook
+```
+
+And in a separate session, begin watching the source directory for changes:
+```bash
+npm run watch
+```
+
+After a change wait for the build to finish and then refresh your browser and the changes should take effect.
+
+#### Python:
+If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.

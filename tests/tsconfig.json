@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "noImplicitAny": true,
+    "lib": ["dom", "es5", "es2015.promise", "es2015.iterable"],
+    "noEmitOnError": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES5",
+    "outDir": "build",
+    "skipLibCheck": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/*.ts",
+    "../src/**/*.ts"
+  ]
+}

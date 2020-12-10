@@ -1,0 +1,2 @@
+[run]
+omit = powerbi_widget/tests/*
