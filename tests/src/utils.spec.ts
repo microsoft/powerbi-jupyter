@@ -3,7 +3,7 @@
 
 import * as widgets from '@jupyter-widgets/base';
 import * as services from '@jupyterlab/services';
-import * as Backbone from 'backbone';
+import { DOMWidgetView } from '@jupyter-widgets/base';
 
 let numComms = 0;
 
@@ -53,11 +53,12 @@ class DummyManager extends widgets.ManagerBase<HTMLElement> {
         this.el = window.document.createElement('div');
     }
 
-    display_view(msg: services.KernelMessage.IMessage, view: Backbone.View<Backbone.Model>, options: any) {
+    display_view(msg: services.KernelMessage.IMessage, view: DOMWidgetView, options: any) {
         // TODO: make this a spy
         // TODO: return an html element
         return Promise.resolve(view).then(view => {
             this.el.appendChild(view.el);
+            view.trigger('displayed');
             view.on('remove', () => console.log('view removed', view));
             return view.el;
         });

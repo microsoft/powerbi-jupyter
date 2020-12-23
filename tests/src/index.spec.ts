@@ -12,7 +12,7 @@ import {
 } from './utils.spec';
 
 import {
-  ReportModel, ReportView
+  ReportModel
 } from '../../src/'
 
 
@@ -21,16 +21,15 @@ describe('Example', () => {
   describe('ReportModel', () => {
 
     it('should be createable', () => {
-      let model = createTestModel(ReportModel);
+      const model = createTestModel(ReportModel);
       expect(model).to.be.an(ReportModel);
-      expect(model.get('value')).to.be('Hello World');
     });
 
-    it('should be createable with a value', () => {
-      let state = { value: 'Foo Bar!' }
-      let model = createTestModel(ReportModel, state);
+    it('should be createable using embed_config', () => {
+      const state = { embed_config: {'accessToken': null, 'embedUrl': null} }
+      const model = createTestModel(ReportModel, state);
       expect(model).to.be.an(ReportModel);
-      expect(model.get('value')).to.be('Foo Bar!');
+      expect(model.get('embed_config')).to.be.equal(state.embed_config);
     });
 
   });

@@ -6,9 +6,10 @@
 
 import pytest
 
-from ..example import ExampleWidget
-
+from ..report import Report
 
 def test_example_creation_blank():
-    w = ExampleWidget()
-    assert w.value == 'Hello World'
+    access_token = ''
+    embed_url = ''
+    w = Report(access_token, embed_url)
+    w.set_dimensions(0, 0)

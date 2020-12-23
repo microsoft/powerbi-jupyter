@@ -50,7 +50,8 @@
     "watch:nbextension": "webpack --watch"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.1.10 || ^2 || ^3"
+    "@jupyter-widgets/base": "^3.0.0",
+    "powerbi-client": "^2.15.1"
   },
   "devDependencies": {
     "@phosphor/application": "^1.6.0",

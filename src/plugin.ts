@@ -7,7 +7,7 @@ import { Widget } from '@phosphor/widgets';
 
 import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 
-import * as widgetExports from './widget';
+import * as widgetExports from './report';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 

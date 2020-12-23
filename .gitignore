@@ -154,3 +154,6 @@ powerbi_widget/labextension/*.tgz
 
 # Packed lab extensions
 powerbi_widget/labextension
+
+# VS Code
+.vscode
