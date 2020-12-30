@@ -4,10 +4,17 @@
 import {
   DOMWidgetModel,
   DOMWidgetView,
-  ISerializers
+  ISerializers,
 } from '@jupyter-widgets/base';
 
-import { Report, service, factories } from 'powerbi-client';
+import {
+  Report,
+  service,
+  factories,
+  models,
+  VisualDescriptor,
+  Page,
+} from 'powerbi-client';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
@@ -15,7 +22,11 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 import '../css/report.css';
 
 // Initialize powerbi service
-const powerbi = new service.Service(factories.hpmFactory, factories.wpmpFactory, factories.routerFactory);
+const powerbi = new service.Service(
+  factories.hpmFactory,
+  factories.wpmpFactory,
+  factories.routerFactory
+);
 
 export class ReportModel extends DOMWidgetModel {
   defaults() {
@@ -30,7 +41,9 @@ export class ReportModel extends DOMWidgetModel {
       embed_config: {},
       _embedded: false,
       container_height: 0,
-      container_width: 0
+      container_width: 0,
+      extract_data_request: {},
+      visual_data: null,
     };
   }
 
@@ -48,7 +61,7 @@ export class ReportModel extends DOMWidgetModel {
 
 export class ReportView extends DOMWidgetView {
   report: Report;
-  render() {
+  render(): void {
     this.el.classList.add('report-container');
 
     this.embed_configChanged();
@@ -57,18 +70,82 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:embed_config', this.embed_configChanged, this);
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
+    this.model.on(
+      'change:extract_data_request',
+      this.extract_data_requestChanged,
+      this
+    );
   }
 
-  dimensionsChanged() {
+  dimensionsChanged(): void {
     this.el.style.height = `${this.model.get('container_height')}px`;
     this.el.style.width = `${this.model.get('container_width')}px`;
   }
 
-  embed_configChanged() {
+  embed_configChanged(): void {
     const reportConfig = this.model.get('embed_config');
     this.report = powerbi.embed(this.el, reportConfig) as Report;
     this.model.set('_embedded', true);
 
     this.touch();
+  }
+
+  async extract_data_requestChanged(): Promise<void> {
+    if (!this.report) {
+      console.error('Power BI report not found');
+      return;
+    }
+
+    const extract_data_request = this.model.get('extract_data_request');
+
+    // Check extract data request object is null or empty
+    if (!extract_data_request || Object.keys(extract_data_request).length === 0) {
+      // This is the case of model reset
+      return;
+    }
+
+    if (!extract_data_request.pageName || !extract_data_request.visualName) {
+      console.error('Page and visual names are required');
+      return;
+    }
+
+    const pageName = extract_data_request.pageName;
+    const visualName = extract_data_request.visualName;
+    const dataRows = extract_data_request.rows;
+
+    try {
+      const pages: Page[] = await this.report.getPages();
+      const selectedPage: Page = pages.filter((page: Page) => {
+        return page.name === pageName;
+      })[0];
+
+      if (!selectedPage) {
+        throw 'Page not found';
+      }
+
+      const visuals: VisualDescriptor[] = await selectedPage.getVisuals();
+      const selectedVisual: VisualDescriptor = visuals.filter(
+        (visual: VisualDescriptor) => {
+          return visual.name === visualName;
+        }
+      )[0];
+
+      if (!selectedVisual) {
+        throw 'Visual not found';
+      }
+      
+      // TODO: Allow both exportData types
+      // TODO: Remove "as unknown" when return type of exportData is fixed
+      const data = await selectedVisual.exportData(
+        models.ExportDataType.Summarized,
+        dataRows
+      ) as unknown as models.IExportDataResult; 
+
+      // Update data
+      this.model.set('visual_data', data.data);
+      this.touch();
+    } catch (error) {
+      console.error('Extract data error:', error);
+    }
   }
 }

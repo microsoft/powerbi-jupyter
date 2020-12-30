@@ -16,16 +16,16 @@ import {
 } from '../../src/'
 
 
-describe('Example', () => {
+describe('Widget model tests', () => {
 
   describe('ReportModel', () => {
 
-    it('should be createable', () => {
+    it('should be creatable', () => {
       const model = createTestModel(ReportModel);
       expect(model).to.be.an(ReportModel);
     });
 
-    it('should be createable using embed_config', () => {
+    it('should be creatable using embed_config', () => {
       const state = { embed_config: {'accessToken': null, 'embedUrl': null} }
       const model = createTestModel(ReportModel, state);
       expect(model).to.be.an(ReportModel);

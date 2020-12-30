@@ -74,3 +74,16 @@ After a change wait for the build to finish and then refresh your browser and th
 
 #### Python:
 If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
+
+
+## Run Tests
+#### Frontend:
+`npm run test`<br/>
+`npm run test:chrome`<br/>
+`npm run firefox`<br/>
+`npm run ie`<br/>
+`npm run debug`<br/>
+
+#### Python:
+1. `cd powerbi-widget`
+1. `pytest`

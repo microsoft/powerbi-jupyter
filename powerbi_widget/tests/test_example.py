@@ -8,8 +8,15 @@ import pytest
 
 from ..report import Report
 
-def test_example_creation_blank():
-    access_token = ''
-    embed_url = ''
-    w = Report(access_token, embed_url)
-    w.set_dimensions(0, 0)
+def test_report_constructor():
+    access_token = 'dummy_access_token'
+    embed_url = 'dummy_embed_url'
+    report = Report(access_token, embed_url)
+    report.set_dimensions(0, 0)
+
+    assert report.embed_config == {
+        'type': 'report',
+        'accessToken': access_token,
+        'embedUrl': embed_url,
+        'tokenType': 0
+    }
