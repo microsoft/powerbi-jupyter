@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=source
 set BUILDDIR=build
-set SPHINXPROJ=powerbi_widget
+set SPHINXPROJ=powerbi_client
 
 if "%1" == "" goto help
 

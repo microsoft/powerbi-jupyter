@@ -11,7 +11,7 @@ import * as widgetExports from './report';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
-const EXTENSION_ID = 'powerbi-widget-client:plugin';
+const EXTENSION_ID = 'powerbi-client-frontend:plugin';
 
 /**
  * The example plugin.

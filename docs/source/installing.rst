@@ -5,27 +5,27 @@ Installation
 ============
 
 
-The simplest way to install powerbi_widget is via pip::
+The simplest way to install powerbi_client is via pip::
 
-    pip install powerbi_widget
+    pip install powerbi_client
 
 or via conda::
 
-    conda install powerbi_widget
+    conda install powerbi_client
 
 
 If you installed via pip, and notebook version < 5.3, you will also have to
 install / configure the front-end extension as well. If you are using classic
 notebook (as opposed to Jupyterlab), run::
 
-    jupyter nbextension install [--sys-prefix / --user / --system] --py powerbi_widget
+    jupyter nbextension install [--sys-prefix / --user / --system] --py powerbi_client
 
-    jupyter nbextension enable [--sys-prefix / --user / --system] --py powerbi_widget
+    jupyter nbextension enable [--sys-prefix / --user / --system] --py powerbi_client
 
 with the `appropriate flag`_. If you are using Jupyterlab, install the extension
 with::
 
-    jupyter labextension install powerbi-widget-client
+    jupyter labextension install powerbi-client-frontend
 
 If you are installing using conda, these commands should be unnecessary, but If
 you need to run them the commands should be the same (just make sure you choose the

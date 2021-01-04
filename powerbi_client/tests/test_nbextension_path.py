@@ -7,7 +7,7 @@
 
 def test_nbextension_path():
     # Check that magic function can be imported from package root:
-    from powerbi_widget import _jupyter_nbextension_paths
+    from powerbi_client import _jupyter_nbextension_paths
     # Ensure that it can be called without incident:
     path = _jupyter_nbextension_paths()
     # Some sanity checks:

@@ -145,15 +145,15 @@ $RECYCLE.BIN/
 # ----
 
 **/node_modules/
-powerbi_widget/nbextension/static/index.*
-powerbi_widget/labextension/*.tgz
+powerbi_client/nbextension/static/index.*
+powerbi_client/labextension/*.tgz
 
 # Coverage data
 # -------------
 **/coverage/
 
 # Packed lab extensions
-powerbi_widget/labextension
+powerbi_client/labextension
 
 # VS Code
 .vscode

@@ -19,7 +19,7 @@ from setuptools import setup
 
 
 # The name of the project
-name = 'powerbi_widget'
+name = 'powerbi_client'
 
 # Ensure a valid python version
 ensure_python('>=3.4')
@@ -44,10 +44,10 @@ package_data_spec = {
 }
 
 data_files_spec = [
-    ('share/jupyter/nbextensions/powerbi_widget',
+    ('share/jupyter/nbextensions/powerbi_client',
         nb_path, '*.js*'),
     ('share/jupyter/lab/extensions', lab_path, '*.tgz'),
-    ('etc/jupyter/nbconfig/notebook.d' , HERE, 'powerbi_widget.json')
+    ('etc/jupyter/nbconfig/notebook.d' , HERE, 'powerbi_client.json')
 ]
 
 

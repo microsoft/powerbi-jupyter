@@ -8,20 +8,20 @@ A Custom Jupyter Widget Library
 You can install using `pip`:
 
 ```bash
-pip install powerbi_widget
+pip install powerbi_client
 ```
 
 Or if you use jupyterlab:
 
 ```bash
-pip install powerbi_widget
+pip install powerbi_client
 jupyter labextension install @jupyter-widgets/jupyterlab-manager
 ```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
 the nbextension:
 ```bash
-jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbi_widget
+jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbi_client
 ```
 
 ## Development Installation
@@ -43,8 +43,8 @@ jupyter labextension install .
 For classic notebook, you can run:
 
 ```
-jupyter nbextension install --sys-prefix --symlink --overwrite --py powerbi_widget
-jupyter nbextension enable --sys-prefix --py powerbi_widget
+jupyter nbextension install --sys-prefix --symlink --overwrite --py powerbi_client
+jupyter nbextension enable --sys-prefix --py powerbi_client
 ```
 
 __Note__ that the `--symlink` flag doesn't work on Windows, so you will here have to run
@@ -75,7 +75,6 @@ After a change wait for the build to finish and then refresh your browser and th
 #### Python:
 If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
 
-
 ## Run Tests
 #### Frontend:
 `npm run test`<br/>
@@ -85,5 +84,5 @@ If you make a change to the python code then you will need to restart the notebo
 `npm run debug`<br/>
 
 #### Python:
-1. `cd powerbi-widget`
-1. `pytest`
+1. `cd powerbi_client`
+1. `pytest -v`

@@ -1,5 +1,5 @@
 {
-  "name": "powerbi-widget-client",
+  "name": "powerbi-client-frontend",
   "version": "0.1.0",
   "description": "A Custom Jupyter Widget Library",
   "keywords": [
@@ -29,14 +29,14 @@
   },
   "scripts": {
     "build": "npm run build:lib && npm run build:nbextension",
-    "build:labextension": "npm run clean:labextension && mkdirp powerbi_widget/labextension && cd powerbi_widget/labextension && npm pack ../..",
+    "build:labextension": "npm run clean:labextension && mkdirp powerbi_client/labextension && cd powerbi_client/labextension && npm pack ../..",
     "build:lib": "tsc",
     "build:nbextension": "webpack -p",
     "build:all": "npm run build:labextension && npm run build:nbextension",
     "clean": "npm run clean:lib && npm run clean:nbextension",
     "clean:lib": "rimraf lib",
-    "clean:labextension": "rimraf powerbi_widget/labextension",
-    "clean:nbextension": "rimraf powerbi_widget/nbextension/static/index.js",
+    "clean:labextension": "rimraf powerbi_client/labextension",
+    "clean:nbextension": "rimraf powerbi_client/nbextension/static/index.js",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
     "prepack": "npm run build:lib",

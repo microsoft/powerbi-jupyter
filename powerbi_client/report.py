@@ -25,10 +25,10 @@ class Report(DOMWidget):
     _model_name = Unicode('ReportModel').tag(sync=True)
 
     # Name of the front-end module containing widget view
-    _view_module = Unicode('powerbi-widget-client').tag(sync=True)
+    _view_module = Unicode('powerbi-client-frontend').tag(sync=True)
 
     # Name of the front-end module containing widget model
-    _model_module = Unicode('powerbi-widget-client').tag(sync=True)
+    _model_module = Unicode('powerbi-client-frontend').tag(sync=True)
 
     # Version of the front-end module containing widget view
     _view_module_version = Unicode('^0.1.0').tag(sync=True)

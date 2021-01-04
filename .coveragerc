@@ -1,2 +1,2 @@
 [run]
-omit = powerbi_widget/tests/*
+omit = powerbi_client/tests/*

@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = powerbi_widget
+SPHINXPROJ    = powerbi_client
 SOURCEDIR     = source
 BUILDDIR      = build
 

@@ -8,6 +8,6 @@ def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
         'src': 'nbextension/static',
-        'dest': 'powerbi_widget',
-        'require': 'powerbi_widget/extension'
+        'dest': 'powerbi_client',
+        'require': 'powerbi_client/extension'
     }]
