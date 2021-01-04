@@ -14,6 +14,7 @@ import {
   models,
   VisualDescriptor,
   Page,
+  IEmbedConfiguration,
 } from 'powerbi-client';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
@@ -44,6 +45,10 @@ export class ReportModel extends DOMWidgetModel {
       container_width: 0,
       extract_data_request: {},
       visual_data: null,
+      _event_data: {
+        event_name: null,
+        event_details: null,
+      },
     };
   }
 
@@ -57,6 +62,12 @@ export class ReportModel extends DOMWidgetModel {
   static view_name = 'ReportView';
   static view_module = MODULE_NAME;
   static view_module_version = MODULE_VERSION;
+}
+
+interface ExtractDataRequest {
+  pageName?: string;
+  visualName?: string;
+  rows?: number;
 }
 
 export class ReportView extends DOMWidgetView {
@@ -83,10 +94,45 @@ export class ReportView extends DOMWidgetView {
   }
 
   embed_configChanged(): void {
-    const reportConfig = this.model.get('embed_config');
+    const reportConfig = this.model.get('embed_config') as IEmbedConfiguration;
     this.report = powerbi.embed(this.el, reportConfig) as Report;
+
+    this.report.on('loaded', () => {
+      console.log('Loaded');
+      // Invoke loaded event handler on kernel side
+      this.model.set('_event_data', {
+        event_name: 'loaded',
+        event_details: null,
+      });
+
+      this.touch();
+    });
+
+    this.report.on('rendered', () => {
+      console.log('Rendered');
+      // Invoke rendered event handler on kernel side
+      this.model.set('_event_data', {
+        event_name: 'rendered',
+        event_details: null,
+      });
+
+      this.touch();
+    });
+
+    this.report.on('error', (errorMessage) => {
+      // Invoke error event handler on kernel side
+      this.model.set('_event_data', {
+        event_name: 'error',
+        event_details: errorMessage.detail,
+      });
+
+      this.touch();
+    });
+
+    // Notify that report embedding has started
     this.model.set('_embedded', true);
 
+    // Commit model changes
     this.touch();
   }
 
@@ -95,8 +141,8 @@ export class ReportView extends DOMWidgetView {
       console.error('Power BI report not found');
       return;
     }
-
-    const extract_data_request = this.model.get('extract_data_request');
+    
+    const extract_data_request = this.model.get('extract_data_request') as ExtractDataRequest;
 
     // Check extract data request object is null or empty
     if (!extract_data_request || Object.keys(extract_data_request).length === 0) {
@@ -133,7 +179,7 @@ export class ReportView extends DOMWidgetView {
       if (!selectedVisual) {
         throw 'Visual not found';
       }
-      
+
       // TODO: Allow both exportData types
       // TODO: Remove "as unknown" when return type of exportData is fixed
       const data = await selectedVisual.exportData(

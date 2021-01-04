@@ -39,7 +39,7 @@ class Report(DOMWidget):
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
     # is automatically synced to the frontend *any* time it changes in Python.
-    # It is synced back to Python from the frontend *any* time the model is touched.
+    # It is synced back to Python from the frontend *any* time the model is touched in frontend.
 
     _embedded = Bool(False).tag(sync=True)
 
@@ -53,6 +53,17 @@ class Report(DOMWidget):
 
     # TODO: Add validation
     extract_data_request = Dict(None).tag(sync=True)
+
+    # Event handler specific properties.
+    _registered_event_handlers = {}
+
+    _event_data = Dict({
+        'event_name': None,
+        'event_details': None
+    }).tag(sync=True)
+
+    # Tells if Power BI events are being observed
+    _observing_events = False
 
     # Methods
     def __init__(self, access_token, embed_url, token_type=0, **kwargs):
@@ -69,6 +80,9 @@ class Report(DOMWidget):
         super(Report, self).__init__(**kwargs)
 
     def set_embed_config(self, access_token, embed_url, token_type=0):
+        """
+        TODO: Add docstring
+        """
         self.embed_config = {
             'type': 'report',
             'accessToken': access_token,
@@ -78,6 +92,12 @@ class Report(DOMWidget):
         self._embedded = False
 
     def set_dimensions(self, container_height, container_width):
+        """Set width and height of Power BI report in px
+
+        Args:
+            container_height (number): report height
+            container_width (number): report width
+        """
         self.container_height = container_height
         self.container_width = container_width
 
@@ -118,7 +138,9 @@ class Report(DOMWidget):
         return exported_data_task
 
     def wait_for_change(self, value):
-
+        """
+        TODO: Add docstring
+        """
         future = Future()
 
         # Callback for processing exported_data
@@ -128,3 +150,45 @@ class Report(DOMWidget):
 
         self.observe(get_value, value)
         return future
+
+    def on(self, event, callback):
+        """Register a callback to execute when the report emits the target event
+        Parameters
+
+        Args:
+            event (string): Name of Power BI event (eg. 'loaded', 'rendered', 'error')
+            callback (function): User defined function. Callback function is invoked with event details as parameter
+        """
+        self._registered_event_handlers[event] = callback
+
+        def get_event_data(change):
+
+            event_data = change.new
+            event_name = event_data['event_name']
+            event_details = event_data['event_details']
+
+            # Do not invoke callback when _event_data trait is reset
+            if event_name is None:
+                return
+
+            # Check if a handler is registered for the current event
+            if event_name not in self._registered_event_handlers:
+                return
+
+            event_handler = self._registered_event_handlers[event_name]
+            event_handler(event_details)
+
+            # Reset the _event_data trait, so as to receive next event
+            self._event_data = {
+                'event_name': None,
+                'event_details': None
+            }
+
+        # Check if already observing events
+        if not self._observing_events:
+
+            # Prevents calling DOMWidget.observe() again
+            self._observing_events = True
+
+            # Start observing Power BI events
+            self.observe(get_event_data, '_event_data')
