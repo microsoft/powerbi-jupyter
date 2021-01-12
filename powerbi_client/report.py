@@ -7,9 +7,11 @@
 TODO: Add module docstring
 """
 
+import time
 from asyncio import Future, ensure_future
 
 from ipywidgets import DOMWidget
+from jupyter_ui_poll import ui_events
 from traitlets import Bool, Dict, Float, Unicode, observe
 
 from ._frontend import module_name, module_version
@@ -36,47 +38,44 @@ class Report(DOMWidget):
     # Version of the front-end module containing widget model
     _model_module_version = Unicode('^0.1.0').tag(sync=True)
 
+    # Default values for widget traits
+    VISUAL_DATA_DEFAULT_STATE = ''
+    EXTRACT_DATA_REQUEST_DEFAULT_STATE = {}
+    REGISTERED_EVENT_HANDLERS_DEFAULT_STATE = {}
+    EVENT_DATA_DEFAULT_STATE = {
+        'event_name': None,
+        'event_details': None
+    }
+
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
     # is automatically synced to the frontend *any* time it changes in Python.
     # It is synced back to Python from the frontend *any* time the model is touched in frontend.
 
+    # TODO: Add trait validation
+    embed_config = Dict(None).tag(sync=True)
     _embedded = Bool(False).tag(sync=True)
 
-    embed_config = Dict(None).tag(sync=True)
-
-    container_height = Float(None).tag(sync=True)
-
-    container_width = Float(None).tag(sync=True)
-
-    visual_data = Unicode('').tag(sync=True)
+    container_height = Float(0).tag(sync=True)
+    container_width = Float(0).tag(sync=True)
 
     # TODO: Add validation
     extract_data_request = Dict(None).tag(sync=True)
+    visual_data = Unicode(VISUAL_DATA_DEFAULT_STATE).tag(sync=True)
 
-    # Event handler specific properties.
-    _registered_event_handlers = {}
-
-    _event_data = Dict({
-        'event_name': None,
-        'event_details': None
-    }).tag(sync=True)
-
-    # Tells if Power BI events are being observed
-    _observing_events = False
+    _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
 
     # Methods
     def __init__(self, access_token, embed_url, token_type=0, **kwargs):
-        self.embed_config = {
-            'type': 'report',
-            'accessToken': access_token,
-            'embedUrl': embed_url,
-            'tokenType': token_type
-        }
-        self.container_height = 0
-        self.container_width = 0
-        self._embedded = False
+        # Tells if Power BI events are being observed
+        self._observing_events = False
 
+        # Registered Power BI event handlers methods
+        self._registered_event_handlers = self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE
+
+        self.set_embed_config(access_token, embed_url, token_type)
+
+        # Init parent class DOMWidget
         super(Report, self).__init__(**kwargs)
 
     def set_embed_config(self, access_token, embed_url, token_type=0):
@@ -110,13 +109,8 @@ class Report(DOMWidget):
             rows (int, optional): Number of rows of data. Defaults to 10.
 
         Returns:
-            Task: async task which results in extracted visual data
-            # TODO: Return data directly
+            string: visual's exported data
         """
-        # Starts executing the export data task
-        return ensure_future(self._extract_data(page_name, visual_name, rows))
-
-    async def _extract_data(self, page_name, visual_name, rows=10):
         if self._embedded == False:
             raise Exception("Report is not embedded")
 
@@ -127,15 +121,23 @@ class Report(DOMWidget):
             'rows': rows
         }
 
-        # TODO: Wait for the future to be done and return its result
-        exported_data_task = await self.wait_for_change('visual_data')
+        PROCESS_EVENTS_ITERATION = 3    # Process upto n UI events per iteration
+        POLLING_INTERVAL = 0.5  # Check for UI every n seconds
+
+        # Wait for client-side to send visual data
+        with ui_events() as ui_poll:
+            # While visual data is not updated
+            while self.visual_data == self.VISUAL_DATA_DEFAULT_STATE:
+                ui_poll(PROCESS_EVENTS_ITERATION)
+                time.sleep(POLLING_INTERVAL)
+
+        exported_data = self.visual_data
 
         # Reset the extract_data_request and visual_data's value
-        self.extract_data_request = {}
-        self.visual_data = ''
+        self.extract_data_request = self.EXTRACT_DATA_REQUEST_DEFAULT_STATE
+        self.visual_data = self.VISUAL_DATA_DEFAULT_STATE
 
-        # Return the asyncio.task instance
-        return exported_data_task
+        return exported_data
 
     def wait_for_change(self, value):
         """
@@ -179,10 +181,7 @@ class Report(DOMWidget):
             event_handler(event_details)
 
             # Reset the _event_data trait, so as to receive next event
-            self._event_data = {
-                'event_name': None,
-                'event_details': None
-            }
+            self._event_data = self.EVENT_DATA_DEFAULT_STATE
 
         # Check if already observing events
         if not self._observing_events:
