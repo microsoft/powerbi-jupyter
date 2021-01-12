@@ -30,10 +30,7 @@ export default examplePlugin;
 /**
  * Activate the widget extension.
  */
-function activateWidgetExtension(
-  app: Application<Widget>,
-  registry: IJupyterWidgetRegistry
-): void {
+function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWidgetRegistry): void {
   registry.registerWidget({
     name: MODULE_NAME,
     version: MODULE_VERSION,

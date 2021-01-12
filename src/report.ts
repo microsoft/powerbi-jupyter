@@ -1,11 +1,7 @@
 // Copyright (c) Microsoft
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  DOMWidgetModel,
-  DOMWidgetView,
-  ISerializers,
-} from '@jupyter-widgets/base';
+import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
 
 import {
   Report,
@@ -21,6 +17,7 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 
 // Import the CSS
 import '../css/report.css';
+import { getActivePageSize } from './utils';
 
 // Initialize powerbi service
 const powerbi = new service.Service(
@@ -30,7 +27,7 @@ const powerbi = new service.Service(
 );
 
 export class ReportModel extends DOMWidgetModel {
-  defaults() {
+  defaults(): any {
     return {
       ...super.defaults(),
       _model_name: ReportModel.model_name,
@@ -70,10 +67,27 @@ interface ExtractDataRequest {
   rows?: number;
 }
 
+interface DOMRectSize {
+  bottom: number;
+  height: number;
+  left: number;
+  right: number;
+  top: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
 export class ReportView extends DOMWidgetView {
   report: Report;
+  reportContainer: HTMLDivElement;
+
   render(): void {
-    this.el.classList.add('report-container');
+    const newDivElement = document.createElement('div');
+    newDivElement.style.visibility = 'hidden';
+    this.el.appendChild(newDivElement);
+
+    this.reportContainer = newDivElement;
 
     this.embed_configChanged();
 
@@ -81,24 +95,48 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:embed_config', this.embed_configChanged, this);
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
-    this.model.on(
-      'change:extract_data_request',
-      this.extract_data_requestChanged,
-      this
-    );
+    this.model.on('change:extract_data_request', this.extract_data_requestChanged, this);
   }
 
   dimensionsChanged(): void {
-    this.el.style.height = `${this.model.get('container_height')}px`;
-    this.el.style.width = `${this.model.get('container_width')}px`;
+    this.reportContainer.style.height = `${this.model.get('container_height')}px`;
+    this.reportContainer.style.width = `${this.model.get('container_width')}px`;
   }
 
   embed_configChanged(): void {
     const reportConfig = this.model.get('embed_config') as IEmbedConfiguration;
-    this.report = powerbi.embed(this.el, reportConfig) as Report;
 
-    this.report.on('loaded', () => {
+    // Phased loading
+    this.report = powerbi.load(this.reportContainer, reportConfig) as Report;
+
+    this.report.on('loaded', async () => {
       console.log('Loaded');
+
+      try {
+        // Get dimensions of output cell
+        const DOMRect: DOMRectSize = this.el.getBoundingClientRect();
+
+        const { width, height } = await getActivePageSize(this.report);
+
+        if (width && height) {
+          const outputCellWidth = DOMRect.width || 980;
+          const newHeight = outputCellWidth * (height / width);
+
+          this.reportContainer.style.width = `${outputCellWidth}px`;
+          this.reportContainer.style.height = `${newHeight}px`;
+
+          // Show the report container
+          this.reportContainer.style.visibility = 'visible';
+
+          // Complete the phased embedding
+          this.report.render();
+        } else {
+          console.error('Invalid report size');
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
       // Invoke loaded event handler on kernel side
       this.model.set('_event_data', {
         event_name: 'loaded',
@@ -141,7 +179,7 @@ export class ReportView extends DOMWidgetView {
       console.error('Power BI report not found');
       return;
     }
-    
+
     const extract_data_request = this.model.get('extract_data_request') as ExtractDataRequest;
 
     // Check extract data request object is null or empty
@@ -170,11 +208,9 @@ export class ReportView extends DOMWidgetView {
       }
 
       const visuals: VisualDescriptor[] = await selectedPage.getVisuals();
-      const selectedVisual: VisualDescriptor = visuals.filter(
-        (visual: VisualDescriptor) => {
-          return visual.name === visualName;
-        }
-      )[0];
+      const selectedVisual: VisualDescriptor = visuals.filter((visual: VisualDescriptor) => {
+        return visual.name === visualName;
+      })[0];
 
       if (!selectedVisual) {
         throw 'Visual not found';
@@ -182,10 +218,10 @@ export class ReportView extends DOMWidgetView {
 
       // TODO: Allow both exportData types
       // TODO: Remove "as unknown" when return type of exportData is fixed
-      const data = await selectedVisual.exportData(
+      const data = ((await selectedVisual.exportData(
         models.ExportDataType.Summarized,
         dataRows
-      ) as unknown as models.IExportDataResult; 
+      )) as unknown) as models.IExportDataResult;
 
       // Update data
       this.model.set('visual_data', data.data);
