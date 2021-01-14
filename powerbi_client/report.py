@@ -10,6 +10,7 @@ TODO: Add module docstring
 import time
 from asyncio import Future, ensure_future
 
+from IPython import get_ipython
 from ipywidgets import DOMWidget
 from jupyter_ui_poll import ui_events
 from traitlets import Bool, Dict, Float, Unicode, observe
@@ -71,7 +72,8 @@ class Report(DOMWidget):
         self._observing_events = False
 
         # Registered Power BI event handlers methods
-        self._registered_event_handlers = self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE
+        self._registered_event_handlers = dict(
+            self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE)
 
         self.set_embed_config(access_token, embed_url, token_type)
 
@@ -124,34 +126,22 @@ class Report(DOMWidget):
         PROCESS_EVENTS_ITERATION = 3    # Process upto n UI events per iteration
         POLLING_INTERVAL = 0.5  # Check for UI every n seconds
 
-        # Wait for client-side to send visual data
-        with ui_events() as ui_poll:
-            # While visual data is not updated
-            while self.visual_data == self.VISUAL_DATA_DEFAULT_STATE:
-                ui_poll(PROCESS_EVENTS_ITERATION)
-                time.sleep(POLLING_INTERVAL)
+        # Check if ipython kernel is available
+        if get_ipython():
+            # Wait for client-side to send visual data
+            with ui_events() as ui_poll:
+                # While visual data is not received
+                while self.visual_data == self.VISUAL_DATA_DEFAULT_STATE:
+                    ui_poll(PROCESS_EVENTS_ITERATION)
+                    time.sleep(POLLING_INTERVAL)
 
         exported_data = self.visual_data
 
         # Reset the extract_data_request and visual_data's value
-        self.extract_data_request = self.EXTRACT_DATA_REQUEST_DEFAULT_STATE
+        self.extract_data_request = dict(self.EXTRACT_DATA_REQUEST_DEFAULT_STATE)
         self.visual_data = self.VISUAL_DATA_DEFAULT_STATE
 
         return exported_data
-
-    def wait_for_change(self, value):
-        """
-        TODO: Add docstring
-        """
-        future = Future()
-
-        # Callback for processing exported_data
-        def get_value(change):
-            future.set_result(change.new)
-            self.unobserve(get_value, value)
-
-        self.observe(get_value, value)
-        return future
 
     def on(self, event, callback):
         """Register a callback to execute when the report emits the target event
@@ -161,6 +151,7 @@ class Report(DOMWidget):
             event (string): Name of Power BI event (eg. 'loaded', 'rendered', 'error')
             callback (function): User defined function. Callback function is invoked with event details as parameter
         """
+        # TODO: Value of event should be from one of the Report.allowedEvents array
         self._registered_event_handlers[event] = callback
 
         def get_event_data(change):
@@ -181,7 +172,7 @@ class Report(DOMWidget):
             event_handler(event_details)
 
             # Reset the _event_data trait, so as to receive next event
-            self._event_data = self.EVENT_DATA_DEFAULT_STATE
+            self._event_data = dict(self.EVENT_DATA_DEFAULT_STATE)
 
         # Check if already observing events
         if not self._observing_events:

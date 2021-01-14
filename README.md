@@ -84,5 +84,4 @@ If you make a change to the python code then you will need to restart the notebo
 `npm run debug`<br/>
 
 #### Python:
-1. `cd powerbi_client`
-1. `pytest -v`
+1. `pytest powerbi_client --cov -v`
