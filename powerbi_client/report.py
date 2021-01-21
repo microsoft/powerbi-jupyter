@@ -8,7 +8,6 @@ TODO: Add module docstring
 """
 
 import time
-from asyncio import Future, ensure_future
 
 from IPython import get_ipython
 from ipywidgets import DOMWidget

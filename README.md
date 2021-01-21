@@ -26,7 +26,7 @@ jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbi_client
 
 ## Development Installation
 
-
+### Setup
 ```bash
 # First install the python package. This will also build the JS packages.
 pip install -e ".[test, examples]"
@@ -53,27 +53,39 @@ you might also need another flag instead of `--sys-prefix`, but we won't cover t
 of those flags here.
 
 ### How to see your changes
-#### Typescript:
-To continuously monitor the project for changes and automatically trigger a rebuild, start Jupyter in watch mode:
-```bash
-jupyter lab --watch
-```
+#### Typescript (Frontend):
+To continuously monitor the project for changes and automatically trigger a rebuild, 
 
-To execute the project in Jupyter Notebook:
+For Jupyter Lab:
+1. Start Jupyter Lab in watch mode:
+    ```bash
+    jupyter lab --watch
+    ```
+
+For classic jupyter notebook:
+1. Build frontend code with either watch or single build mode:
+    ```bash
+    npm run build 
+    ```
+    or,
+    ```bash
+    npm run watch
+    ```
+
+1. Copy output to jupyter directory
+    ```bash
+    jupyter nbextension install --sys-prefix --overwrite --py powerbi_client
+    ```
+
+1. Reload webpage in browser
+
+In a separate shell session, keep the Jupyter notebook running:
 ```bash
-python setup.py sdist
 jupyter notebook
 ```
 
-And in a separate session, begin watching the source directory for changes:
-```bash
-npm run watch
-```
-
-After a change wait for the build to finish and then refresh your browser and the changes should take effect.
-
-#### Python:
-If you make a change to the python code then you will need to restart the notebook kernel to have it take effect.
+#### Python (Backend kernel):
+If you make changes to the python code then you will need to restart the notebook kernel to have it take effect.
 
 ## Run Tests
 #### Frontend:
