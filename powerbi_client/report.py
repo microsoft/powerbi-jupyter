@@ -47,6 +47,13 @@ class Report(DOMWidget):
         'event_name': None,
         'event_details': None
     }
+    REPORT_FILTER_REQUEST_DEFAULT_STATE = {
+        'filters': [],
+        'request_completed': True
+    }
+
+    # Other constants
+    REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
 
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
@@ -60,11 +67,16 @@ class Report(DOMWidget):
     container_height = Float(0).tag(sync=True)
     container_width = Float(0).tag(sync=True)
 
-    # TODO: Add validation
+    # TODO: Add trait validation
+    # TODO: Start with _
     extract_data_request = Dict(None).tag(sync=True)
+    # TODO: Start with _
     visual_data = Unicode(VISUAL_DATA_DEFAULT_STATE).tag(sync=True)
 
     _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
+
+    # TODO: Add trait validation
+    _report_filters_request = Dict(REPORT_FILTER_REQUEST_DEFAULT_STATE).tag(sync=True)
 
     # Methods
     def __init__(self, access_token, embed_url, token_type=0, **kwargs):
@@ -114,7 +126,7 @@ class Report(DOMWidget):
             string: visual's exported data
         """
         if self._embedded == False:
-            raise Exception("Report is not embedded")
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         # Start exporting data on client side
         self.extract_data_request = {
@@ -182,3 +194,30 @@ class Report(DOMWidget):
 
             # Start observing Power BI events
             self.observe(get_event_data, '_event_data')
+
+    def set_filters(self, filters):
+        """Set report level filters in the embedded report
+
+        Args:
+            filters ([models.ReportLevelFilters]): List of report level filters
+
+        Raises:
+            Exception: When report is not embedded
+        """
+        if self._embedded == False:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+        
+        self._report_filters_request = {
+            'filters': filters,
+            'request_completed': False
+        }
+
+        # TODO: Should we wait for the filters to be applied
+
+    def remove_filters(self):
+        """Remove all report level filters from the embedded report
+
+        Raises:
+            Exception: When report is not embedded
+        """
+        self.set_filters([])

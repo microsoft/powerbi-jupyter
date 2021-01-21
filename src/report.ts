@@ -26,6 +26,13 @@ const powerbi = new service.Service(
   factories.routerFactory
 );
 
+const REPORT_FILTER_REQUEST_DEFAULT_STATE = {
+  filters: [],
+  request_completed: true,
+};
+
+const REPORT_NOT_EMBEDDED_MESSAGE = 'Power BI report is not embedded';
+
 export class ReportModel extends DOMWidgetModel {
   defaults(): any {
     return {
@@ -46,6 +53,7 @@ export class ReportModel extends DOMWidgetModel {
         event_name: null,
         event_details: null,
       },
+      _report_filters_request: REPORT_FILTER_REQUEST_DEFAULT_STATE,
     };
   }
 
@@ -65,6 +73,11 @@ interface ExtractDataRequest {
   pageName?: string;
   visualName?: string;
   rows?: number;
+}
+
+interface ReportFilterRequest {
+  filters: models.ReportLevelFilters[];
+  request_completed: boolean;
 }
 
 interface DOMRectSize {
@@ -96,6 +109,7 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
     this.model.on('change:extract_data_request', this.extract_data_requestChanged, this);
+    this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
   }
 
   dimensionsChanged(): void {
@@ -176,7 +190,7 @@ export class ReportView extends DOMWidgetView {
 
   async extract_data_requestChanged(): Promise<void> {
     if (!this.report) {
-      console.error('Power BI report not found');
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -218,10 +232,7 @@ export class ReportView extends DOMWidgetView {
 
       // TODO: Allow both exportData types
       // TODO: Remove "as unknown" when return type of exportData is fixed
-      const data = ((await selectedVisual.exportData(
-        models.ExportDataType.Summarized,
-        dataRows
-      )) as unknown) as models.IExportDataResult;
+      const data = await selectedVisual.exportData(models.ExportDataType.Summarized, dataRows);
 
       // Update data
       this.model.set('visual_data', data.data);
@@ -229,5 +240,34 @@ export class ReportView extends DOMWidgetView {
     } catch (error) {
       console.error('Extract data error:', error);
     }
+  }
+
+  async reportFiltersChanged(): Promise<void> {
+    if (!this.report) {
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      return;
+    }
+
+    const filterRequest = this.model.get('_report_filters_request') as ReportFilterRequest;
+
+    if (filterRequest.request_completed) {
+      // Reset of filter request
+      return;
+    }
+
+    try {
+      // Add new filters or remove filters when filters array is empty
+      if (filterRequest.filters.length > 0) {
+        await this.report.updateFilters(models.FiltersOperations.Add, filterRequest.filters);
+      } else {
+        await this.report.updateFilters(models.FiltersOperations.RemoveAll);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    // Reset filter request
+    this.model.set('_report_filters_request', REPORT_FILTER_REQUEST_DEFAULT_STATE);
+    this.touch();
   }
 }
