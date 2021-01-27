@@ -12,7 +12,7 @@ import time
 from IPython import get_ipython
 from ipywidgets import DOMWidget
 from jupyter_ui_poll import ui_events
-from traitlets import Bool, Dict, Float, Unicode, observe
+from traitlets import Bool, Dict, Float, Unicode, List, observe
 
 from ._frontend import module_name, module_version
 
@@ -50,9 +50,19 @@ class Report(DOMWidget):
         'filters': [],
         'request_completed': True
     }
+    GET_PAGES_REQUEST_DEFAULT_STATE = False
+    REPORT_PAGES_DEFAULT_STATE = []
+    GET_VISUALS_DEFAULT_PAGE_NAME = ''
+    PAGE_VISUALS_DEFAULT_STATE = []
 
     # Other constants
     REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
+
+    # Process upto n UI events per iteration
+    PROCESS_EVENTS_ITERATION = 3
+
+    # Check for UI every n seconds
+    POLLING_INTERVAL = 0.5
 
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
@@ -76,6 +86,12 @@ class Report(DOMWidget):
 
     # TODO: Add trait validation
     _report_filters_request = Dict(REPORT_FILTER_REQUEST_DEFAULT_STATE).tag(sync=True)
+
+    _get_pages_request = Bool(GET_PAGES_REQUEST_DEFAULT_STATE).tag(sync=True)
+    _report_pages = List(REPORT_PAGES_DEFAULT_STATE).tag(sync=True)
+
+    _get_visuals_page_name = Unicode(GET_VISUALS_DEFAULT_PAGE_NAME).tag(sync=True)
+    _page_visuals = List(PAGE_VISUALS_DEFAULT_STATE).tag(sync=True)
 
     # Methods
     def __init__(self, access_token, embed_url, token_type=0, **kwargs):
@@ -113,13 +129,14 @@ class Report(DOMWidget):
         self.container_height = container_height
         self.container_width = container_width
 
-    def extract_data(self, page_name, visual_name, rows=10):
+    def extract_data(self, page_name, visual_name, rows=10, underlying_data=False):
         """Returns the data of given visual of the embedded Power BI report
 
         Args:
             page_name (string): Page name of the embedded report
             visual_name (string): Visual's unique name 
-            rows (int, optional): Number of rows of data. Defaults to 10.
+            rows (int, optional): Number of rows of data. Defaults to 10
+            underlying_data (boolean, optional): Choice to show the underlying data or not. Default is False.
 
         Returns:
             string: visual's exported data
@@ -131,11 +148,9 @@ class Report(DOMWidget):
         self.extract_data_request = {
             'pageName': page_name,
             'visualName': visual_name,
-            'rows': rows
+            'rows': rows,
+            'underlyingData': underlying_data
         }
-
-        PROCESS_EVENTS_ITERATION = 3    # Process upto n UI events per iteration
-        POLLING_INTERVAL = 0.5  # Check for UI every n seconds
 
         # Check if ipython kernel is available
         if get_ipython():
@@ -143,8 +158,8 @@ class Report(DOMWidget):
             with ui_events() as ui_poll:
                 # While visual data is not received
                 while self.visual_data == self.VISUAL_DATA_DEFAULT_STATE:
-                    ui_poll(PROCESS_EVENTS_ITERATION)
-                    time.sleep(POLLING_INTERVAL)
+                    ui_poll(self.PROCESS_EVENTS_ITERATION)
+                    time.sleep(self.POLLING_INTERVAL)
 
         exported_data = self.visual_data
 
@@ -205,7 +220,7 @@ class Report(DOMWidget):
         """
         if self._embedded == False:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
-        
+
         self._report_filters_request = {
             'filters': filters,
             'request_completed': False
@@ -220,3 +235,64 @@ class Report(DOMWidget):
             Exception: When report is not embedded
         """
         self.set_filters([])
+
+    def get_pages(self):
+        """Returns the list of pages of the embedded Power BI report
+
+        Returns:
+            string: list of pages
+        """
+        if self._embedded == False:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+
+        # Start getting pages on client side
+        self._get_pages_request = True
+
+        # Check if ipython kernel is available
+        if get_ipython():
+            # Wait for client-side to send list of pages
+            with ui_events() as ui_poll:
+                # While list of report pages is not received
+                while self._report_pages == self.REPORT_PAGES_DEFAULT_STATE:
+                    ui_poll(self.PROCESS_EVENTS_ITERATION)
+                    time.sleep(self.POLLING_INTERVAL)
+
+        pages = self._report_pages
+
+        # Reset the get_pages_request and report_pages's value
+        self._get_pages_request = bool(self.GET_PAGES_REQUEST_DEFAULT_STATE)
+        self._report_pages = list(self.REPORT_PAGES_DEFAULT_STATE)
+
+        return pages
+
+    def get_visuals(self, page_name):
+        """Returns the list of visuals of the given page of the embedded Power BI report
+
+        Args:
+            page_name (string): Page name of the embedded report
+
+        Returns:
+            string: list of visuals
+        """
+        if self._embedded == False:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+
+        # Start getting visuals on client side
+        self._get_visuals_page_name = page_name
+
+        # Check if ipython kernel is available
+        if get_ipython():
+            # Wait for client-side to send list of visuals
+            with ui_events() as ui_poll:
+                # While list of visuals is not received
+                while self._page_visuals == self.PAGE_VISUALS_DEFAULT_STATE:
+                    ui_poll(self.PROCESS_EVENTS_ITERATION)
+                    time.sleep(self.POLLING_INTERVAL)
+
+        visuals = self._page_visuals
+
+        # Reset the get_visuals_page_name and page_visuals's value
+        self._get_visuals_page_name = self.GET_VISUALS_DEFAULT_PAGE_NAME
+        self._page_visuals = list(self.PAGE_VISUALS_DEFAULT_STATE)
+
+        return visuals

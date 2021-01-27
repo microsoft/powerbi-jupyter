@@ -15,6 +15,8 @@ VISUAL_NAME = 'dummy_visual_name'
 VISUAL_DATA = 'dummy_visual_data'
 VISUAL_DATA_ROWS = 20
 DEFAULT_DATA_ROWS = 10
+REPORT_PAGES = ['dummy_report_pages']
+PAGE_VISUALS = ['dummy_page_visuals']
 
 
 class TestCommAndTraitlets:
@@ -179,3 +181,55 @@ class TestExtractData:
         assert returned_data == VISUAL_DATA
         assert report.extract_data_request == report.EXTRACT_DATA_REQUEST_DEFAULT_STATE
         assert report.visual_data == report.VISUAL_DATA_DEFAULT_STATE
+
+
+class TestGetPages:
+    def test_throws_when_not_embedded(self):
+        # Arrange
+        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report._embedded = False
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            report.get_pages()
+
+    def test_returned_data(self):
+        # Arrange
+        report = Report(ACCESS_TOKEN, EMBED_URL)
+        # Data sent by frontend (Setting this upfront will prevent get_pages from waiting for list of pages)
+        report._report_pages = REPORT_PAGES
+        report._embedded = True
+
+        # Act
+        returned_pages = report.get_pages()
+
+        # Assert
+        assert returned_pages == REPORT_PAGES
+        assert report._get_pages_request == report.GET_PAGES_REQUEST_DEFAULT_STATE
+        assert report._report_pages == report.REPORT_PAGES_DEFAULT_STATE
+
+
+class TestGetVisuals:
+    def test_throws_when_not_embedded(self):
+        # Arrange
+        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report._embedded = False
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            report.get_visuals('page')
+
+    def test_returned_data(self):
+        # Arrange
+        report = Report(ACCESS_TOKEN, EMBED_URL)
+        # Data sent by frontend (Setting this upfront will prevent get_pages from waiting for list of pages)
+        report._page_visuals = PAGE_VISUALS
+        report._embedded = True
+
+        # Act
+        returned_visuals = report.get_visuals(PAGE_NAME)
+
+        # Assert
+        assert returned_visuals == PAGE_VISUALS
+        assert report._get_visuals_page_name == report.GET_VISUALS_DEFAULT_PAGE_NAME
+        assert report._page_visuals == report.PAGE_VISUALS_DEFAULT_STATE

@@ -17,7 +17,9 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 
 // Import the CSS
 import '../css/report.css';
-import { getActivePageSize } from './utils';
+import { getActivePageSize, getRequestedPage } from './utils';
+import { IPageNode } from 'page';
+import { IReportNode } from 'report';
 
 // Initialize powerbi service
 const powerbi = new service.Service(
@@ -54,6 +56,10 @@ export class ReportModel extends DOMWidgetModel {
         event_details: null,
       },
       _report_filters_request: REPORT_FILTER_REQUEST_DEFAULT_STATE,
+      _get_pages_request: false,
+      _report_pages: [],
+      _get_visuals_page_name: null,
+      _page_visuals: []
     };
   }
 
@@ -73,11 +79,20 @@ interface ExtractDataRequest {
   pageName?: string;
   visualName?: string;
   rows?: number;
+  underlyingData?: boolean;
 }
 
 interface ReportFilterRequest {
   filters: models.ReportLevelFilters[];
   request_completed: boolean;
+}
+
+interface PageWithOptionalReport {
+  report?: IReportNode;
+}
+
+interface VisualWithOptionalPage {
+  page?: IPageNode;
 }
 
 interface DOMRectSize {
@@ -110,6 +125,8 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:container_width', this.dimensionsChanged, this);
     this.model.on('change:extract_data_request', this.extract_data_requestChanged, this);
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
+    this.model.on('change:_get_pages_request', this.getPagesRequestChanged, this);
+    this.model.on('change:_get_visuals_page_name', this.getVisualsPageNameChanged, this);
   }
 
   dimensionsChanged(): void {
@@ -210,17 +227,12 @@ export class ReportView extends DOMWidgetView {
     const pageName = extract_data_request.pageName;
     const visualName = extract_data_request.visualName;
     const dataRows = extract_data_request.rows;
+    const exportDataType = extract_data_request.underlyingData
+      ? models.ExportDataType.Underlying
+      : models.ExportDataType.Summarized;
 
     try {
-      const pages: Page[] = await this.report.getPages();
-      const selectedPage: Page = pages.filter((page: Page) => {
-        return page.name === pageName;
-      })[0];
-
-      if (!selectedPage) {
-        throw 'Page not found';
-      }
-
+      const selectedPage: Page = await getRequestedPage(this.report, pageName);
       const visuals: VisualDescriptor[] = await selectedPage.getVisuals();
       const selectedVisual: VisualDescriptor = visuals.filter((visual: VisualDescriptor) => {
         return visual.name === visualName;
@@ -230,9 +242,7 @@ export class ReportView extends DOMWidgetView {
         throw 'Visual not found';
       }
 
-      // TODO: Allow both exportData types
-      // TODO: Remove "as unknown" when return type of exportData is fixed
-      const data = await selectedVisual.exportData(models.ExportDataType.Summarized, dataRows);
+      const data = await selectedVisual.exportData(exportDataType, dataRows);
 
       // Update data
       this.model.set('visual_data', data.data);
@@ -269,5 +279,68 @@ export class ReportView extends DOMWidgetView {
     // Reset filter request
     this.model.set('_report_filters_request', REPORT_FILTER_REQUEST_DEFAULT_STATE);
     this.touch();
+  }
+
+  async getPagesRequestChanged(): Promise<void> {
+    if (!this.report) {
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      return;
+    }
+
+    const get_pages_request = this.model.get('_get_pages_request') as boolean;
+    if (!get_pages_request) {
+      return;
+    }
+
+    try {
+      const pages: Page[] = await this.report.getPages();
+
+      if (!pages) {
+        throw 'Pages not found';
+      }
+
+      // Remove 'report' property from Page object to handle nested property loop
+      const pagesWithoutReport = pages.map((page: PageWithOptionalReport) => {
+        delete page.report;
+        return page;
+      });
+
+      this.model.set('_report_pages', pagesWithoutReport);
+      this.touch();
+    } catch (error) {
+      console.error('Get pages error:', error);
+    }
+  }
+
+  async getVisualsPageNameChanged(): Promise<void> {
+    if (!this.report) {
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      return;
+    }
+
+    const get_visuals_page_name = this.model.get('_get_visuals_page_name') as string;
+    if (!get_visuals_page_name) {
+      return;
+    }
+
+    try {
+      const selectedPage: Page = await getRequestedPage(this.report, get_visuals_page_name);
+      const visuals: VisualDescriptor[] = await selectedPage.getVisuals();
+
+      if (!visuals) {
+        throw 'Visuals not found';
+      }
+
+      // Remove 'page' property from Visual object to handle nested property loop
+      const visualsWithoutPage = visuals.map((visual: VisualWithOptionalPage) => {
+        delete visual.page;
+        return visual;
+      });
+
+      this.model.set('_page_visuals', visualsWithoutPage);
+      this.touch();
+    } catch (error) {
+      console.error('Get visuals error:', error);
+    }
   }
 }

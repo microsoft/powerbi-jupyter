@@ -1,4 +1,4 @@
-import { models, Report } from 'powerbi-client';
+import { models, Page, Report } from 'powerbi-client';
 
 /**
  * Returns width and height of the active page as an object
@@ -17,4 +17,17 @@ export async function getActivePageSize(report: Report): Promise<models.ICustomP
   }
 
   return activePage.defaultSize;
+}
+
+export async function getRequestedPage(report: Report, pageName: string): Promise<Page> {
+  const pages: Page[] = await report.getPages();
+  const requestedPage: Page = pages.filter((page: Page) => {
+    return page.name === pageName;
+  })[0];
+
+  if (!requestedPage) {
+    throw 'Page not found';
+  }
+
+  return requestedPage;
 }
