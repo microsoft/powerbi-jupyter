@@ -40,7 +40,7 @@ class Report(DOMWidget):
 
     # Default values for widget traits
     VISUAL_DATA_DEFAULT_STATE = ''
-    EXTRACT_DATA_REQUEST_DEFAULT_STATE = {}
+    EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE = {}
     REGISTERED_EVENT_HANDLERS_DEFAULT_STATE = {}
     EVENT_DATA_DEFAULT_STATE = {
         'event_name': None,
@@ -78,7 +78,7 @@ class Report(DOMWidget):
 
     # TODO: Add trait validation
     # TODO: Start with _
-    extract_data_request = Dict(None).tag(sync=True)
+    export_visual_data_request = Dict(None).tag(sync=True)
     # TODO: Start with _
     visual_data = Unicode(VISUAL_DATA_DEFAULT_STATE).tag(sync=True)
 
@@ -129,7 +129,7 @@ class Report(DOMWidget):
         self.container_height = container_height
         self.container_width = container_width
 
-    def extract_data(self, page_name, visual_name, rows=10, underlying_data=False):
+    def export_visual_data(self, page_name, visual_name, rows=10, underlying_data=False):
         """Returns the data of given visual of the embedded Power BI report
 
         Args:
@@ -145,7 +145,7 @@ class Report(DOMWidget):
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         # Start exporting data on client side
-        self.extract_data_request = {
+        self.export_visual_data_request = {
             'pageName': page_name,
             'visualName': visual_name,
             'rows': rows,
@@ -163,8 +163,8 @@ class Report(DOMWidget):
 
         exported_data = self.visual_data
 
-        # Reset the extract_data_request and visual_data's value
-        self.extract_data_request = dict(self.EXTRACT_DATA_REQUEST_DEFAULT_STATE)
+        # Reset the export_visual_data_request and visual_data's value
+        self.export_visual_data_request = dict(self.EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE)
         self.visual_data = self.VISUAL_DATA_DEFAULT_STATE
 
         return exported_data
@@ -209,8 +209,9 @@ class Report(DOMWidget):
             # Start observing Power BI events
             self.observe(get_event_data, '_event_data')
 
-    def set_filters(self, filters):
-        """Set report level filters in the embedded report
+    def update_filters(self, filters):
+        """Set report level filters in the embedded report.
+            Currently supports models.FiltersOperations.Add
 
         Args:
             filters ([models.ReportLevelFilters]): List of report level filters
@@ -234,7 +235,7 @@ class Report(DOMWidget):
         Raises:
             Exception: When report is not embedded
         """
-        self.set_filters([])
+        self.update_filters([])
 
     def get_pages(self):
         """Returns the list of pages of the embedded Power BI report
@@ -265,7 +266,7 @@ class Report(DOMWidget):
 
         return pages
 
-    def get_visuals(self, page_name):
+    def visuals_on_page(self, page_name):
         """Returns the list of visuals of the given page of the embedded Power BI report
 
         Args:

@@ -49,7 +49,7 @@ export class ReportModel extends DOMWidgetModel {
       _embedded: false,
       container_height: 0,
       container_width: 0,
-      extract_data_request: {},
+      export_visual_data_request: {},
       visual_data: null,
       _event_data: {
         event_name: null,
@@ -75,7 +75,7 @@ export class ReportModel extends DOMWidgetModel {
   static view_module_version = MODULE_VERSION;
 }
 
-interface ExtractDataRequest {
+interface ExportVisualDataRequest {
   pageName?: string;
   visualName?: string;
   rows?: number;
@@ -123,7 +123,7 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:embed_config', this.embed_configChanged, this);
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
-    this.model.on('change:extract_data_request', this.extract_data_requestChanged, this);
+    this.model.on('change:export_visual_data_request', this.export_visual_data_requestChanged, this);
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
     this.model.on('change:_get_pages_request', this.getPagesRequestChanged, this);
     this.model.on('change:_get_visuals_page_name', this.getVisualsPageNameChanged, this);
@@ -205,29 +205,29 @@ export class ReportView extends DOMWidgetView {
     this.touch();
   }
 
-  async extract_data_requestChanged(): Promise<void> {
+  async export_visual_data_requestChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
-    const extract_data_request = this.model.get('extract_data_request') as ExtractDataRequest;
+    const export_visual_data_request = this.model.get('export_visual_data_request') as ExportVisualDataRequest;
 
-    // Check extract data request object is null or empty
-    if (!extract_data_request || Object.keys(extract_data_request).length === 0) {
+    // Check export visual data request object is null or empty
+    if (!export_visual_data_request || Object.keys(export_visual_data_request).length === 0) {
       // This is the case of model reset
       return;
     }
 
-    if (!extract_data_request.pageName || !extract_data_request.visualName) {
+    if (!export_visual_data_request.pageName || !export_visual_data_request.visualName) {
       console.error('Page and visual names are required');
       return;
     }
 
-    const pageName = extract_data_request.pageName;
-    const visualName = extract_data_request.visualName;
-    const dataRows = extract_data_request.rows;
-    const exportDataType = extract_data_request.underlyingData
+    const pageName = export_visual_data_request.pageName;
+    const visualName = export_visual_data_request.visualName;
+    const dataRows = export_visual_data_request.rows;
+    const exportDataType = export_visual_data_request.underlyingData
       ? models.ExportDataType.Underlying
       : models.ExportDataType.Summarized;
 
@@ -248,7 +248,7 @@ export class ReportView extends DOMWidgetView {
       this.model.set('visual_data', data.data);
       this.touch();
     } catch (error) {
-      console.error('Extract data error:', error);
+      console.error('Export visual data error:', error);
     }
   }
 
