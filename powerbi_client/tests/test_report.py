@@ -157,7 +157,7 @@ class TestEventHandlers:
         assert 'loaded' not in report._registered_event_handlers
 
 
-class TestExtractData:
+class TestExportData:
     def test_throws_when_not_embedded(self):
         # Arrange
         report = Report(ACCESS_TOKEN, EMBED_URL)
@@ -165,7 +165,7 @@ class TestExtractData:
 
         # Act + Assert
         with pytest.raises(Exception):
-            report.extract_data('page', 'visual')
+            report.export_visual_data('page', 'visual')
 
     def test_returned_data(self):
         # Arrange
@@ -175,11 +175,11 @@ class TestExtractData:
         report._embedded = True
 
         # Act
-        returned_data = report.extract_data(PAGE_NAME, VISUAL_NAME, VISUAL_DATA_ROWS)
+        returned_data = report.export_visual_data(PAGE_NAME, VISUAL_NAME, VISUAL_DATA_ROWS)
 
         # Assert
         assert returned_data == VISUAL_DATA
-        assert report.extract_data_request == report.EXTRACT_DATA_REQUEST_DEFAULT_STATE
+        assert report.export_visual_data_request == report.EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE
         assert report.visual_data == report.VISUAL_DATA_DEFAULT_STATE
 
 
@@ -227,7 +227,7 @@ class TestGetVisuals:
         report._embedded = True
 
         # Act
-        returned_visuals = report.get_visuals(PAGE_NAME)
+        returned_visuals = report.visuals_on_page(PAGE_NAME)
 
         # Assert
         assert returned_visuals == PAGE_VISUALS
