@@ -24,6 +24,21 @@ the nbextension:
 jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbi_client
 ```
 
+## Demo
+A Jupyter notebook that embeds a sample report.
+It demonstrates the complete flow i.e. embedding the embedded report, setting report event handlers, get list of pages, get list of visuals, export and visualize visual data and apply filters.
+
+### Required python packages:
+- pandas
+- matplotlib
+
+To run the demo, run the following commands:
+```bash
+cd .\examples\
+jupyter notebook
+```
+Now, run introduction.ipynb
+
 ## Development Installation
 
 ### Setup
