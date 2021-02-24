@@ -59,7 +59,10 @@ export class ReportModel extends DOMWidgetModel {
       _get_pages_request: false,
       _report_pages: [],
       _get_visuals_page_name: null,
-      _page_visuals: []
+      _page_visuals: [],
+      _report_bookmark_name: null,
+      _get_bookmarks_request: false,
+      _report_bookmarks: [],
     };
   }
 
@@ -123,10 +126,16 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:embed_config', this.embed_configChanged, this);
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
-    this.model.on('change:export_visual_data_request', this.export_visual_data_requestChanged, this);
+    this.model.on(
+      'change:export_visual_data_request',
+      this.export_visual_data_requestChanged,
+      this
+    );
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
     this.model.on('change:_get_pages_request', this.getPagesRequestChanged, this);
     this.model.on('change:_get_visuals_page_name', this.getVisualsPageNameChanged, this);
+    this.model.on('change:_report_bookmark_name', this.reportBookmarkNameChanged, this);
+    this.model.on('change:_get_bookmarks_request', this.getBookmarksRequestChanged, this);
   }
 
   dimensionsChanged(): void {
@@ -211,7 +220,9 @@ export class ReportView extends DOMWidgetView {
       return;
     }
 
-    const export_visual_data_request = this.model.get('export_visual_data_request') as ExportVisualDataRequest;
+    const export_visual_data_request = this.model.get(
+      'export_visual_data_request'
+    ) as ExportVisualDataRequest;
 
     // Check export visual data request object is null or empty
     if (!export_visual_data_request || Object.keys(export_visual_data_request).length === 0) {
@@ -341,6 +352,50 @@ export class ReportView extends DOMWidgetView {
       this.touch();
     } catch (error) {
       console.error('Get visuals error:', error);
+    }
+  }
+
+  async reportBookmarkNameChanged(): Promise<void> {
+    if (!this.report) {
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      return;
+    }
+
+    const bookmarkName = this.model.get('_report_bookmark_name') as string;
+
+    try {
+      // Apply corresponding bookmark to the embedded report
+      await this.report.bookmarksManager.apply(bookmarkName);
+    } catch (error) {
+      console.error('Set bookmark error:', error);
+    }
+  }
+
+  async getBookmarksRequestChanged(): Promise<void> {
+    if (!this.report) {
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      return;
+    }
+
+    const get_bookmarks_request = this.model.get('_get_bookmarks_request') as boolean;
+    if (!get_bookmarks_request) {
+      return;
+    }
+
+    try {
+      // Get list of bookmarks present in the report
+      const bookmarks: models.IReportBookmark[] = await this.report.bookmarksManager.getBookmarks();
+
+      // Check if there is any bookmark saved on the embedded report
+      if (bookmarks.length === 0) {
+        this.model.set('_report_bookmarks', ['']);
+        this.touch();
+      } else {
+        this.model.set('_report_bookmarks', bookmarks);
+        this.touch();
+      }
+    } catch (error) {
+      console.error('Get bookmarks error:', error);
     }
   }
 }

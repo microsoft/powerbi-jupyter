@@ -54,6 +54,9 @@ class Report(DOMWidget):
     REPORT_PAGES_DEFAULT_STATE = []
     GET_VISUALS_DEFAULT_PAGE_NAME = ''
     PAGE_VISUALS_DEFAULT_STATE = []
+    GET_BOOKMARKS_REQUEST_DEFAULT_STATE = False
+    REPORT_BOOKMARKS_DEFAULT_STATE = []
+    REPORT_BOOKMARK_DEFAULT_NAME = ''
 
     # Other constants
     REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
@@ -92,6 +95,11 @@ class Report(DOMWidget):
 
     _get_visuals_page_name = Unicode(GET_VISUALS_DEFAULT_PAGE_NAME).tag(sync=True)
     _page_visuals = List(PAGE_VISUALS_DEFAULT_STATE).tag(sync=True)
+
+    _report_bookmark_name = Unicode(REPORT_BOOKMARK_DEFAULT_NAME).tag(sync=True)
+
+    _report_bookmarks = List(REPORT_BOOKMARKS_DEFAULT_STATE).tag(sync=True)
+    _get_bookmarks_request = Bool(GET_BOOKMARKS_REQUEST_DEFAULT_STATE).tag(sync=True)
 
     # Methods
     def __init__(self, access_token, embed_url, token_type=0, **kwargs):
@@ -297,3 +305,53 @@ class Report(DOMWidget):
         self._page_visuals = list(self.PAGE_VISUALS_DEFAULT_STATE)
 
         return visuals
+
+    def set_bookmark(self, bookmark_name):
+        """Applies a bookmark by name on the embedded report.
+
+        Args:
+            bookmark_name (string) : Bookmark Name
+        Raises:
+            Exception: When report is not embedded
+        """
+
+        if self._embedded == False:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+
+        self._report_bookmark_name = bookmark_name
+
+    def get_bookmarks(self):
+        """Returns the list of bookmarks of the embedded Power BI report
+
+        Returns:
+            list: list of bookmarks
+
+        Raises:
+            Exception: When report is not embedded
+        """
+
+        if self._embedded == False:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+
+        # Start getting bookmarks on client side
+        self._get_bookmarks_request = True
+
+        # Check if ipython kernel is available
+        if get_ipython():
+            # Wait for client-side to send list of bookmarks
+            with ui_events() as ui_poll:
+                # While list of report bookmark(s) is not received
+                while self._report_bookmarks == self.REPORT_BOOKMARKS_DEFAULT_STATE:
+                    ui_poll(self.PROCESS_EVENTS_ITERATION)
+                    time.sleep(self.POLLING_INTERVAL)
+
+        bookmarks = self._report_bookmarks
+
+        if bookmarks == ['']:
+            bookmarks = self.REPORT_BOOKMARKS_DEFAULT_STATE
+
+        # Reset the _get_bookmarks_request and _report_bookmarks values
+        self._get_bookmarks_request = bool(self.GET_BOOKMARKS_REQUEST_DEFAULT_STATE)
+        self._report_bookmarks = list(self.REPORT_BOOKMARKS_DEFAULT_STATE)
+
+        return bookmarks

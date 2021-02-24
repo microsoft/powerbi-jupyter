@@ -17,6 +17,7 @@ VISUAL_DATA_ROWS = 20
 DEFAULT_DATA_ROWS = 10
 REPORT_PAGES = ['dummy_report_pages']
 PAGE_VISUALS = ['dummy_page_visuals']
+REPORT_BOOKMARKS = ['dummy_report_bookmarks']
 
 
 class TestCommAndTraitlets:
@@ -233,3 +234,31 @@ class TestGetVisuals:
         assert returned_visuals == PAGE_VISUALS
         assert report._get_visuals_page_name == report.GET_VISUALS_DEFAULT_PAGE_NAME
         assert report._page_visuals == report.PAGE_VISUALS_DEFAULT_STATE
+
+class TestGetBookmarks:
+    def test_throws_when_not_embedded(self):
+        
+        # Arrange
+        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report._embedded = False
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            report.get_bookmarks()
+
+    def test_returned_data(self):
+
+        # Arrange
+        report = Report(ACCESS_TOKEN, EMBED_URL)
+
+        # Data sent by frontend (Setting this upfront will prevent get_bookmarks from waiting for list of bookmarks)
+        report._report_bookmarks = REPORT_BOOKMARKS
+        report._embedded = True
+
+        # Act
+        returned_bookmarks = report.get_bookmarks()
+
+        # Assert
+        assert returned_bookmarks == REPORT_BOOKMARKS
+        assert report._get_bookmarks_request == report.GET_BOOKMARKS_REQUEST_DEFAULT_STATE
+        assert report._report_bookmarks == report.REPORT_BOOKMARKS_DEFAULT_STATE
