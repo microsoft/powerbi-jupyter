@@ -88,7 +88,8 @@ setup_args = dict(
     install_requires = [
         'ipywidgets>=7.0.0',
         'jupyter-ui-poll>=0.1.2',
-        'msal>=1.8.0'
+        'msal>=1.8.0',
+        'requests>=2.25.1'
     ],
     extras_require = {
         'test': [

@@ -21,8 +21,10 @@ DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 class AuthenticationResult:
 
     # Methods
-    def __init__(self, access_token_result):
+    def __init__(self, client_id, scopes, access_token_result):
         self._access_token_result = access_token_result
+        self._client_id = client_id
+        self._scopes = scopes
 
     def get_access_token(self):
         """Returns the access token
@@ -42,6 +44,13 @@ class AuthenticationResult:
 
         return self._access_token_result
 
+    def refresh_token(self):
+        app = msal.PublicClientApplication(self._client_id)
+        token_result = app.acquire_token_by_refresh_token(self._access_token_result.get('refresh_token'), self._scopes)
+        if "access_token" not in token_result:
+            raise RuntimeError(token_result.get('error_description'))
+        self._access_token_result = token_result
+
 
 class DeviceCodeLoginAuthentication(AuthenticationResult):
 
@@ -56,7 +65,7 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
             scopes = DEFAULT_SCOPES
         self.scopes = scopes
         auth_result = self._acquire_token_device_code()
-        super().__init__(auth_result)
+        super().__init__(client_id, scopes, auth_result)
 
     def _acquire_token_device_code(self):
         """Returns the token acquired using device flow
@@ -102,7 +111,7 @@ class InteractiveLoginAuthentication(AuthenticationResult):
             scopes = DEFAULT_SCOPES
         self.scopes = scopes
         auth_result = self._acquire_token_interactive()
-        super().__init__(auth_result)
+        super().__init__(client_id, scopes, auth_result)
 
     def _acquire_token_interactive(self):
         """Returns the token acquired using interactive login

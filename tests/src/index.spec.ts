@@ -26,10 +26,10 @@ describe('Widget model tests', () => {
     });
 
     it('should be creatable using embed_config', () => {
-      const state = { embed_config: {'accessToken': null, 'embedUrl': null} }
+      const state = { _embed_config: {'accessToken': null, 'embedUrl': null} }
       const model = createTestModel(ReportModel, state);
       expect(model).to.be.an(ReportModel);
-      expect(model.get('embed_config')).to.be.equal(state.embed_config);
+      expect(model.get('_embed_config')).to.be.equal(state._embed_config);
     });
 
   });

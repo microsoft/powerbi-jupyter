@@ -23,7 +23,7 @@ REPORT_BOOKMARKS = ['dummy_report_bookmarks']
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report.comm = mock_comm
 
         new_height = 450
@@ -44,34 +44,36 @@ class TestCommAndTraitlets:
 class TestReportConstructor:
     def test_report_constructor(self):
         # Act
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
 
         # Assert
-        assert report.embed_config == {
+        assert report._embed_config == {
             'type': 'report',
             'accessToken': ACCESS_TOKEN,
             'embedUrl': EMBED_URL,
-            'tokenType': 0
+            'tokenType': 0,
+            'tokenExpiration': 0
         }
         assert report._embedded == False
 
     def test_report_constructor_token_type(self):
         # Act
-        report = Report(ACCESS_TOKEN, EMBED_URL, token_type=1)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL, token_type=1)
 
         # Assert
-        assert report.embed_config == {
+        assert report._embed_config == {
             'type': 'report',
             'accessToken': ACCESS_TOKEN,
             'embedUrl': EMBED_URL,
-            'tokenType': 1
+            'tokenType': 1,
+            'tokenExpiration': 0
         }
 
 
 class TestSettingNewEmbedConfig:
     def test_set_embed_config(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         # Simulate that report was earlier embedded
         report._embedded = True
 
@@ -79,21 +81,22 @@ class TestSettingNewEmbedConfig:
         new_embed_url = 'new_dummy_embed_url'
 
         # Act
-        report.set_embed_config(new_access_token, new_embed_url)
+        report.set_embed_config(access_token=new_access_token, embed_url=new_embed_url)
 
         # Assert
-        assert report.embed_config == {
+        assert report._embed_config == {
             'type': 'report',
             'accessToken': new_access_token,
             'embedUrl': new_embed_url,
-            'tokenType': 0
+            'tokenType': 0,
+            'tokenExpiration': 0
         }
         assert report._embedded == False
 
 
 class TestChangingNewReportSize:
     def test_change_size(self):
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
 
         new_height = 500
         new_width = 900
@@ -108,7 +111,7 @@ class TestChangingNewReportSize:
 class TestEventHandlers:
     def test_setting_event_handler(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = True
         event_name = 'loaded'
 
@@ -125,7 +128,7 @@ class TestEventHandlers:
 
     def test_setting_event_handler_again(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = True
         event_name = 'loaded'
 
@@ -149,7 +152,7 @@ class TestEventHandlers:
 
     def test_not_setting_event_handler(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
 
         # Act
         # Does not set any handler
@@ -161,7 +164,7 @@ class TestEventHandlers:
 class TestExportData:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = False
 
         # Act + Assert
@@ -170,7 +173,7 @@ class TestExportData:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         # Data sent by frontend (Setting this upfront will prevent extract_data from waiting for data)
         report.visual_data = VISUAL_DATA
         report._embedded = True
@@ -187,7 +190,7 @@ class TestExportData:
 class TestGetPages:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = False
 
         # Act + Assert
@@ -196,7 +199,7 @@ class TestGetPages:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         # Data sent by frontend (Setting this upfront will prevent get_pages from waiting for list of pages)
         report._report_pages = REPORT_PAGES
         report._embedded = True
@@ -213,7 +216,7 @@ class TestGetPages:
 class TestGetVisuals:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = False
 
         # Act + Assert
@@ -222,7 +225,7 @@ class TestGetVisuals:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         # Data sent by frontend (Setting this upfront will prevent get_pages from waiting for list of pages)
         report._page_visuals = PAGE_VISUALS
         report._embedded = True
@@ -239,7 +242,7 @@ class TestGetBookmarks:
     def test_throws_when_not_embedded(self):
         
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = False
 
         # Act + Assert
@@ -249,7 +252,7 @@ class TestGetBookmarks:
     def test_returned_data(self):
 
         # Arrange
-        report = Report(ACCESS_TOKEN, EMBED_URL)
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
 
         # Data sent by frontend (Setting this upfront will prevent get_bookmarks from waiting for list of bookmarks)
         report._report_bookmarks = REPORT_BOOKMARKS

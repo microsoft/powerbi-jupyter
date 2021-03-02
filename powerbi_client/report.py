@@ -8,6 +8,7 @@ TODO: Add module docstring
 """
 
 import time
+import requests
 
 from IPython import get_ipython
 from ipywidgets import DOMWidget
@@ -16,6 +17,7 @@ from traitlets import Bool, Dict, Float, Unicode, List, observe
 
 from ._frontend import module_name, module_version
 
+from .authentication import DeviceCodeLoginAuthentication
 
 class Report(DOMWidget):
     """PowerBI report embedding widget"""
@@ -57,6 +59,7 @@ class Report(DOMWidget):
     GET_BOOKMARKS_REQUEST_DEFAULT_STATE = False
     REPORT_BOOKMARKS_DEFAULT_STATE = []
     REPORT_BOOKMARK_DEFAULT_NAME = ''
+    TOKEN_EXPIRED_DEFAULT_STATE = False
 
     # Other constants
     REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
@@ -67,13 +70,16 @@ class Report(DOMWidget):
     # Check for UI every n seconds
     POLLING_INTERVAL = 0.5
 
+    # Authentication object
+    _auth = None
+
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
     # is automatically synced to the frontend *any* time it changes in Python.
     # It is synced back to Python from the frontend *any* time the model is touched in frontend.
 
     # TODO: Add trait validation
-    embed_config = Dict(None).tag(sync=True)
+    _embed_config = Dict(None).tag(sync=True)
     _embedded = Bool(False).tag(sync=True)
 
     container_height = Float(0).tag(sync=True)
@@ -101,8 +107,39 @@ class Report(DOMWidget):
     _report_bookmarks = List(REPORT_BOOKMARKS_DEFAULT_STATE).tag(sync=True)
     _get_bookmarks_request = Bool(GET_BOOKMARKS_REQUEST_DEFAULT_STATE).tag(sync=True)
 
+    _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
+
     # Methods
-    def __init__(self, access_token, embed_url, token_type=0, **kwargs):
+    def __init__(self, access_token=None, token_type=0, embed_url=None, group_id=None, report_id=None, auth=None, **kwargs):
+
+        token_expiration = 0
+        try:
+            # Get access token for the report using authentication
+            if not access_token:
+                if not auth:
+                    if not Report._auth:
+
+                        # Set DeviceCodeLoginAuthentication to be the default global authentication method
+                        Report._auth = DeviceCodeLoginAuthentication()
+                    auth = Report._auth
+                self._auth = auth
+                access_token = self._auth.get_access_token()
+                token_type = 0
+                token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
+
+            # Get embed URL for the report using access token
+            if not embed_url:
+                if not group_id or not report_id:
+                    raise Exception("Group Id and Report Id are required")
+                if token_type == 1:
+                    raise Exception("Cannot get embed URL using embed token")
+
+                request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/reports/" + report_id
+                response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
+                embed_url = response.json()['embedUrl']
+        except:
+            raise Exception("Could not create Access token or Embed URL")
+
         # Tells if Power BI events are being observed
         self._observing_events = False
 
@@ -110,20 +147,38 @@ class Report(DOMWidget):
         self._registered_event_handlers = dict(
             self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE)
 
-        self.set_embed_config(access_token, embed_url, token_type)
+        self._set_embed_config(access_token, embed_url, token_type, token_expiration)
+        self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
         super(Report, self).__init__(**kwargs)
 
-    def set_embed_config(self, access_token, embed_url, token_type=0):
+    def _update_access_token(self, change):
+        if change.new == True:
+            if not self._auth:
+                raise Exception("Authentication context not found")
+            self._auth.refresh_token()
+            self._set_embed_config(self._auth.get_access_token(), self._embed_config['embedUrl'], self._embed_config['tokenType'], self._auth.get_access_token_details().get('id_token_claims').get('exp'))
+            self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
+
+    def set_access_token(self, access_token):
+        """Set access token for Power BI report
+
+        Args:
+            access_token (string): report access token
+        """
+        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], token_type=self._embed_config['tokenType'])
+
+    def _set_embed_config(self, access_token, embed_url, token_type=0, token_expiration=0):
         """
         TODO: Add docstring
         """
-        self.embed_config = {
+        self._embed_config = {
             'type': 'report',
             'accessToken': access_token,
             'embedUrl': embed_url,
-            'tokenType': token_type
+            'tokenType': token_type,
+            'tokenExpiration': token_expiration
         }
         self._embedded = False
 

@@ -10,14 +10,14 @@ import {
   models,
   VisualDescriptor,
   Page,
-  IEmbedConfiguration,
+  IReportEmbedConfiguration,
 } from 'powerbi-client';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
 // Import the CSS
 import '../css/report.css';
-import { getActivePageSize, getRequestedPage } from './utils';
+import { getActivePageSize, getRequestedPage, setTokenExpirationListener } from './utils';
 import { IPageNode } from 'page';
 import { IReportNode } from 'report';
 
@@ -35,6 +35,9 @@ const REPORT_FILTER_REQUEST_DEFAULT_STATE = {
 
 const REPORT_NOT_EMBEDDED_MESSAGE = 'Power BI report is not embedded';
 
+// Set threshold to refresh token in minutes
+const TOKEN_REFRESH_THRESHOLD = 10;
+
 export class ReportModel extends DOMWidgetModel {
   defaults(): any {
     return {
@@ -45,7 +48,7 @@ export class ReportModel extends DOMWidgetModel {
       _view_name: ReportModel.view_name,
       _view_module: ReportModel.view_module,
       _view_module_version: ReportModel.view_module_version,
-      embed_config: {},
+      _embed_config: {},
       _embedded: false,
       container_height: 0,
       container_width: 0,
@@ -63,6 +66,7 @@ export class ReportModel extends DOMWidgetModel {
       _report_bookmark_name: null,
       _get_bookmarks_request: false,
       _report_bookmarks: [],
+      _token_expired: false,
     };
   }
 
@@ -123,7 +127,7 @@ export class ReportView extends DOMWidgetView {
     this.embed_configChanged();
 
     // Observe changes in the traitlets in Python, and define custom callback.
-    this.model.on('change:embed_config', this.embed_configChanged, this);
+    this.model.on('change:_embed_config', this.embed_configChanged, this);
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
     this.model.on(
@@ -143,14 +147,45 @@ export class ReportView extends DOMWidgetView {
     this.reportContainer.style.width = `${this.model.get('container_width')}px`;
   }
 
+  setTokenExpiredFlag(): void {
+    this.model.set('_token_expired', true);
+    this.touch();
+  }
+
   embed_configChanged(): void {
-    const reportConfig = this.model.get('embed_config') as IEmbedConfiguration;
+    const embedConfig = this.model.get('_embed_config');
+    const reportConfig = embedConfig as IReportEmbedConfiguration;
+
+    if (this.report) {
+      const accessToken = reportConfig.accessToken as string;
+
+      // To avoid re-embedding the report
+      if (
+        this.report.config.embedUrl === reportConfig.embedUrl &&
+        this.report.config.accessToken !== reportConfig.accessToken
+      ) {
+        // Set new access token
+        this.report.setAccessToken(accessToken);
+        if (embedConfig.tokenExpiration) {
+          // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
+          setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
+        }
+      }
+      this.model.set('_embedded', true);
+      this.touch();
+      return;
+    }
 
     // Phased loading
     this.report = powerbi.load(this.reportContainer, reportConfig) as Report;
 
     this.report.on('loaded', async () => {
       console.log('Loaded');
+
+      if (embedConfig.tokenExpiration) {
+        // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
+        setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
+      }
 
       try {
         // Get dimensions of output cell
