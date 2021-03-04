@@ -25,7 +25,7 @@ static_analysis_options:
       - from: 'src\'
         include:
           - '**/*.*'
-      - from: 'powerbi_client\'
+      - from: 'powerbiclient\'
         include:
           - '**/*.*'
 
@@ -35,7 +35,7 @@ static_analysis_options:
         - 'demo\**\*' # Exclude path 'Localize'.
         - 'test\**\*'
         - 'node_modules\**\*'
-        - 'powerbi_client\tests\**\*'
+        - 'powerbiclient\tests\**\*'
 
   binskim_options:
     files_to_scan:
@@ -43,7 +43,7 @@ static_analysis_options:
         - 'examples\**\*' # Exclude path 'Localize'.
         - 'tests\**\*'
         - 'node_modules\**\*'
-        - 'powerbi_client\tests\**\*'
+        - 'powerbiclient\tests\**\*'
 
 package_sources:
   npm:
@@ -87,7 +87,7 @@ build:
             - '**/examples/**/*.*'
             - '**/node_modules/**/*.*'
             - '**/tests/**/*.*'
-            - '**/powerbi_client/tests/**/*.*'
+            - '**/powerbiclient/tests/**/*.*'
 
 # All build stage artifacts get signed right after the build stage
 # because the global signing profile is defined.

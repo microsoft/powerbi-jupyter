@@ -27,7 +27,7 @@ module.exports = [
     entry: './src/extension.ts',
     output: {
       filename: 'index.js',
-      path: path.resolve(__dirname, 'powerbi_client', 'nbextension', 'static'),
+      path: path.resolve(__dirname, 'powerbiclient', 'nbextension', 'static'),
       libraryTarget: 'amd'
     },
     module: {

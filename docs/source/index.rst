@@ -1,5 +1,5 @@
 
-powerbi_client
+powerbiclient
 =====================================
 
 Version: |release|
@@ -10,13 +10,13 @@ A Custom Jupyter Widget Library
 Quickstart
 ----------
 
-To get started with powerbi_client, install with pip::
+To get started with powerbiclient, install with pip::
 
-    pip install powerbi_client
+    pip install powerbiclient
 
 or with conda::
 
-    conda install powerbi_client
+    conda install powerbiclient
 
 
 Contents

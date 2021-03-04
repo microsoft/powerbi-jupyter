@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# powerbi_client documentation build configuration file
+# powerbiclient documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -54,7 +54,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'powerbi_client'
+project = 'powerbiclient'
 copyright = '2020, Microsoft'
 author = 'Microsoft'
 
@@ -69,7 +69,7 @@ author = 'Microsoft'
 import os
 here = os.path.dirname(__file__)
 repo = os.path.join(here, '..', '..')
-_version_py = os.path.join(repo, 'powerbi_client', '_version.py')
+_version_py = os.path.join(repo, 'powerbiclient', '_version.py')
 version_ns = {}
 with open(_version_py) as f:
     exec(f.read(), version_ns)
@@ -116,7 +116,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'powerbi_clientdoc'
+htmlhelp_basename = 'powerbiclientdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -143,7 +143,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'powerbi_client.tex', 'powerbi_client Documentation',
+    (master_doc, 'powerbiclient.tex', 'powerbiclient Documentation',
      'Microsoft', 'manual'),
 ]
 
@@ -154,8 +154,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc,
-    'powerbi_client',
-    'powerbi_client Documentation',
+    'powerbiclient',
+    'powerbiclient Documentation',
      [author], 1)
 ]
 
@@ -167,10 +167,10 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc,
-     'powerbi_client',
-     'powerbi_client Documentation',
+     'powerbiclient',
+     'powerbiclient Documentation',
      author,
-     'powerbi_client',
+     'powerbiclient',
      'A Custom Jupyter Widget Library',
      'Miscellaneous'),
 ]

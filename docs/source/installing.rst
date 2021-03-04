@@ -5,22 +5,22 @@ Installation
 ============
 
 
-The simplest way to install powerbi_client is via pip::
+The simplest way to install powerbiclient is via pip::
 
-    pip install powerbi_client
+    pip install powerbiclient
 
 or via conda::
 
-    conda install powerbi_client
+    conda install powerbiclient
 
 
 If you installed via pip, and notebook version < 5.3, you will also have to
 install / configure the front-end extension as well. If you are using classic
 notebook (as opposed to Jupyterlab), run::
 
-    jupyter nbextension install [--sys-prefix / --user / --system] --py powerbi_client
+    jupyter nbextension install [--sys-prefix / --user / --system] --py powerbiclient
 
-    jupyter nbextension enable [--sys-prefix / --user / --system] --py powerbi_client
+    jupyter nbextension enable [--sys-prefix / --user / --system] --py powerbiclient
 
 with the `appropriate flag`_. If you are using Jupyterlab, install the extension
 with::

@@ -48,14 +48,14 @@ build: off
 before_test:
   - git config --global user.email appveyor@fake.com
   - git config --global user.name "AppVeyor CI"
-  - set "tmptestdir=%tmp%\powerbi_client-%RANDOM%"
+  - set "tmptestdir=%tmp%\powerbiclient-%RANDOM%"
   - mkdir "%tmptestdir%"
   - cd "%tmptestdir%"
 
 
 # to run your custom scripts instead of automatic tests
 test_script:
-  - 'py.test -l --cov-report xml:"%APPVEYOR_BUILD_FOLDER%\coverage.xml" --cov=powerbi_client --pyargs powerbi_client'
+  - 'py.test -l --cov-report xml:"%APPVEYOR_BUILD_FOLDER%\coverage.xml" --cov=powerbiclient --pyargs powerbiclient'
 
 on_success:
   - cd "%APPVEYOR_BUILD_FOLDER%"

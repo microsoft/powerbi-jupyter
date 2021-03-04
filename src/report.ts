@@ -52,8 +52,8 @@ export class ReportModel extends DOMWidgetModel {
       _embedded: false,
       container_height: 0,
       container_width: 0,
-      export_visual_data_request: {},
-      visual_data: null,
+      _export_visual_data_request: {},
+      _visual_data: null,
       _event_data: {
         event_name: null,
         event_details: null,
@@ -124,17 +124,13 @@ export class ReportView extends DOMWidgetView {
 
     this.reportContainer = newDivElement;
 
-    this.embed_configChanged();
+    this.embedConfigChanged();
 
     // Observe changes in the traitlets in Python, and define custom callback.
-    this.model.on('change:_embed_config', this.embed_configChanged, this);
+    this.model.on('change:_embed_config', this.embedConfigChanged, this);
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
-    this.model.on(
-      'change:export_visual_data_request',
-      this.export_visual_data_requestChanged,
-      this
-    );
+    this.model.on('change:_export_visual_data_request', this.exportVisualDataRequestChanged, this);
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
     this.model.on('change:_get_pages_request', this.getPagesRequestChanged, this);
     this.model.on('change:_get_visuals_page_name', this.getVisualsPageNameChanged, this);
@@ -152,7 +148,7 @@ export class ReportView extends DOMWidgetView {
     this.touch();
   }
 
-  embed_configChanged(): void {
+  embedConfigChanged(): void {
     const embedConfig = this.model.get('_embed_config');
     const reportConfig = embedConfig as IReportEmbedConfiguration;
 
@@ -249,31 +245,31 @@ export class ReportView extends DOMWidgetView {
     this.touch();
   }
 
-  async export_visual_data_requestChanged(): Promise<void> {
+  async exportVisualDataRequestChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
-    const export_visual_data_request = this.model.get(
-      'export_visual_data_request'
+    const exportVisualDataRequest = this.model.get(
+      '_export_visual_data_request'
     ) as ExportVisualDataRequest;
 
     // Check export visual data request object is null or empty
-    if (!export_visual_data_request || Object.keys(export_visual_data_request).length === 0) {
+    if (!exportVisualDataRequest || Object.keys(exportVisualDataRequest).length === 0) {
       // This is the case of model reset
       return;
     }
 
-    if (!export_visual_data_request.pageName || !export_visual_data_request.visualName) {
+    if (!exportVisualDataRequest.pageName || !exportVisualDataRequest.visualName) {
       console.error('Page and visual names are required');
       return;
     }
 
-    const pageName = export_visual_data_request.pageName;
-    const visualName = export_visual_data_request.visualName;
-    const dataRows = export_visual_data_request.rows;
-    const exportDataType = export_visual_data_request.underlyingData
+    const pageName = exportVisualDataRequest.pageName;
+    const visualName = exportVisualDataRequest.visualName;
+    const dataRows = exportVisualDataRequest.rows;
+    const exportDataType = exportVisualDataRequest.underlyingData
       ? models.ExportDataType.Underlying
       : models.ExportDataType.Summarized;
 
@@ -291,7 +287,7 @@ export class ReportView extends DOMWidgetView {
       const data = await selectedVisual.exportData(exportDataType, dataRows);
 
       // Update data
-      this.model.set('visual_data', data.data);
+      this.model.set('_visual_data', data.data);
       this.touch();
     } catch (error) {
       console.error('Export visual data error:', error);

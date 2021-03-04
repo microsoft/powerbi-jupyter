@@ -1,5 +1,5 @@
 
-name: powerbi_client_docs
+name: powerbiclient_docs
 channels:
   - conda-forge
 dependencies:
