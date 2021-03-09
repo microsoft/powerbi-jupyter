@@ -86,7 +86,7 @@ interface ExportVisualDataRequest {
   pageName?: string;
   visualName?: string;
   rows?: number;
-  underlyingData?: boolean;
+  exportDataType?: number;
 }
 
 interface ReportFilterRequest {
@@ -172,8 +172,22 @@ export class ReportView extends DOMWidgetView {
       return;
     }
 
-    // Phased loading
-    this.report = powerbi.load(this.reportContainer, reportConfig) as Report;
+    // Flag for checking create view mode
+    const createReportmode =
+      embedConfig.viewMode !== models.ViewMode.View &&
+      embedConfig.viewMode !== models.ViewMode.Edit;
+
+    // Check if the embedding mode is create mode
+    if (createReportmode) {
+      // Create blank Power BI report
+      this.report = powerbi.createReport(this.reportContainer, reportConfig) as Report;
+    } else {
+      // Phased loading
+      this.report = powerbi.load(this.reportContainer, reportConfig) as Report;
+    }
+
+    // Set default aspect ratio
+    let aspectRatio = 9 / 16;
 
     this.report.on('loaded', async () => {
       console.log('Loaded');
@@ -184,25 +198,34 @@ export class ReportView extends DOMWidgetView {
       }
 
       try {
+        // Check if embed mode is view/edit to get active page size
+        if (!createReportmode) {
+          // Get page size for the Power BI report
+          const { width, height } = await getActivePageSize(this.report);
+          if (width && height) {
+            // Update aspect ratio according to the page size
+            aspectRatio = height / width;
+          } else {
+            console.error('Invalid report size');
+          }
+        }
+
         // Get dimensions of output cell
         const DOMRect: DOMRectSize = this.el.getBoundingClientRect();
 
-        const { width, height } = await getActivePageSize(this.report);
+        const outputCellWidth = DOMRect.width || 980;
+        const newHeight = outputCellWidth * aspectRatio;
 
-        if (width && height) {
-          const outputCellWidth = DOMRect.width || 980;
-          const newHeight = outputCellWidth * (height / width);
+        // Set dimensions of report container
+        this.reportContainer.style.width = `${outputCellWidth}px`;
+        this.reportContainer.style.height = `${newHeight}px`;
 
-          this.reportContainer.style.width = `${outputCellWidth}px`;
-          this.reportContainer.style.height = `${newHeight}px`;
+        // Show the report container
+        this.reportContainer.style.visibility = 'visible';
 
-          // Show the report container
-          this.reportContainer.style.visibility = 'visible';
-
+        if (!createReportmode) {
           // Complete the phased embedding
           this.report.render();
-        } else {
-          console.error('Invalid report size');
         }
       } catch (error) {
         console.error(error);
@@ -269,9 +292,7 @@ export class ReportView extends DOMWidgetView {
     const pageName = exportVisualDataRequest.pageName;
     const visualName = exportVisualDataRequest.visualName;
     const dataRows = exportVisualDataRequest.rows;
-    const exportDataType = exportVisualDataRequest.underlyingData
-      ? models.ExportDataType.Underlying
-      : models.ExportDataType.Summarized;
+    const exportDataType = exportVisualDataRequest.exportDataType;
 
     try {
       const selectedPage: Page = await getRequestedPage(this.report, pageName);

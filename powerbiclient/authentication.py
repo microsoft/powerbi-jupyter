@@ -17,6 +17,8 @@ DEFAULT_CLIENT_ID = "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
 # Using Power BI default permissions
 DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 
+# Power BI permissions for creating report
+CREATE_REPORT_SCOPES = ["https://analysis.windows.net/powerbi/api/Dataset.ReadWrite.All", "https://analysis.windows.net/powerbi/api/Content.Create", "https://analysis.windows.net/powerbi/api/Workspace.ReadWrite.All"]
 
 class AuthenticationResult:
 

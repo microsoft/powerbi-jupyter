@@ -16,8 +16,9 @@ from jupyter_ui_poll import ui_events
 from traitlets import Bool, Dict, Float, Unicode, List, observe
 
 from ._frontend import module_name, module_version
+from .models import Permissions, EmbedMode, TokenType, ExportDataType
 
-from .authentication import DeviceCodeLoginAuthentication
+from .authentication import DeviceCodeLoginAuthentication, CREATE_REPORT_SCOPES
 
 class Report(DOMWidget):
     """PowerBI report embedding widget"""
@@ -108,7 +109,7 @@ class Report(DOMWidget):
     _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
 
     # Methods
-    def __init__(self, access_token=None, token_type=0, embed_url=None, group_id=None, report_id=None, auth=None, **kwargs):
+    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, client_id=None, group_id=None, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, dataset_id=None, **kwargs):
 
         token_expiration = 0
         try:
@@ -116,25 +117,37 @@ class Report(DOMWidget):
             if not access_token:
                 if not auth:
                     if not Report._auth:
+                        if view_mode == EmbedMode.CREATE.value:
+                            if not client_id:
+                                raise Exception("client_id is required")
 
-                        # Set DeviceCodeLoginAuthentication to be the default global authentication method
-                        Report._auth = DeviceCodeLoginAuthentication()
+                            # Set DeviceCodeLoginAuthentication as authentication method to get access token for creating Power BI report
+                            Report._auth = DeviceCodeLoginAuthentication(scopes=CREATE_REPORT_SCOPES, client_id=client_id)
+                        else:
+                            # Set DeviceCodeLoginAuthentication to be the default global authentication method
+                            Report._auth = DeviceCodeLoginAuthentication()
                     auth = Report._auth
                 self._auth = auth
                 access_token = self._auth.get_access_token()
-                token_type = 0
+                token_type = TokenType.AAD.value
                 token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
 
             # Get embed URL for the report using access token
             if not embed_url:
-                if not group_id or not report_id:
-                    raise Exception("Group Id and Report Id are required")
-                if token_type == 1:
-                    raise Exception("Cannot get embed URL using embed token")
-
-                request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/reports/" + report_id
-                response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
-                embed_url = response.json()['embedUrl']
+                if token_type == TokenType.EMBED.value:
+                        raise Exception("Cannot get embed URL using embed token")
+                if view_mode == EmbedMode.CREATE.value:
+                    if not group_id or not dataset_id:
+                        raise Exception("Group Id and Dataset Id are required")
+                    request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/datasets/" +  dataset_id
+                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
+                    embed_url = response.json()['createReportEmbedURL']
+                else:
+                    if not group_id or not report_id:
+                        raise Exception("Group Id and Report Id are required")
+                    request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/reports/" + report_id
+                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
+                    embed_url = response.json()['embedUrl']
         except:
             raise Exception("Could not create Access token or Embed URL")
 
@@ -145,7 +158,7 @@ class Report(DOMWidget):
         self._registered_event_handlers = dict(
             self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE)
 
-        self._set_embed_config(access_token, embed_url, token_type, token_expiration)
+        self._set_embed_config(access_token=access_token, embed_url=embed_url, view_mode=view_mode, permissions=permissions, dataset_id=dataset_id, token_type=token_type, token_expiration=token_expiration)
         self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
@@ -156,7 +169,7 @@ class Report(DOMWidget):
             if not self._auth:
                 raise Exception("Authentication context not found")
             self._auth.refresh_token()
-            self._set_embed_config(self._auth.get_access_token(), self._embed_config['embedUrl'], self._embed_config['tokenType'], self._auth.get_access_token_details().get('id_token_claims').get('exp'))
+            self._set_embed_config(access_token=self._auth.get_access_token(), embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_type=self._embed_config['tokenType'], token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
             self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
 
     def set_access_token(self, access_token):
@@ -165,9 +178,9 @@ class Report(DOMWidget):
         Args:
             access_token (string): report access token
         """
-        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], token_type=self._embed_config['tokenType'])
+        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_type=self._embed_config['tokenType'], token_expiration=self._embed_config['tokenExpiration'])
 
-    def _set_embed_config(self, access_token, embed_url, token_type=0, token_expiration=0):
+    def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id, token_type, token_expiration):
         """
         TODO: Add docstring
         """
@@ -176,7 +189,10 @@ class Report(DOMWidget):
             'accessToken': access_token,
             'embedUrl': embed_url,
             'tokenType': token_type,
-            'tokenExpiration': token_expiration
+            'tokenExpiration': token_expiration,
+            'viewMode': view_mode,
+            'permissions': permissions,
+            'datasetId': dataset_id
         }
         self._embedded = False
 
@@ -190,14 +206,14 @@ class Report(DOMWidget):
         self.container_height = container_height
         self.container_width = container_width
 
-    def export_visual_data(self, page_name, visual_name, rows=10, underlying_data=False):
+    def export_visual_data(self, page_name, visual_name, rows=10, export_data_type=ExportDataType.SUMMARIZED.value):
         """Returns the data of given visual of the embedded Power BI report
 
         Args:
             page_name (string): Page name of the embedded report
             visual_name (string): Visual's unique name 
             rows (int, optional): Number of rows of data. Defaults to 10
-            underlying_data (boolean, optional): Choice to show the underlying data or not. Default is False.
+            export_data_type (number, optional): Type of data to be exported. Default is Summarized.
 
         Returns:
             string: visual's exported data
@@ -209,8 +225,8 @@ class Report(DOMWidget):
         self._export_visual_data_request = {
             'pageName': page_name,
             'visualName': visual_name,
-            'rows': rows,
-            'underlyingData': underlying_data
+            'rows': rows,	
+            'exportDataType': export_data_type
         }
 
         # Check if ipython kernel is available
