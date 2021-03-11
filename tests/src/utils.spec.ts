@@ -54,8 +54,6 @@ class DummyManager extends widgets.ManagerBase<HTMLElement> {
     }
 
     display_view(msg: services.KernelMessage.IMessage, view: DOMWidgetView, options: any) {
-        // TODO: make this a spy
-        // TODO: return an html element
         return Promise.resolve(view).then(view => {
             this.el.appendChild(view.el);
             view.trigger('displayed');

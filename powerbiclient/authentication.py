@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft.
 
 """
-TODO: Add module docstring
+Authenticates a Power BI User and acquires an access token
 """
 
 import json
@@ -24,6 +24,16 @@ class AuthenticationResult:
 
     # Methods
     def __init__(self, client_id, scopes, access_token_result):
+        """Create an instance of Authentication
+
+        Args:
+            client_id (string): your app has a client_id after you register it on AAD
+            scopes (list[string]): scopes required to access Power BI API
+            access_token_result (dict): authentication result
+
+        Returns:
+            object: Authentication object
+        """
         self._access_token_result = access_token_result
         self._client_id = client_id
         self._scopes = scopes
@@ -41,12 +51,14 @@ class AuthenticationResult:
         """Returns the authentication result with access token
 
         Returns:
-            dict: access token datails
+            dict: authentication result
         """
 
         return self._access_token_result
 
     def refresh_token(self):
+        """Acquire token(s) based on a refresh token obtained from authentication result
+        """
         app = msal.PublicClientApplication(self._client_id)
         token_result = app.acquire_token_by_refresh_token(self._access_token_result.get('refresh_token'), self._scopes)
         if "access_token" not in token_result:
@@ -58,7 +70,15 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
 
     # Methods
     def __init__(self, client_id=None, scopes=None):
+        """Initiate a Device Flow Auth instance
 
+        Args:
+            client_id (string): your app has a client_id after you register it on AAD
+            scopes (list[string]): scopes required to access Power BI API
+
+        Returns:
+            object: Device Flow object
+        """
         if not client_id:
             client_id = DEFAULT_CLIENT_ID
         self.client_id = client_id
@@ -70,12 +90,11 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
         super().__init__(client_id, scopes, auth_result)
 
     def _acquire_token_device_code(self):
-        """Returns the token acquired using device flow
+        """Returns the authentication result captured using device flow
 
         Returns:
-            dict: token acquired
+            dict: authentication result
         """
-
         app = msal.PublicClientApplication(self.client_id)
         flow = app.initiate_device_flow(self.scopes)
 
@@ -104,7 +123,15 @@ class InteractiveLoginAuthentication(AuthenticationResult):
 
     # Methods
     def __init__(self, client_id=None, scopes=None):
+        """Acquire token interactively i.e. via a local browser
 
+        Args:
+            client_id (string): your app has a client_id after you register it on AAD
+            scopes (list[string]): scopes required to access Power BI API
+
+        Returns:
+            object: Interactive authentication object
+        """
         if not client_id:
             client_id = DEFAULT_CLIENT_ID
         self.client_id = client_id
@@ -116,12 +143,11 @@ class InteractiveLoginAuthentication(AuthenticationResult):
         super().__init__(client_id, scopes, auth_result)
 
     def _acquire_token_interactive(self):
-        """Returns the token acquired using interactive login
+        """Returns the authentication result captured using interactive login
 
         Returns:
-            dict: token acquired
+            dict: authentication result
         """
-
         app = msal.PublicClientApplication(self.client_id)
         print("A local browser window will be open for interactive sign in.")
         result = app.acquire_token_interactive(self.scopes)

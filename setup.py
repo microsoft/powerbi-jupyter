@@ -74,14 +74,11 @@ setup_args = dict(
     keywords        = ['Jupyter', 'Widgets', 'IPython'],
     classifiers     = [
         'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
+        # TODO: Update License before release using 'License :: <your_license>'
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Framework :: Jupyter',
     ],
     include_package_data = True,
@@ -97,8 +94,9 @@ setup_args = dict(
             'pytest-cov',
             'nbval',
         ],
-        'examples': [
-            # Any requirements for the examples to run
+        'demo': [
+            'pandas',
+            'matplotlib',
         ],
         'docs': [
             'sphinx>=1.5',

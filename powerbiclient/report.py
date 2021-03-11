@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft.
 
 """
-TODO: Add module docstring
+Embeds Power BI Report
 """
 
 import time
@@ -13,12 +13,13 @@ import requests
 from IPython import get_ipython
 from ipywidgets import DOMWidget
 from jupyter_ui_poll import ui_events
-from traitlets import Bool, Dict, Float, Unicode, List, observe
+from traitlets import Bool, Dict, Float, Unicode, List, TraitError, validate
 
 from ._frontend import module_name, module_version
 from .models import Permissions, EmbedMode, TokenType, ExportDataType
 
 from .authentication import DeviceCodeLoginAuthentication, CREATE_REPORT_SCOPES
+
 
 class Report(DOMWidget):
     """PowerBI report embedding widget"""
@@ -42,8 +43,23 @@ class Report(DOMWidget):
     _model_module_version = Unicode('^0.1.0').tag(sync=True)
 
     # Default values for widget traits
+    EMBED_CONFIG_DEFAULT_STATE = {
+        'type': 'report',
+        'accessToken': None,
+        'embedUrl': None,
+        'tokenType': None,
+        'tokenExpiration': None,
+        'viewMode': None,
+        'permissions': None,
+        'datasetId': None
+    }
     VISUAL_DATA_DEFAULT_STATE = ''
-    EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE = {}
+    EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE = {
+        'pageName': None,
+        'visualName': None,
+        'rows': None,
+        'exportDataType': None
+    }
     REGISTERED_EVENT_HANDLERS_DEFAULT_STATE = {}
     EVENT_DATA_DEFAULT_STATE = {
         'event_name': None,
@@ -61,6 +77,7 @@ class Report(DOMWidget):
     REPORT_BOOKMARKS_DEFAULT_STATE = []
     REPORT_BOOKMARK_DEFAULT_NAME = ''
     TOKEN_EXPIRED_DEFAULT_STATE = False
+    CLIENT_ERROR_DEFAULT_STATE = ''
 
     # Other constants
     REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
@@ -74,25 +91,28 @@ class Report(DOMWidget):
     # Authentication object
     _auth = None
 
+    # Allowed events list for Power BI report
+    ALLOWED_EVENTS = ['loaded', 'saved', 'rendered', 'saveAsTriggered', 'error', 'dataSelected', 'buttonClicked', 'filtersApplied', 'pageChanged', 'commandTriggered', 'swipeStart', 'swipeEnd', 'bookmarkApplied', 'dataHyperlinkClicked', 'visualRendered', 'visualClicked', 'selectionChanged']
+
+    # Supported events list for Report widget
+    SUPPORTED_EVENTS = ['loaded', 'rendered', 'error']
+
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
     # is automatically synced to the frontend *any* time it changes in Python.
     # It is synced back to Python from the frontend *any* time the model is touched in frontend.
 
-    # TODO: Add trait validation
-    _embed_config = Dict(None).tag(sync=True)
+    _embed_config = Dict(EMBED_CONFIG_DEFAULT_STATE).tag(sync=True)
     _embedded = Bool(False).tag(sync=True)
 
     container_height = Float(0).tag(sync=True)
     container_width = Float(0).tag(sync=True)
 
-    # TODO: Add trait validation
     _export_visual_data_request = Dict(None).tag(sync=True)
     _visual_data = Unicode(VISUAL_DATA_DEFAULT_STATE).tag(sync=True)
 
     _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
 
-    # TODO: Add trait validation
     _report_filters_request = Dict(REPORT_FILTER_REQUEST_DEFAULT_STATE).tag(sync=True)
 
     _get_pages_request = Bool(GET_PAGES_REQUEST_DEFAULT_STATE).tag(sync=True)
@@ -108,9 +128,109 @@ class Report(DOMWidget):
 
     _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
 
-    # Methods
-    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, client_id=None, group_id=None, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, dataset_id=None, **kwargs):
+    _client_error = Unicode(CLIENT_ERROR_DEFAULT_STATE).tag(sync=True)
 
+    @validate('_export_visual_data_request')
+    def _valid_export_visual_data_request(self, proposal):
+        if proposal['value'] != self.EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE:
+            if (type(proposal['value']['pageName']) is not str):
+                raise TraitError('Invalid pageName ', proposal['value']['pageName'])
+            if (type(proposal['value']['visualName']) is not str):
+                raise TraitError('Invalid visualName ', proposal['value']['visualName'])
+            if (type(proposal['value']['rows']) is not int) or (proposal['value']['rows'] < 0):
+                raise TraitError('Invalid rows ', proposal['value']['rows'])
+            if type(proposal['value']['exportDataType']) is not int:
+                raise TraitError('Invalid exportDataType ', proposal['value']['underlyingData'])
+
+        return proposal['value']
+
+    @validate('_report_filters_request')
+    def _valid_report_filters_request(self, proposal):
+        if proposal['value'] != self.REPORT_FILTER_REQUEST_DEFAULT_STATE:
+            if (type(proposal['value']['filters']) is not list):
+                raise TraitError('Invalid filters ', proposal['value']['filters'])
+
+        return proposal['value']
+
+    @validate('_embed_config')
+    def _valid_embed_config(self, proposal):
+        if proposal['value'] != self.EMBED_CONFIG_DEFAULT_STATE:
+            if (type(proposal['value']['type']) is not str):
+                raise TraitError('Invalid type ', proposal['value']['type'])
+            if (type(proposal['value']['accessToken']) is not str):
+                raise TraitError('Invalid accessToken ', proposal['value']['accessToken'])
+            if (type(proposal['value']['embedUrl']) is not str):
+                raise TraitError('Invalid embedUrl ', proposal['value']['embedUrl'])
+            if (type(proposal['value']['tokenType']) is not int):
+                raise TraitError('Invalid tokenType ', proposal['value']['tokenType'])
+            if (type(proposal['value']['tokenExpiration']) is not int):
+                raise TraitError('Invalid tokenExpiration ', proposal['value']['tokenExpiration'])
+            if (type(proposal['value']['viewMode']) is not int):
+                raise TraitError('Invalid viewMode ', proposal['value']['viewMode'])
+            if (type(proposal['value']['permissions']) is not int):
+                raise TraitError('Invalid permissions ', proposal['value']['permissions'])
+
+        return proposal['value']
+
+    # Methods
+    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, dataset_id=None, **kwargs):
+        """Create an instance of Power BI report
+
+        Args:
+            access_token (string): Optional.
+                access token, which will be used to embed a Power BI report.
+                If not passed, authentication object will be used (to be passed using `auth` parameter)
+
+            embed_url (string): Optional.
+                embed URL of Power BI report.
+                If not passed, `group_id` and `report_id` parameters will be used to generate embed URL
+
+            token_type (number): Optional.
+                type of access token (0: AAD, 1: EMBED).
+                To be passed if EMBED type of token is passed in `access_token` parameter.
+                (Default = AAD)
+
+            group_id (string): Optional.
+                Id of Power BI Group or Workspace where your report resides.
+                It will be used if `embed_url` is not provided
+
+            report_id (string): Optional.
+                Id of Power BI report.
+                It will be used if `embed_url` is not provided
+
+            auth (object): Optional.
+                Authentication object.
+                It will be used if `access_token` is not provided.
+                If not passed, Power BI User will be authenticated automatically using Device Flow authentication
+
+            view_mode (number): Optional.
+                Mode for embedding Power BI report (VIEW: 0, EDIT: 1, CREATE: 2).
+                To be passed if you want to edit or create a report.
+                (Default = VIEW)
+            
+            permissions (number): Optional.
+                Permissions required while embedding report in EDIT mode.
+                Values for permissions:
+                \n `READ` - Users can view the report.
+                \n `READWRITE` - Users can view, edit, and save the report.
+                \n `COPY` - Users can save a copy of the report by using Save As.
+                \n `CREATE` - Users can create a new report.
+                \n `ALL` - Users can create, view, edit, save, and save a copy of the report.
+                \n To be passed if report is embedded in EDIT mode by passing `1` in `view_mode` parameter.
+                (Default = READ)
+
+            client_id (string): Optional.
+                Your app has a client_id after you register it on AAD.
+                To be passed if user wants to create a report and `access_token` or `auth` is not provided.
+                Power BI User will be authenticated automatically using Device Flow authentication using this client_id.
+
+            dataset_id (string): Optional.
+                Create report based on the dataset configured on Power BI workspace.
+                To be passed if user wants to create a report.
+
+        Returns:
+            object: Report object
+        """
         token_expiration = 0
         try:
             # Get access token for the report using authentication
@@ -148,8 +268,8 @@ class Report(DOMWidget):
                     request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/reports/" + report_id
                     response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
                     embed_url = response.json()['embedUrl']
-        except:
-            raise Exception("Could not create Access token or Embed URL")
+        except Exception as ex:
+            raise Exception("Could not create access token or embed URL: ", ex)
 
         # Tells if Power BI events are being observed
         self._observing_events = False
@@ -181,8 +301,16 @@ class Report(DOMWidget):
         self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_type=self._embed_config['tokenType'], token_expiration=self._embed_config['tokenExpiration'])
 
     def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id, token_type, token_expiration):
-        """
-        TODO: Add docstring
+        """Set embed configuration parameters of Power BI report
+
+        Args:
+            access_token (string): report access token
+            embed_url (string): report embed URL
+            view_mode (number): mode for embedding Power BI report (0: View, 1: Edit, 2: Create)
+            permissions (number): permissions required while embedding report in Edit mode
+            dataset_id (string): create report based on the dataset configured on Power BI workspace
+            token_type (number): type of access token (0: Aad, 1: Embed)
+            token_expiration (number): expiration timestamp of the access token
         """
         self._embed_config = {
             'type': 'report',
@@ -218,7 +346,7 @@ class Report(DOMWidget):
         Returns:
             string: visual's exported data
         """
-        if self._embedded == False:
+        if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         # Start exporting data on client side
@@ -237,6 +365,14 @@ class Report(DOMWidget):
                 while self._visual_data == self.VISUAL_DATA_DEFAULT_STATE:
                     ui_poll(self.PROCESS_EVENTS_ITERATION)
                     time.sleep(self.POLLING_INTERVAL)
+                    if self._client_error:
+                        break
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         exported_data = self._visual_data
 
@@ -254,7 +390,14 @@ class Report(DOMWidget):
             event (string): Name of Power BI event (eg. 'loaded', 'rendered', 'error')
             callback (function): User defined function. Callback function is invoked with event details as parameter
         """
-        # TODO: Value of event should be from one of the Report.allowedEvents array
+        # Check if event is one of the Report.ALLOWED_EVENTS list
+        if event not in self.ALLOWED_EVENTS:
+            raise Exception(event + " event is not valid")
+
+        # Check if event is one of the Report.SUPPORTED_EVENTS list
+        if event not in self.SUPPORTED_EVENTS:
+            raise Exception(event + " event is not supported")
+
         self._registered_event_handlers[event] = callback
 
         def get_event_data(change):
@@ -296,7 +439,7 @@ class Report(DOMWidget):
         Raises:
             Exception: When report is not embedded
         """
-        if self._embedded == False:
+        if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         self._report_filters_request = {
@@ -304,7 +447,22 @@ class Report(DOMWidget):
             'request_completed': False
         }
 
-        # TODO: Should we wait for the filters to be applied
+        # Check if ipython kernel is available
+        if get_ipython():
+            # Wait for client-side to update filters
+            with ui_events() as ui_poll:
+                # While filters are not applied
+                while self._report_filters_request != self.REPORT_FILTER_REQUEST_DEFAULT_STATE:
+                    ui_poll(self.PROCESS_EVENTS_ITERATION)
+                    time.sleep(self.POLLING_INTERVAL)
+                    if self._client_error:
+                        break
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
     def remove_filters(self):
         """Remove all report level filters from the embedded report
@@ -320,7 +478,7 @@ class Report(DOMWidget):
         Returns:
             string: list of pages
         """
-        if self._embedded == False:
+        if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         # Start getting pages on client side
@@ -334,6 +492,14 @@ class Report(DOMWidget):
                 while self._report_pages == self.REPORT_PAGES_DEFAULT_STATE:
                     ui_poll(self.PROCESS_EVENTS_ITERATION)
                     time.sleep(self.POLLING_INTERVAL)
+                    if self._client_error:
+                        break
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         pages = self._report_pages
 
@@ -352,7 +518,7 @@ class Report(DOMWidget):
         Returns:
             string: list of visuals
         """
-        if self._embedded == False:
+        if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         # Start getting visuals on client side
@@ -366,6 +532,14 @@ class Report(DOMWidget):
                 while self._page_visuals == self.PAGE_VISUALS_DEFAULT_STATE:
                     ui_poll(self.PROCESS_EVENTS_ITERATION)
                     time.sleep(self.POLLING_INTERVAL)
+                    if self._client_error:
+                        break
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         visuals = self._page_visuals
 
@@ -384,7 +558,7 @@ class Report(DOMWidget):
             Exception: When report is not embedded
         """
 
-        if self._embedded == False:
+        if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         self._report_bookmark_name = bookmark_name
@@ -399,7 +573,7 @@ class Report(DOMWidget):
             Exception: When report is not embedded
         """
 
-        if self._embedded == False:
+        if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
 
         # Start getting bookmarks on client side
@@ -413,6 +587,14 @@ class Report(DOMWidget):
                 while self._report_bookmarks == self.REPORT_BOOKMARKS_DEFAULT_STATE:
                     ui_poll(self.PROCESS_EVENTS_ITERATION)
                     time.sleep(self.POLLING_INTERVAL)
+                    if self._client_error:
+                        break
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         bookmarks = self._report_bookmarks
 

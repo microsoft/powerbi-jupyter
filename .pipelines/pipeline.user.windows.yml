@@ -40,7 +40,7 @@ static_analysis_options:
   binskim_options:
     files_to_scan:
       - exclude:
-        - 'examples\**\*' # Exclude path 'Localize'.
+        - 'demo\**\*' # Exclude path 'Localize'.
         - 'tests\**\*'
         - 'node_modules\**\*'
         - 'powerbiclient\tests\**\*'
@@ -84,7 +84,7 @@ build:
             - '**/.pipelines/**/*.*'
             - '**/dist/**/*.*'
             - '**/lib/**/*.*'
-            - '**/examples/**/*.*'
+            - '**/demo/**/*.*'
             - '**/node_modules/**/*.*'
             - '**/tests/**/*.*'
             - '**/powerbiclient/tests/**/*.*'
@@ -110,7 +110,7 @@ test:
       arguments: 'test.ps1'
       command: '.pipelines\cdpx_run_ps.cmd'
       testresults:
-        - title: 'powerbi-client-frontend test results'
+        - title: 'powerbi-jupyter test results'
           type: 'jasmine'
           from: 'reports'
           include:

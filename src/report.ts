@@ -28,6 +28,13 @@ const powerbi = new service.Service(
   factories.routerFactory
 );
 
+const EXPORT_DATA_DEFAULT_STATE: ExportVisualDataRequest = {
+  pageName: undefined,
+  visualName: undefined,
+  rows: undefined,
+  exportDataType: undefined,
+};
+
 const REPORT_FILTER_REQUEST_DEFAULT_STATE = {
   filters: [],
   request_completed: true,
@@ -52,7 +59,7 @@ export class ReportModel extends DOMWidgetModel {
       _embedded: false,
       container_height: 0,
       container_width: 0,
-      _export_visual_data_request: {},
+      _export_visual_data_request: EXPORT_DATA_DEFAULT_STATE,
       _visual_data: null,
       _event_data: {
         event_name: null,
@@ -67,6 +74,7 @@ export class ReportModel extends DOMWidgetModel {
       _get_bookmarks_request: false,
       _report_bookmarks: [],
       _token_expired: false,
+      _client_error: null,
     };
   }
 
@@ -172,13 +180,13 @@ export class ReportView extends DOMWidgetView {
       return;
     }
 
-    // Flag for checking create view mode
-    const createReportmode =
+    // Flag for checking create mode
+    const createReportMode =
       embedConfig.viewMode !== models.ViewMode.View &&
       embedConfig.viewMode !== models.ViewMode.Edit;
 
     // Check if the embedding mode is create mode
-    if (createReportmode) {
+    if (createReportMode) {
       // Create blank Power BI report
       this.report = powerbi.createReport(this.reportContainer, reportConfig) as Report;
     } else {
@@ -199,7 +207,7 @@ export class ReportView extends DOMWidgetView {
 
       try {
         // Check if embed mode is view/edit to get active page size
-        if (!createReportmode) {
+        if (!createReportMode) {
           // Get page size for the Power BI report
           const { width, height } = await getActivePageSize(this.report);
           if (width && height) {
@@ -223,7 +231,7 @@ export class ReportView extends DOMWidgetView {
         // Show the report container
         this.reportContainer.style.visibility = 'visible';
 
-        if (!createReportmode) {
+        if (!createReportMode) {
           // Complete the phased embedding
           this.report.render();
         }
@@ -271,6 +279,8 @@ export class ReportView extends DOMWidgetView {
   async exportVisualDataRequestChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
+      this.touch();
       return;
     }
 
@@ -279,13 +289,20 @@ export class ReportView extends DOMWidgetView {
     ) as ExportVisualDataRequest;
 
     // Check export visual data request object is null or empty
-    if (!exportVisualDataRequest || Object.keys(exportVisualDataRequest).length === 0) {
+    if (
+      !exportVisualDataRequest.pageName &&
+      !exportVisualDataRequest.visualName &&
+      !exportVisualDataRequest.rows &&
+      !exportVisualDataRequest.exportDataType
+    ) {
       // This is the case of model reset
       return;
     }
 
     if (!exportVisualDataRequest.pageName || !exportVisualDataRequest.visualName) {
       console.error('Page and visual names are required');
+      this.model.set('_client_error', 'Page and visual names are required');
+      this.touch();
       return;
     }
 
@@ -311,13 +328,17 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_visual_data', data.data);
       this.touch();
     } catch (error) {
-      console.error('Export visual data error:', error);
+      console.error(error);
+      this.model.set('_client_error', JSON.stringify(error));
+      this.touch();
     }
   }
 
   async reportFiltersChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
+      this.touch();
       return;
     }
 
@@ -335,18 +356,22 @@ export class ReportView extends DOMWidgetView {
       } else {
         await this.report.updateFilters(models.FiltersOperations.RemoveAll);
       }
+
+      // Reset filter request
+      this.model.set('_report_filters_request', REPORT_FILTER_REQUEST_DEFAULT_STATE);
+      this.touch();
     } catch (error) {
       console.error(error);
+      this.model.set('_client_error', JSON.stringify(error));
+      this.touch();
     }
-
-    // Reset filter request
-    this.model.set('_report_filters_request', REPORT_FILTER_REQUEST_DEFAULT_STATE);
-    this.touch();
   }
 
   async getPagesRequestChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
+      this.touch();
       return;
     }
 
@@ -371,13 +396,17 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_report_pages', pagesWithoutReport);
       this.touch();
     } catch (error) {
-      console.error('Get pages error:', error);
+      console.error(error);
+      this.model.set('_client_error', JSON.stringify(error));
+      this.touch();
     }
   }
 
   async getVisualsPageNameChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
+      this.touch();
       return;
     }
 
@@ -403,7 +432,9 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_page_visuals', visualsWithoutPage);
       this.touch();
     } catch (error) {
-      console.error('Get visuals error:', error);
+      console.error(error);
+      this.model.set('_client_error', JSON.stringify(error));
+      this.touch();
     }
   }
 
@@ -426,6 +457,8 @@ export class ReportView extends DOMWidgetView {
   async getBookmarksRequestChanged(): Promise<void> {
     if (!this.report) {
       console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
+      this.touch();
       return;
     }
 
@@ -447,7 +480,9 @@ export class ReportView extends DOMWidgetView {
         this.touch();
       }
     } catch (error) {
-      console.error('Get bookmarks error:', error);
+      console.error(error);
+      this.model.set('_client_error', JSON.stringify(error));
+      this.touch();
     }
   }
 }

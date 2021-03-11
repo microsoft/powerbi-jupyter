@@ -6,6 +6,7 @@
 
 import pytest
 
+from traitlets.traitlets import TraitError
 from ..report import Report
 
 ACCESS_TOKEN = 'dummy_access_token'
@@ -40,6 +41,34 @@ class TestCommAndTraitlets:
             'container_width': new_width
         }
 
+    def test_export_visual_data_request_validators(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
+
+        # Act + Assert
+        with pytest.raises(TraitError):
+            report.export_visual_data(PAGE_NAME, VISUAL_NAME, 'number')
+
+    def test_report_filters_request_validators(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
+
+        # Act + Assert
+        with pytest.raises(TraitError):
+            report.update_filters('filter')
+
+    def test_embed_config_validators(self):
+        # Arrange
+        report = None
+
+        # Act + Assert
+        with pytest.raises(TraitError):
+            report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL, token_type='AAD')
+
+        assert report is None
+
 
 class TestReportConstructor:
     def test_report_constructor(self):
@@ -52,7 +81,10 @@ class TestReportConstructor:
             'accessToken': ACCESS_TOKEN,
             'embedUrl': EMBED_URL,
             'tokenType': 0,
-            'tokenExpiration': 0
+            'tokenExpiration': 0,
+            'viewMode': 0,
+            'permissions': 0,
+            'datasetId': None
         }
         assert report._embedded == False
 
@@ -66,7 +98,10 @@ class TestReportConstructor:
             'accessToken': ACCESS_TOKEN,
             'embedUrl': EMBED_URL,
             'tokenType': 1,
-            'tokenExpiration': 0
+            'tokenExpiration': 0,
+            'viewMode': 0,
+            'permissions': 0,
+            'datasetId': None
         }
 
 
@@ -81,7 +116,7 @@ class TestSettingNewEmbedConfig:
         new_embed_url = 'new_dummy_embed_url'
 
         # Act
-        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url)
+        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config['permissions'], dataset_id=report._embed_config['datasetId'], token_type=report._embed_config['tokenType'], token_expiration=report._embed_config['tokenExpiration'])
 
         # Assert
         assert report._embed_config == {
@@ -89,7 +124,10 @@ class TestSettingNewEmbedConfig:
             'accessToken': new_access_token,
             'embedUrl': new_embed_url,
             'tokenType': 0,
-            'tokenExpiration': 0
+            'tokenExpiration': 0,
+            'viewMode': 0,
+            'permissions': 0,
+            'datasetId': None
         }
         assert report._embedded == False
 
@@ -109,6 +147,42 @@ class TestChangingNewReportSize:
 
 
 class TestEventHandlers:
+    def test_throws_for_invalid_event(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
+        event_name = 'tileClicked'
+
+        # Act
+        def tileClicked_callback():
+            pass
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            report.on(event_name, tileClicked_callback)
+
+        # Assert
+        assert event_name not in report._registered_event_handlers.keys()
+        assert report._observing_events == False
+
+    def test_throws_for_unsupported_event(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
+        event_name = 'saved'
+
+        # Act
+        def saved_callback():
+            pass
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            report.on(event_name, saved_callback)
+
+        # Assert
+        assert event_name not in report._registered_event_handlers.keys()
+        assert report._observing_events == False
+
     def test_setting_event_handler(self):
         # Arrange
         report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
@@ -238,9 +312,9 @@ class TestGetVisuals:
         assert report._get_visuals_page_name == report.GET_VISUALS_DEFAULT_PAGE_NAME
         assert report._page_visuals == report.PAGE_VISUALS_DEFAULT_STATE
 
+
 class TestGetBookmarks:
     def test_throws_when_not_embedded(self):
-        
         # Arrange
         report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
         report._embedded = False
@@ -250,7 +324,6 @@ class TestGetBookmarks:
             report.get_bookmarks()
 
     def test_returned_data(self):
-
         # Arrange
         report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
 

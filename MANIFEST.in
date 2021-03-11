@@ -18,7 +18,7 @@ prune docs/gh-pages
 prune docs/dist
 
 # Examples
-graft examples
+graft demo
 
 # Tests
 graft tests

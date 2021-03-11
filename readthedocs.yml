@@ -3,7 +3,7 @@ python:
   version: 3.5
   pip_install: true
   extra_requirements:
-    - examples
+    - demo
     - docs
 conda:
   file: docs/environment.yml

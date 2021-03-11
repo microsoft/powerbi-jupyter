@@ -34,17 +34,17 @@ It demonstrates the complete flow i.e. embedding the embedded report, setting re
 
 To run the demo, run the following commands:
 ```bash
-cd .\examples\
+cd .\demo\
 jupyter notebook
 ```
-Now, run introduction.ipynb
+Now, run demo.ipynb
 
 ## Development Installation
 
 ### Setup
 ```bash
 # First install the python package. This will also build the JS packages.
-pip install -e ".[test, examples]"
+pip install -e ".[test, demo]"
 ```
 
 When developing your extensions, you need to manually enable your extensions with the

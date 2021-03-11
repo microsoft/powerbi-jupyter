@@ -41,7 +41,7 @@ install:
     elif [[ $GROUP == js ]]; then
       pip install --upgrade -e ".[test]" -v
     elif [[ $GROUP == docs ]]; then
-      pip install --upgrade ".[test, examples, docs]" -v
+      pip install --upgrade ".[test, demo, docs]" -v
     fi
 before_script:
   # Set up a virtual screen for Firefox browser testing:
