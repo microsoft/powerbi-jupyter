@@ -98,16 +98,6 @@ setup_args = dict(
             'pandas',
             'matplotlib',
         ],
-        'docs': [
-            'sphinx>=1.5',
-            'recommonmark',
-            'sphinx_rtd_theme',
-            'nbsphinx>=0.2.13,<0.4.0',
-            'jupyter_sphinx',
-            'nbsphinx-link',
-            'pytest_check_links',
-            'pypandoc',
-        ],
     },
     entry_points = {
     },

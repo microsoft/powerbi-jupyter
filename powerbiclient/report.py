@@ -179,15 +179,14 @@ class Report(DOMWidget):
         Args:
             access_token (string): Optional.
                 access token, which will be used to embed a Power BI report.
-                If not passed, authentication object will be used (to be passed using `auth` parameter)
+                If not provided, authentication object will be used (to be provided using `auth` parameter)
 
             embed_url (string): Optional.
                 embed URL of Power BI report.
-                If not passed, `group_id` and `report_id` parameters will be used to generate embed URL
+                If not provided, `group_id` and `report_id` parameters will be used to generate embed URL
 
             token_type (number): Optional.
                 type of access token (0: AAD, 1: EMBED).
-                To be passed if EMBED type of token is passed in `access_token` parameter.
                 (Default = AAD)
 
             group_id (string): Optional.
@@ -201,11 +200,11 @@ class Report(DOMWidget):
             auth (object): Optional.
                 Authentication object.
                 It will be used if `access_token` is not provided.
-                If not passed, Power BI User will be authenticated automatically using Device Flow authentication
+                If not provided, Power BI User will be authenticated automatically using Device Flow authentication
 
             view_mode (number): Optional.
                 Mode for embedding Power BI report (VIEW: 0, EDIT: 1, CREATE: 2).
-                To be passed if you want to edit or create a report.
+                To be provided if you want to edit or create a report.
                 (Default = VIEW)
             
             permissions (number): Optional.
@@ -216,17 +215,17 @@ class Report(DOMWidget):
                 \n `COPY` - Users can save a copy of the report by using Save As.
                 \n `CREATE` - Users can create a new report.
                 \n `ALL` - Users can create, view, edit, save, and save a copy of the report.
-                \n To be passed if report is embedded in EDIT mode by passing `1` in `view_mode` parameter.
+                \n To be provided if the report is embedded in EDIT mode by passing `1` in `view_mode` parameter.
                 (Default = READ)
 
             client_id (string): Optional.
                 Your app has a client_id after you register it on AAD.
-                To be passed if user wants to create a report and `access_token` or `auth` is not provided.
+                To be provided if user wants to create a report and `access_token` or `auth` is not provided.
                 Power BI User will be authenticated automatically using Device Flow authentication using this client_id.
 
             dataset_id (string): Optional.
                 Create report based on the dataset configured on Power BI workspace.
-                To be passed if user wants to create a report.
+                To be provided if user wants to create a report.
 
         Returns:
             object: Report object
@@ -338,10 +337,11 @@ class Report(DOMWidget):
         """Returns the data of given visual of the embedded Power BI report
 
         Args:
-            page_name (string): Page name of the embedded report
+            page_name (string): Page name of the report's page containing the target visual
             visual_name (string): Visual's unique name 
             rows (int, optional): Number of rows of data. Defaults to 10
-            export_data_type (number, optional): Type of data to be exported. Default is Summarized.
+            export_data_type (number, optional): Type of data to be exported (SUMMARIZED: 0, UNDERLYING: 1).
+                (Default = SUMMARIZED)
 
         Returns:
             string: visual's exported data
