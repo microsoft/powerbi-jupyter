@@ -330,6 +330,13 @@ class Report(DOMWidget):
             container_height (number): report height
             container_width (number): report width
         """
+        if not self._embedded:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+        if container_height < 0:
+            raise TraitError('Invalid report height ', container_height)
+        if container_width < 0:
+            raise TraitError('Invalid report width ', container_width)
+
         self.container_height = container_height
         self.container_width = container_width
 
