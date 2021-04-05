@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-# Permission for embedding Power BI report
+# Permissions for embedding Power BI report
 class Permissions(IntEnum):
     READ = 0
     READWRITE = 1
@@ -8,18 +8,23 @@ class Permissions(IntEnum):
     CREATE = 4
     ALL = 7
 
-# Type of token for embedding Power BI report
+# Types of token for embedding Power BI report
 class TokenType(IntEnum):
     AAD = 0
     EMBED = 1
 
-# Embed mode for embedding Power BI report
+# Embed modes for embedding Power BI report
 class EmbedMode(IntEnum):
     VIEW = 0
     EDIT = 1
     CREATE = 2
 
-# Type of data to be exported
+# Types of data to be exported
 class ExportDataType(IntEnum):
     SUMMARIZED = 0
     UNDERLYING = 1
+
+# Types of embedding Power BI report
+class EmbedType(IntEnum):
+    USEROWNSDATA = 0
+    APPOWNSDATA = 1

@@ -25,6 +25,7 @@ class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
         # Arrange
         report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
         report.comm = mock_comm
 
         new_height = 450
@@ -135,6 +136,7 @@ class TestSettingNewEmbedConfig:
 class TestChangingNewReportSize:
     def test_change_size(self):
         report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
 
         new_height = 500
         new_width = 900

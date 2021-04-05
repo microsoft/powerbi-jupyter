@@ -16,7 +16,7 @@ from jupyter_ui_poll import ui_events
 from traitlets import Bool, Dict, Float, Unicode, List, TraitError, validate
 
 from ._frontend import module_name, module_version
-from .models import Permissions, EmbedMode, TokenType, ExportDataType
+from .models import Permissions, EmbedMode, TokenType, ExportDataType, EmbedType
 
 from .authentication import DeviceCodeLoginAuthentication, CREATE_REPORT_SCOPES
 
@@ -97,6 +97,9 @@ class Report(DOMWidget):
     # Supported events list for Report widget
     SUPPORTED_EVENTS = ['loaded', 'rendered', 'error']
 
+    # Default request body for generate token API
+    DEFAULT_EMBED_TOKEN_REQUEST_BODY = { "accessLevel": "View" }
+
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
     # is automatically synced to the frontend *any* time it changes in Python.
@@ -144,6 +147,7 @@ class Report(DOMWidget):
 
         return proposal['value']
 
+    # Traits validators
     @validate('_report_filters_request')
     def _valid_report_filters_request(self, proposal):
         if proposal['value'] != self.REPORT_FILTER_REQUEST_DEFAULT_STATE:
@@ -173,7 +177,7 @@ class Report(DOMWidget):
         return proposal['value']
 
     # Methods
-    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, dataset_id=None, **kwargs):
+    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None , view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, dataset_id=None, **kwargs):
         """Create an instance of Power BI report
 
         Args:
@@ -202,6 +206,13 @@ class Report(DOMWidget):
                 It will be used if `access_token` is not provided.
                 If not provided, Power BI User will be authenticated automatically using Device Flow authentication
 
+            embed_token_request_body (JSON): Optional.
+                JSON formatted request body to be used while calling Reports GenerateTokenInGroup API.
+                \n For embedding Power BI report, refer: https://docs.microsoft.com/en-us/rest/api/power-bi/embedtoken/reports_generatetokeningroup.
+                \n For creating Power BI report, refer: https://docs.microsoft.com/en-us/rest/api/power-bi/embedtoken/datasets_generatetokeningroup.
+                It will be used if MasterUserAuthentication or ServicePrincipalAuthentication class object is provided using `auth` parameter.
+                (Default = { "accessLevel": "View" })
+
             view_mode (number): Optional.
                 Mode for embedding Power BI report (VIEW: 0, EDIT: 1, CREATE: 2).
                 To be provided if you want to edit or create a report.
@@ -219,9 +230,9 @@ class Report(DOMWidget):
                 (Default = READ)
 
             client_id (string): Optional.
-                Your app has a client_id after you register it on AAD.
+                Your app has a client Id after you register it on AAD.
                 To be provided if user wants to create a report and `access_token` or `auth` is not provided.
-                Power BI User will be authenticated automatically using Device Flow authentication using this client_id.
+                Power BI User will be authenticated automatically using Device Flow authentication using this client Id.
 
             dataset_id (string): Optional.
                 Create report based on the dataset configured on Power BI workspace.
@@ -247,25 +258,52 @@ class Report(DOMWidget):
                             Report._auth = DeviceCodeLoginAuthentication()
                     auth = Report._auth
                 self._auth = auth
-                access_token = self._auth.get_access_token()
-                token_type = TokenType.AAD.value
-                token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
+
+                # Perform UserOwnsData embedding
+                if self._auth.embed_type is EmbedType.USEROWNSDATA:
+                    access_token = self._auth.get_access_token()
+                    token_type = TokenType.AAD.value
+                    token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
+
+                # Perform AppOwnsData embedding
+                else:
+                    if not embed_token_request_body:
+                        embed_token_request_body = self.DEFAULT_EMBED_TOKEN_REQUEST_BODY
+
+                    # Generate embed token using access token
+                    if view_mode == EmbedMode.CREATE.value:
+                        if not group_id or not dataset_id:
+                            raise Exception("Group Id and Dataset Id are required")
+                        access_token = self._generate_embed_token(group_id=group_id, report_id=None, dataset_id=dataset_id, access_token=self._auth.get_access_token(), token_request_body=embed_token_request_body)
+                    else:
+                        if not group_id or not report_id:
+                            raise Exception("Group Id and Report Id are required")
+                        access_token = self._generate_embed_token(group_id=group_id, report_id=report_id, dataset_id=None, access_token=self._auth.get_access_token(), token_request_body=embed_token_request_body)
+                    token_type = TokenType.EMBED.value
 
             # Get embed URL for the report using access token
             if not embed_url:
+                token = access_token
                 if token_type == TokenType.EMBED.value:
+                    if not self._auth:
                         raise Exception("Cannot get embed URL using embed token")
+                    token = self._auth.get_access_token()
+
                 if view_mode == EmbedMode.CREATE.value:
                     if not group_id or not dataset_id:
                         raise Exception("Group Id and Dataset Id are required")
-                    request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/datasets/" +  dataset_id
-                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
+                    request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/datasets/{dataset_id}"
+                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + token})
+                    if not response.ok:
+                        raise Exception("Get embed URL failed with status code ", response.status_code)
                     embed_url = response.json()['createReportEmbedURL']
                 else:
                     if not group_id or not report_id:
                         raise Exception("Group Id and Report Id are required")
-                    request_url = "https://api.powerbi.com/v1.0/myorg/groups/" + group_id + "/reports/" + report_id
-                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + access_token})
+                    request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/reports/{report_id}"
+                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + token})
+                    if not response.ok:
+                        raise Exception("Get embed URL failed with status code ", response.status_code)
                     embed_url = response.json()['embedUrl']
         except Exception as ex:
             raise Exception("Could not create access token or embed URL: ", ex)
@@ -613,3 +651,27 @@ class Report(DOMWidget):
         self._report_bookmarks = list(self.REPORT_BOOKMARKS_DEFAULT_STATE)
 
         return bookmarks
+
+    # Utility method to generate embed token for a Power BI report
+    def _generate_embed_token(self, group_id, report_id, dataset_id, access_token, token_request_body):
+        """Generate embed token for Power BI report
+            Refer: https://docs.microsoft.com/en-us/rest/api/power-bi/embedtoken/reports_generatetokeningroup
+
+        Args:
+            group_id (string): Id of Power BI Group or Workspace where your report resides.
+            report_id (string): Id of Power BI report.
+            access_token (string): access token, which will be used to generate embed token for Power BI report.
+            token_request_body (string): JSON formatted request body to be used while calling Reports GenerateTokenInGroup API.
+
+        Returns:
+            string: Report embed token
+        """
+        if dataset_id:
+            request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/datasets/{dataset_id}/GenerateToken"
+        else:
+            request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/reports/{report_id}/GenerateToken"
+        response = requests.post(request_url, headers={'Authorization': 'Bearer ' + access_token}, data=token_request_body)
+        if not response.ok:
+            raise Exception("Generate embed token failed with status code ", response.status_code)
+
+        return response.json()['token']
