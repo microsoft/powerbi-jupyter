@@ -352,7 +352,7 @@ export class ReportView extends DOMWidgetView {
     try {
       // Add new filters or remove filters when filters array is empty
       if (filterRequest.filters.length > 0) {
-        await this.report.updateFilters(models.FiltersOperations.Add, filterRequest.filters);
+        await this.report.updateFilters(models.FiltersOperations.Replace, filterRequest.filters);
       } else {
         await this.report.updateFilters(models.FiltersOperations.RemoveAll);
       }

@@ -522,7 +522,7 @@ class Report(DOMWidget):
         """Returns the list of pages of the embedded Power BI report
 
         Returns:
-            string: list of pages
+            list: list of pages
         """
         if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
@@ -562,7 +562,7 @@ class Report(DOMWidget):
             page_name (string): Page name of the embedded report
 
         Returns:
-            string: list of visuals
+            list: list of visuals
         """
         if not self._embedded:
             raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)

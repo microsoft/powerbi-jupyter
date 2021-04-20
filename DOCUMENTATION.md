@@ -3,35 +3,71 @@
 
 ## Table of content
 
-* [**PowerBI report embedding widget**](#powerbiclient.report)
-  * [Create an instance of a report](#\_\_init\_\_-report)
-  * [Set a new access token for report](#set\_access\_token)
-  * [Set width and height of a report in px](#set\_dimensions)
-  * [Export the data of a given visual of the report](#export\_visual\_data)
-  * [Register a callback to a report event](#on)
-  * [Set report level filters in the report](#update\_filters)
-  * [Remove all report level filters](#remove\_filters)
-  * [Get the list of the report's pages](#get\_pages)
-  * [Get the list of visuals of the given page of the report](#visuals\_on\_page)
-  * [Apply a bookmark by name on the report](#set\_bookmark)
-  * [Get the list of the report's bookmarks](#get\_bookmarks)
-* [**Authenticate to Power BI and acquire access token**](#powerbiclient.authentication)
-  * [Authentication result](#authenticationResult-class)
-    * [Create instance of Authentication](#\_\_init\_\_-authenticationresult)
-    * [Get access token](#get\_access\_token)
-    * [Get authentication result](#get\_access\_token\_details)
-    * [Acquire token based on a refresh token obtained from authentication result](#refresh\_token)
-  * [Device Flow Authentication](#devicecodeloginauthentication-class)
-    * [Initiate a Device Flow Auth instance](#\_\_init\_\_-deviceCodeloginauthentication)
-  * [Interactive Flow Authentication](#interactiveloginauthentication-class)
-    * [Acquire token interactively](#\_\_init\_\_-interactiveloginauthentication)
-  * [Master User Authentication](#masteruserauthentication-class)
-    * [Acquire token with username and password](#\_\_init\_\_-masteruserauthentication)
-  * [Service Principal Authentication](#serviceprincipalauthentication-class)
-    * [Acquire token with Service Principal](#\_\_init\_\_-serviceprincipalauthentication)
+* [**Quick start**](#Quick-start)
+* [**PowerBI report embedding widget**](#PowerBI-report-embedding-widget)
+  * [Create an instance of a report](#Create-an-instance-of-a-report)
+  * [Set a new access token for report](#Set-a-new-access-token-for-report)
+  * [Set width and height of the report container in pixels](#Set-width-and-height-of-the-report-container-in-pixels)
+  * [Export the data of a given visual of the report](#Export-the-data-of-a-given-visual-of-the-report)
+  * [Register a callback to a report event](#Register-a-callback-to-a-report-event)
+  * [Add report level filters in the report](#Add-report-level-filters-in-the-report)
+  * [Remove all report level filters](#Remove-all-report-level-filters)
+  * [Get the list of the report's pages](#Get-the-list-of-the-report's-pages)
+  * [Get the list of visuals of the given page of the report](#Get-the-list-of-visuals-of-the-given-page-of-the-report)
+  * [Apply a bookmark by name on the report](#Apply-a-bookmark-by-name-on-the-report)
+  * [Get the list of the report's bookmarks](#Get-the-list-of-the-report's-bookmarks)
+* [**Authenticate to Power BI and acquire access token**](#Authenticate-to-Power-BI-and-acquire-access-token)
+  * [Authentication result](#Authentication-result)
+    * [Create instance of Authentication](#Create-instance-of-Authentication)
+    * [Get access token](#Get-access-token)
+    * [Get authentication result](#Get-authentication-result)
+    * [Acquire token based on a refresh token obtained from authentication result](#Acquire-token-based-on-a-refresh-token-obtained-from-authentication-result)
+  * [Device Flow Authentication](#Device-Flow-Authentication)
+    * [Initiate a Device Flow Auth instance](#Initiate-a-Device-Flow-Auth-instance)
+  * [Interactive Flow Authentication](#Interactive-Flow-Authentication)
+    * [Acquire token interactively](#Acquire-token-interactively)
+  * [Master User Authentication](#Master-User-Authentication)
+    * [Acquire token with username and password](#Acquire-token-with-username-and-password)
+  * [Service Principal Authentication](#Service-Principal-Authentication)
+    * [Acquire token with Service Principal](#Acquire-token-with-Service-Principal)
+
+# Quick start
+The below example shows how to:
+- Import Report class, models and authentication modules
+- Use device authentication to authenticate to Power BI
+- Embed report by group id and report id
+
+```python
+# Import Report class and models
+from powerbiclient import Report, models
+
+# Import DeviceCodeLoginAuthentication class to authenticate to Power BI
+from powerbiclient.authentication import DeviceCodeLoginAuthentication
+
+# Initiate device authentication
+device_auth = DeviceCodeLoginAuthentication()
+
+# Get access token from auth object
+access_token = device_auth.get_access_token()
+
+# Set workspace Id and report Id
+group_id="<YOUR_WORKSPACE_ID>"
+report_id="<YOUR_REPORT_ID>"
+
+# Create an instance of Power BI Report (Use either of the below instances)
+# Use auth object
+report = Report(group_id=group_id, report_id=report_id, auth=device_auth)
+
+# Use access token from device authentication
+report = Report(group_id=group_id, report_id=report_id, access_token=access_token, token_type=models.TokenType.AAD.value)
+
+# Load the report in the output cell
+report
+```
 
 <a name="powerbiclient.report"></a>
-# powerbiclient.report
+# PowerBI report embedding widget
+## powerbiclient.report
 
 Embeds Power BI Report
 
@@ -42,9 +78,7 @@ Embeds Power BI Report
 class Report(DOMWidget)
 ```
 
-PowerBI report embedding widget
-
-**Code snippet**:
+**Example**:
 ```python
 # Import Report class
 from powerbiclient import Report
@@ -53,13 +87,12 @@ from powerbiclient import Report
 <br>
 
 <a name="powerbiclient.report.Report.__init__"></a>
+## Create an instance of a report
 ## \_\_init\_\_ Report
 
 ```python
-__init__(access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None, view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, dataset_id=None, **kwargs)
+__init__(access_token=None, embed_url=None, token_type=models.TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None, view_mode=models.EmbedMode.VIEW.value, permissions=models.Permissions.READ.value, client_id=None, dataset_id=None, **kwargs)
 ```
-
-Create an instance of Power BI report
 
 **Arguments**:
 
@@ -76,7 +109,7 @@ Create an instance of Power BI report
   (Default = AAD)
   
 - `group_id` _string_ - Optional.
-  Id of Power BI Group or Workspace where your report resides.
+  Id of Power BI Workspace where your report resides.
   It will be used if `embed_url` is not provided
   
 - `report_id` _string_ - Optional.
@@ -112,7 +145,7 @@ Create an instance of Power BI report
   (Default = READ)
   
 - `client_id` _string_ - Optional.
-  Your app has a client Id after you register it on AAD.
+  Your Azure AD app has a client Id after you register it on AAD.
   To be provided if user wants to create a report and `access_token` or `auth` is not provided.
   Power BI User will be authenticated automatically using Device Flow authentication using this client Id.
   
@@ -124,7 +157,7 @@ Create an instance of Power BI report
 
 - `object` - Report object
 
-**Code snippet**:
+**Example**:
 ```python
 # Instantiate report object with Power BI report embed token and embed URL
 report = Report(access_token=access_token, embed_url=embed_url, token_type=models.TokenType.EMBED.value)
@@ -133,19 +166,18 @@ report = Report(access_token=access_token, embed_url=embed_url, token_type=model
 <br>
 
 <a name="powerbiclient.report.Report.set_access_token"></a>
+## Set a new access token for report
 ## set\_access\_token
 
 ```python
 set_access_token(access_token)
 ```
 
-Set access token for Power BI report
-
 **Arguments**:
 
 - `access_token` _string_ - report access token
 
-**Code snippet**:
+**Example**:
 ```python
 # Set new access token to the embedded report
 report.set_access_token(access_token)
@@ -154,32 +186,32 @@ report.set_access_token(access_token)
 <br>
 
 <a name="powerbiclient.report.Report.set_dimensions"></a>
+## Set width and height of the report container in pixels
 ## set\_dimensions
 
 ```python
 set_dimensions(container_height, container_width)
 ```
 
-Set width and height of Power BI report in px
-
 **Arguments**:
 
-- `container_height` _number_ - report height
-- `container_width` _number_ - report width
+- `container_height` _number_ - container height
+- `container_width` _number_ - container width
 
-**Code snippet**:
+**Example**:
 ```python
-# Set report height and width using report object
+# Set report container's height and width using report object
 report.set_dimensions(container_height, container_width)
 ```
 
 <br>
 
 <a name="powerbiclient.report.Report.export_visual_data"></a>
+## Export the data of a given visual of the report
 ## export\_visual\_data
 
 ```python
-export_visual_data(page_name, visual_name, rows=10, export_data_type=ExportDataType.SUMMARIZED.value)
+export_visual_data(page_name, visual_name, rows=10, export_data_type=models.ExportDataType.SUMMARIZED.value)
 ```
 
 Returns the data of given visual of the embedded Power BI report
@@ -197,15 +229,16 @@ Returns the data of given visual of the embedded Power BI report
 
 - `string` - visual's exported data
 
-**Code snippet**:
+**Example**:
 ```python
 # Get 50 rows of provided visual's summarized data
-exported_data = report.export_visual_data(page_name, visual_name, rows=50, export_data_type=ExportDataType.SUMMARIZED.value)
+exported_data = report.export_visual_data(page_name, visual_name, rows=50, export_data_type=models.ExportDataType.SUMMARIZED.value)
 ```
 
 <br>
 
 <a name="powerbiclient.report.Report.on"></a>
+## Register a callback to a report event
 ## on
 
 ```python
@@ -213,14 +246,13 @@ on(event, callback)
 ```
 
 Register a callback to execute when the report emits the target event
-Parameters
 
 **Arguments**:
 
 - `event` _string_ - Name of Power BI event (eg. 'loaded', 'rendered', 'error')
 - `callback` _function_ - User defined function. Callback function is invoked with event details as parameter
 
-**Code snippet**:
+**Example**:
 ```python
 # Create a method to be executed on report 'loaded' event to print 'Report is loaded'
 def loaded_callback(event_details):
@@ -233,14 +265,14 @@ report.on('loaded', loaded_callback)
 <br>
 
 <a name="powerbiclient.report.Report.update_filters"></a>
+## Add report level filters in the report
 ## update\_filters
 
 ```python
 update_filters(filters)
 ```
 
-Set report level filters in the embedded report.
-Currently supports models.FiltersOperations.Add
+Currently supports only replace option for filters, replacing existing filters and add new filters that are provided. (models.FiltersOperations.Replace)
 
 **Arguments**:
 
@@ -251,7 +283,7 @@ Currently supports models.FiltersOperations.Add
 
 - `Exception` - When report is not embedded
 
-**Code snippet**:
+**Example**:
 ```python
 # Create a basic filter to filter the report with value "East" in column "Region" of table "Geo"
 region_filter = {
@@ -271,19 +303,18 @@ report.update_filters([region_filter])
 <br>
 
 <a name="powerbiclient.report.Report.remove_filters"></a>
+## Remove all report level filters
 ## remove\_filters
 
 ```python
 remove_filters()
 ```
 
-Remove all report level filters from the embedded report
-
 **Raises**:
 
 - `Exception` - When report is not embedded
 
-**Code snippet**:
+**Example**:
 ```python
 # Remove all the report level filters from the embedded report
 report.remove_filters()
@@ -292,6 +323,7 @@ report.remove_filters()
 <br>
 
 <a name="powerbiclient.report.Report.get_pages"></a>
+## Get the list of the report's pages
 ## get\_pages
 
 ```python
@@ -302,9 +334,9 @@ Returns the list of pages of the embedded Power BI report
 
 **Returns**:
 
-- `string` - list of pages
+- `list` - list of pages
 
-**Code snippet**:
+**Example**:
 ```python
 # Get the list of pages from embedded report
 pages = report.get_pages()
@@ -313,6 +345,7 @@ pages = report.get_pages()
 <br>
 
 <a name="powerbiclient.report.Report.visuals_on_page"></a>
+## Get the list of visuals of the given page of the report
 ## visuals\_on\_page
 
 ```python
@@ -328,9 +361,9 @@ Returns the list of visuals of the given page of the embedded Power BI report
 
 **Returns**:
 
-- `string` - list of visuals
+- `list` - list of visuals
 
-**Code snippet**:
+**Example**:
 ```python
 # Get the list of visuals on a page
 visuals = report.visuals_on_page(page_name)
@@ -339,13 +372,12 @@ visuals = report.visuals_on_page(page_name)
 <br>
 
 <a name="powerbiclient.report.Report.set_bookmark"></a>
+## Apply a bookmark by name on the report
 ## set\_bookmark
 
 ```python
 set_bookmark(bookmark_name)
 ```
-
-Applies a bookmark by name on the embedded report.
 
 **Arguments**:
 
@@ -355,7 +387,7 @@ Applies a bookmark by name on the embedded report.
 
 - `Exception` - When report is not embedded
 
-**Code snippet**:
+**Example**:
 ```python
 # Apply a bookmark on the embedded report using report bookmark's name
 report.set_bookmark(bookmark_name)
@@ -364,6 +396,7 @@ report.set_bookmark(bookmark_name)
 <br>
 
 <a name="powerbiclient.report.Report.get_bookmarks"></a>
+## Get the list of the report's bookmarks
 ## get\_bookmarks
 
 ```python
@@ -381,24 +414,24 @@ Returns the list of bookmarks of the embedded Power BI report
 
 - `Exception` - When report is not embedded
 
-**Code snippet**:
+**Example**:
 ```python
 # Get the list of report bookmarks, if any
 bookmarks = report.get_bookmarks()
 ```
 
 <a name="powerbiclient.authentication"></a>
-# powerbiclient.authentication
+# Authenticate to Power BI and acquire access token
+## powerbiclient.authentication
 
-Authenticates a Power BI User and acquires an access token
-
-**Code snippet**:
+**Example**:
 ```python
 # Import authentication module
 from powerbiclient import authentication
 ```
 
 <a name="powerbiclient.authentication.AuthenticationResult"></a>
+## Authentication result
 ## AuthenticationResult class
 
 ```python
@@ -408,17 +441,16 @@ class AuthenticationResult()
 <br>
 
 <a name="powerbiclient.authentication.AuthenticationResult.__init__"></a>
+## Create instance of Authentication
 ## \_\_init\_\_ AuthenticationResult
 
 ```python
 __init__(client_id, scopes, authority_uri, access_token_result)
 ```
 
-Create an instance of Authentication
-
 **Arguments**:
 
-- `client_id` _string_ - Your app has a client Id after you register it on AAD
+- `client_id` _string_ - Your Azure AD app has a client Id after you register it on AAD
 - `scopes` _list[string]_ - Scopes required to access Power BI API
 - `authority_uri` _string_ - Microsoft authority URI used for authentication
 - `access_token_result` _dict_ - Authentication result
@@ -430,6 +462,7 @@ Create an instance of Authentication
 <br>
 
 <a name="powerbiclient.authentication.AuthenticationResult.get_access_token"></a>
+## Get access token
 ## get\_access\_token
 
 ```python
@@ -442,7 +475,7 @@ Returns the access token
 
 - `string` - access token
 
-**Code snippet**:
+**Example**:
 ```python
 # Get the access token using authentication object
 access_token = auth.get_access_token()
@@ -451,6 +484,7 @@ access_token = auth.get_access_token()
 <br>
 
 <a name="powerbiclient.authentication.AuthenticationResult.get_access_token_details"></a>
+## Get authentication result
 ## get\_access\_token\_details
 
 ```python
@@ -463,7 +497,7 @@ Returns the authentication result with access token
 
 - `dict` - authentication result
 
-**Code snippet**:
+**Example**:
 ```python
 # Get the authentication result using authentication object
 auth_result = auth.get_access_token_details()
@@ -472,15 +506,14 @@ auth_result = auth.get_access_token_details()
 <br>
 
 <a name="powerbiclient.authentication.AuthenticationResult.refresh_token"></a>
+## Acquire token based on a refresh token obtained from authentication result
 ## refresh\_token
 
 ```python
 refresh_token()
 ```
 
-Acquire token(s) based on a refresh token obtained from authentication result
-
-**Code snippet**:
+**Example**:
 ```python
 # Acquire new access token from refresh token using authentication object
 auth.refresh_token()
@@ -489,6 +522,7 @@ auth.refresh_token()
 <br>
 
 <a name="powerbiclient.authentication.DeviceCodeLoginAuthentication"></a>
+## Device Flow Authentication
 ## DeviceCodeLoginAuthentication class
 
 ```python
@@ -496,26 +530,25 @@ class DeviceCodeLoginAuthentication(AuthenticationResult)
 ```
 Inherits AuthenticationResult class
 
-**Code snippet**:
+**Example**:
 ```python
 # Import DeviceCodeLoginAuthentication class
 from powerbiclient.authentication import DeviceCodeLoginAuthentication
 ```
 
 <a name="powerbiclient.authentication.DeviceCodeLoginAuthentication.__init__"></a>
+## Initiate a Device Flow Auth instance
 ## \_\_init\_\_ DeviceCodeLoginAuthentication
 
 ```python
 __init__(client_id=None, scopes=None)
 ```
 
-Initiate a Device Flow Auth instance
-
 **Arguments**:
 
 - `client_id` _string_ - Optional.
-  Your app has a client Id after you register it on AAD.
-  (Default = Microsoft Azure Cross-platform Command Line Interface AAD app Id)
+  Your Azure AD app has a client Id after you register it on AAD.
+  (Default = Microsoft Azure Cross-platform Command Line Interface Azure AD app Id)
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
   (Default = Power BI API default permissions)
@@ -527,13 +560,14 @@ Initiate a Device Flow Auth instance
 
 - `object` - Device Flow object
 
-**Code snippet**:
+**Example**:
 ```python
 # Initiate device flow authentication with default client Id and Power BI scopes
 auth = DeviceCodeLoginAuthentication()
 ```
 
 <a name="powerbiclient.authentication.InteractiveLoginAuthentication"></a>
+## Interactive Flow Authentication
 ## InteractiveLoginAuthentication class
 
 ```python
@@ -541,13 +575,14 @@ class InteractiveLoginAuthentication(AuthenticationResult)
 ```
 Inherits AuthenticationResult class
 
-**Code snippet**:
+**Example**:
 ```python
 # Import InteractiveLoginAuthentication class
 from powerbiclient.authentication import InteractiveLoginAuthentication
 ```
 
 <a name="powerbiclient.authentication.InteractiveLoginAuthentication.__init__"></a>
+## Acquire token interactively
 ## \_\_init\_\_ InteractiveLoginAuthentication
 
 ```python
@@ -559,8 +594,8 @@ Acquire token interactively i.e. via a local browser
 **Arguments**:
 
 - `client_id` _string_ - Optional.
-  Your app has a client Id after you register it on AAD.
-  (Default = Microsoft Azure Cross-platform Command Line Interface AAD app Id)
+  Your Azure AD app has a client Id after you register it on AAD.
+  (Default = Microsoft Azure Cross-platform Command Line Interface Azure AD app Id)
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
   (Default = Power BI API default permissions)
@@ -573,13 +608,14 @@ Acquire token interactively i.e. via a local browser
 
 - `object` - Interactive authentication object
 
-**Code snippet**:
+**Example**:
 ```python
 # Initiate interactive login authentication with default client Id and Power BI scopes
 auth = InteractiveLoginAuthentication()
 ```
 
 <a name="powerbiclient.authentication.MasterUserAuthentication"></a>
+## Master User Authentication
 ## MasterUserAuthentication class
 
 ```python
@@ -587,28 +623,27 @@ class MasterUserAuthentication(AuthenticationResult)
 ```
 Inherits AuthenticationResult class
 
-**Code snippet**:
+**Example**:
 ```python
 # Import MasterUserAuthentication class
 from powerbiclient.authentication import MasterUserAuthentication
 ```
 
 <a name="powerbiclient.authentication.MasterUserAuthentication.__init__"></a>
+## Acquire token with username and password
 ## \_\_init\_\_ MasterUserAuthentication
 
 ```python
 __init__(username, password, client_id=None, scopes=None, tenant=None)
 ```
 
-Acquire token with username and password
-
 **Arguments**:
 
 - `username` _string_ - UPN in the form of an email address.
 - `password` _string_ - Password to authenticate Power BI user.
 - `client_id` _string_ - Optional.
-  Your app has a client Id after you register it on AAD.
-  (Default = Microsoft Azure Cross-platform Command Line Interface AAD app Id)
+  Your Azure AD app has a client Id after you register it on AAD.
+  (Default = Microsoft Azure Cross-platform Command Line Interface Azure AD app Id)
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
   (Default = Power BI API default permissions)
@@ -621,7 +656,7 @@ Acquire token with username and password
 
 - `object` - Master User authentication object
 
-**Code snippet**:
+**Example**:
 ```python
 # Initiate Master User authentication with default tenant, client Id and Power BI scopes
 username = 'pbi_username'
@@ -631,6 +666,7 @@ auth = MasterUserAuthentication(username, password)
 ```
 
 <a name="powerbiclient.authentication.ServicePrincipalAuthentication"></a>
+## Service Principal Authentication
 ## ServicePrincipalAuthentication class
 
 ```python
@@ -638,25 +674,24 @@ class ServicePrincipalAuthentication(AuthenticationResult)
 ```
 Inherits AuthenticationResult class
 
-**Code snippet**:
+**Example**:
 ```python
 # Import ServicePrincipalAuthentication class
 from powerbiclient.authentication import ServicePrincipalAuthentication
 ```
 
 <a name="powerbiclient.authentication.ServicePrincipalAuthentication.__init__"></a>
+## Acquire token with Service Principal
 ## \_\_init\_\_ ServicePrincipalAuthentication
 
 ```python
 __init__(client_id, client_secret, tenant, scopes=None)
 ```
 
-Acquire token with Service Principal
-
 **Arguments**:
 
-- `client_id` _string_ - Your app has a client Id after you register it on AAD.
-- `client_secret` _string_ - Client secret associated with the AAD app
+- `client_id` _string_ - Your Azure AD app has a client Id after you register it on AAD.
+- `client_secret` _string_ - Client secret associated with the Azure AD app
 - `tenant` _string_ - Organization tenant Id
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
@@ -667,7 +702,7 @@ Acquire token with Service Principal
 
 - `object` - Service Principal authentication object
 
-**Code snippet**:
+**Example**:
 ```python
 # Initiate interactive login authentication with default client Id and Power BI scopes
 client_id = 'AAD_app_id'
