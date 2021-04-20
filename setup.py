@@ -69,12 +69,12 @@ setup_args = dict(
     author          = 'Microsoft',
     author_email    = '',
     url             = 'https://github.com/Microsoft/powerbi-jupyter',
-    license         = 'BSD',
+    license         = 'MIT',
     platforms       = "Linux, Mac OS X, Windows",
     keywords        = ['Jupyter', 'Widgets', 'IPython'],
     classifiers     = [
         'Intended Audience :: Developers',
-        # TODO: Update License before release using 'License :: <your_license>'
+        'License :: MIT License'
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',

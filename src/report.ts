@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft
-// Distributed under the terms of the Modified BSD License.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/base';
 

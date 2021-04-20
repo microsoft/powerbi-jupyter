@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import { models, Page, Report } from 'powerbi-client';
 import { ReportView } from './report';
 

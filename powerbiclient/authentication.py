@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright (c) Microsoft.
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
 
 """
 Authenticates a Power BI User and acquires an access token

@@ -1,7 +1,14 @@
-# Development Installation
-This document provides the steps for setting up the powerbiclient widget on your system.
+# Contributing
 
 ## Setup
+
+Clone the repository:
+```
+git clone https://github.com/Microsoft/PowerBI-Jupyter.git
+```
+
+Navigate to `powerbi-jupyter` directory after cloning
+
 First install the python package. This will also build the JS packages:
 ```bash
 pip install -e ".[test, demo]"
