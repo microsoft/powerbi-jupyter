@@ -30,6 +30,7 @@
     * [Acquire token with username and password](#Acquire-token-with-username-and-password)
   * [Service Principal Authentication](#Service-Principal-Authentication)
     * [Acquire token with Service Principal](#Acquire-token-with-Service-Principal)
+* [**Configure Azure AD app to authenticate to Power BI**](#Configure-Azure-AD-app-to-authenticate-to-Power-BI)
 
 # Quick start
 The below example shows how to:
@@ -91,7 +92,7 @@ from powerbiclient import Report
 ## \_\_init\_\_ Report
 
 ```python
-__init__(access_token=None, embed_url=None, token_type=models.TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None, view_mode=models.EmbedMode.VIEW.value, permissions=models.Permissions.READ.value, client_id=None, dataset_id=None, **kwargs)
+__init__(access_token=None, embed_url=None, token_type=models.TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None, view_mode=models.EmbedMode.VIEW.value, permissions=models.Permissions.READ.value, client_id=None, tenant=None, scopes=None, dataset_id=None, **kwargs)
 ```
 
 **Arguments**:
@@ -146,8 +147,18 @@ __init__(access_token=None, embed_url=None, token_type=models.TokenType.AAD.valu
   
 - `client_id` _string_ - Optional.
   Your Azure AD app has a client Id after you register it on AAD.
-  To be provided if user wants to create a report and `access_token` or `auth` is not provided.
+  To be provided if user wants to authenticate using own Azure AD app and `access_token` or `auth` is not provided.
   Power BI User will be authenticated automatically using Device Flow authentication using this client Id.
+  Refer [Configure Azure AD app to authenticate to Power BI](#Configure-Azure-AD-app-to-authenticate-to-Power-BI) section.
+  (Default = Microsoft Azure Cross-platform Command Line Interface AAD app Id)
+
+- scopes _list[string]_ - Optional.
+  Scopes required to access Power BI API
+  (Default = Power BI API default permissions)
+
+- tenant _string_ - Optional.
+  Organization tenant Id
+  (Default = "organizations")
   
 - `dataset_id` _string_ - Optional.
   Create report based on the dataset configured on Power BI workspace.
@@ -450,7 +461,8 @@ __init__(client_id, scopes, authority_uri, access_token_result)
 
 **Arguments**:
 
-- `client_id` _string_ - Your Azure AD app has a client Id after you register it on AAD
+- `client_id` _string_ - Your Azure AD app has a client Id after you register it on AAD.
+  Refer [Configure Azure AD app to authenticate to Power BI](#Configure-Azure-AD-app-to-authenticate-to-Power-BI) section.
 - `scopes` _list[string]_ - Scopes required to access Power BI API
 - `authority_uri` _string_ - Microsoft authority URI used for authentication
 - `access_token_result` _dict_ - Authentication result
@@ -548,6 +560,7 @@ __init__(client_id=None, scopes=None)
 
 - `client_id` _string_ - Optional.
   Your Azure AD app has a client Id after you register it on AAD.
+  Refer [Configure Azure AD app to authenticate to Power BI](#Configure-Azure-AD-app-to-authenticate-to-Power-BI) section.
   (Default = Microsoft Azure Cross-platform Command Line Interface Azure AD app Id)
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
@@ -595,6 +608,7 @@ Acquire token interactively i.e. via a local browser
 
 - `client_id` _string_ - Optional.
   Your Azure AD app has a client Id after you register it on AAD.
+  Refer [Configure Azure AD app to authenticate to Power BI](#Configure-Azure-AD-app-to-authenticate-to-Power-BI) section.
   (Default = Microsoft Azure Cross-platform Command Line Interface Azure AD app Id)
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
@@ -643,6 +657,7 @@ __init__(username, password, client_id=None, scopes=None, tenant=None)
 - `password` _string_ - Password to authenticate Power BI user.
 - `client_id` _string_ - Optional.
   Your Azure AD app has a client Id after you register it on AAD.
+  Refer [Configure Azure AD app to authenticate to Power BI](#Configure-Azure-AD-app-to-authenticate-to-Power-BI) section.
   (Default = Microsoft Azure Cross-platform Command Line Interface Azure AD app Id)
 - `scopes` _list[string]_ - Optional.
   Scopes required to access Power BI API
@@ -691,6 +706,7 @@ __init__(client_id, client_secret, tenant, scopes=None)
 **Arguments**:
 
 - `client_id` _string_ - Your Azure AD app has a client Id after you register it on AAD.
+  Refer [Configure Azure AD app to authenticate to Power BI](#Configure-Azure-AD-app-to-authenticate-to-Power-BI) section.
 - `client_secret` _string_ - Client secret associated with the Azure AD app
 - `tenant` _string_ - Organization tenant Id
 - `scopes` _list[string]_ - Optional.
@@ -711,3 +727,23 @@ tenant = 'Org_tenant_Id'
 
 auth = ServicePrincipalAuthentication(client_id, client_secret, tenant)
 ```
+
+# Configure Azure AD app to authenticate to Power BI
+
+1. Visit Azure portal's [App registrations service](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+
+2. Click on **New registration**
+
+3. Enter display name to identify your Azure AD app
+
+4. Select preferred account types option
+
+5. Under **Redirect URI**, select **Public client/native (mobile & desktop)** in the dropdown
+
+6. Click **Register**
+
+7. After successful registration, you will be redirected to Azure AD app configurations. Click **Authentication** in left panel
+
+8. Under **Advanced settings**, toggle **Allow public client flows** to "Yes" and click on Save
+
+9. To get the Azure AD app details, click **Overview** in left panel

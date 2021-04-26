@@ -328,8 +328,12 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_visual_data', data.data);
       this.touch();
     } catch (error) {
+      let stringifiedError = JSON.stringify(error);
+      if (stringifiedError === '{}') {
+        stringifiedError = error.toString();
+      }
       console.error(error);
-      this.model.set('_client_error', JSON.stringify(error));
+      this.model.set('_client_error', stringifiedError);
       this.touch();
     }
   }
@@ -361,8 +365,12 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_report_filters_request', REPORT_FILTER_REQUEST_DEFAULT_STATE);
       this.touch();
     } catch (error) {
+      let stringifiedError = JSON.stringify(error);
+      if (stringifiedError === '{}') {
+        stringifiedError = error.toString();
+      }
       console.error(error);
-      this.model.set('_client_error', JSON.stringify(error));
+      this.model.set('_client_error', stringifiedError);
       this.touch();
     }
   }
@@ -396,8 +404,12 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_report_pages', pagesWithoutReport);
       this.touch();
     } catch (error) {
+      let stringifiedError = JSON.stringify(error);
+      if (stringifiedError === '{}') {
+        stringifiedError = error.toString();
+      }
       console.error(error);
-      this.model.set('_client_error', JSON.stringify(error));
+      this.model.set('_client_error', stringifiedError);
       this.touch();
     }
   }
@@ -432,8 +444,12 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_page_visuals', visualsWithoutPage);
       this.touch();
     } catch (error) {
+      let stringifiedError = JSON.stringify(error);
+      if (stringifiedError === '{}') {
+        stringifiedError = error.toString();
+      }
       console.error(error);
-      this.model.set('_client_error', JSON.stringify(error));
+      this.model.set('_client_error', stringifiedError);
       this.touch();
     }
   }
@@ -480,8 +496,12 @@ export class ReportView extends DOMWidgetView {
         this.touch();
       }
     } catch (error) {
+      let stringifiedError = JSON.stringify(error);
+      if (stringifiedError === '{}') {
+        stringifiedError = error.toString();
+      }
       console.error(error);
-      this.model.set('_client_error', JSON.stringify(error));
+      this.model.set('_client_error', stringifiedError);
       this.touch();
     }
   }

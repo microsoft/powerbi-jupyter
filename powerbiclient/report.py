@@ -178,7 +178,7 @@ class Report(DOMWidget):
         return proposal['value']
 
     # Methods
-    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None , view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, dataset_id=None, **kwargs):
+    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None , view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, tenant=None, scopes=None, dataset_id=None, **kwargs):
         """Create an instance of Power BI report
 
         Args:
@@ -232,8 +232,17 @@ class Report(DOMWidget):
 
             client_id (string): Optional.
                 Your app has a client Id after you register it on AAD.
-                To be provided if user wants to create a report and `access_token` or `auth` is not provided.
+                To be provided if user wants to authenticate using own Azure AD app and `access_token` or `auth` is not provided.
                 Power BI User will be authenticated automatically using Device Flow authentication using this client Id.
+                (Default = Microsoft Azure Cross-platform Command Line Interface AAD app Id)
+
+            scopes (list[string]): Optional.
+                Scopes required to access Power BI API
+                (Default = Power BI API default permissions)
+
+            tenant (string): Optional.
+                Organization tenant Id
+                (Default = "organizations")
 
             dataset_id (string): Optional.
                 Create report based on the dataset configured on Power BI workspace.
@@ -252,16 +261,19 @@ class Report(DOMWidget):
                             if not client_id:
                                 raise Exception("client_id is required")
 
+                            if not scopes:
+                                scopes = CREATE_REPORT_SCOPES
+
                             # Set DeviceCodeLoginAuthentication as authentication method to get access token for creating Power BI report
-                            Report._auth = DeviceCodeLoginAuthentication(scopes=CREATE_REPORT_SCOPES, client_id=client_id)
+                            Report._auth = DeviceCodeLoginAuthentication(client_id=client_id, scopes=scopes, tenant=tenant)
                         else:
                             # Set DeviceCodeLoginAuthentication to be the default global authentication method
-                            Report._auth = DeviceCodeLoginAuthentication()
+                            Report._auth = DeviceCodeLoginAuthentication(client_id=client_id, scopes=scopes, tenant=tenant)
                     auth = Report._auth
                 self._auth = auth
 
                 # Perform UserOwnsData embedding
-                if self._auth.embed_type is EmbedType.USEROWNSDATA:
+                if self._auth.embed_type is EmbedType.USEROWNSDATA.value:
                     access_token = self._auth.get_access_token()
                     token_type = TokenType.AAD.value
                     token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
@@ -336,6 +348,8 @@ class Report(DOMWidget):
         Args:
             access_token (string): report access token
         """
+        if not access_token:
+            raise Exception("Access token cannot be empty")
         self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_type=self._embed_config['tokenType'], token_expiration=self._embed_config['tokenExpiration'])
 
     def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id, token_type, token_expiration):
@@ -414,17 +428,17 @@ class Report(DOMWidget):
                     if self._client_error:
                         break
 
-        # Throw client side error
-        if self._client_error:
-            error_message = self._client_error
-            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
-            raise Exception(error_message)
-
         exported_data = self._visual_data
 
         # Reset the _export_visual_data_request and _visual_data's value
         self._export_visual_data_request = dict(self.EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE)
         self._visual_data = self.VISUAL_DATA_DEFAULT_STATE
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         return exported_data
 
@@ -504,6 +518,9 @@ class Report(DOMWidget):
                     if self._client_error:
                         break
 
+        # Reset the _report_filters_request's value
+        self._report_filters_request = dict(self.REPORT_FILTER_REQUEST_DEFAULT_STATE)
+
         # Throw client side error
         if self._client_error:
             error_message = self._client_error
@@ -541,17 +558,17 @@ class Report(DOMWidget):
                     if self._client_error:
                         break
 
-        # Throw client side error
-        if self._client_error:
-            error_message = self._client_error
-            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
-            raise Exception(error_message)
-
         pages = self._report_pages
 
         # Reset the get_pages_request and report_pages's value
         self._get_pages_request = bool(self.GET_PAGES_REQUEST_DEFAULT_STATE)
         self._report_pages = list(self.REPORT_PAGES_DEFAULT_STATE)
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         return pages
 
@@ -581,17 +598,17 @@ class Report(DOMWidget):
                     if self._client_error:
                         break
 
-        # Throw client side error
-        if self._client_error:
-            error_message = self._client_error
-            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
-            raise Exception(error_message)
-
         visuals = self._page_visuals
 
         # Reset the get_visuals_page_name and page_visuals's value
         self._get_visuals_page_name = self.GET_VISUALS_DEFAULT_PAGE_NAME
         self._page_visuals = list(self.PAGE_VISUALS_DEFAULT_STATE)
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         return visuals
 
@@ -636,12 +653,6 @@ class Report(DOMWidget):
                     if self._client_error:
                         break
 
-        # Throw client side error
-        if self._client_error:
-            error_message = self._client_error
-            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
-            raise Exception(error_message)
-
         bookmarks = self._report_bookmarks
 
         if bookmarks == ['']:
@@ -650,6 +661,12 @@ class Report(DOMWidget):
         # Reset the _get_bookmarks_request and _report_bookmarks values
         self._get_bookmarks_request = bool(self.GET_BOOKMARKS_REQUEST_DEFAULT_STATE)
         self._report_bookmarks = list(self.REPORT_BOOKMARKS_DEFAULT_STATE)
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
 
         return bookmarks
 
