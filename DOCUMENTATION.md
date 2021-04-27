@@ -674,10 +674,7 @@ __init__(username, password, client_id=None, scopes=None, tenant=None)
 **Example**:
 ```python
 # Initiate Master User authentication with default tenant, client Id and Power BI scopes
-username = 'pbi_username'
-password = 'pbi_password'
-
-auth = MasterUserAuthentication(username, password)
+auth = MasterUserAuthentication('pbi_username', 'pbi_password')
 ```
 
 <a name="powerbiclient.authentication.ServicePrincipalAuthentication"></a>
