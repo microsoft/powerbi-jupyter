@@ -74,7 +74,7 @@ setup_args = dict(
     keywords        = ['Jupyter', 'Widgets', 'IPython'],
     classifiers     = [
         'Intended Audience :: Developers',
-        'License :: MIT License'
+        'License :: MIT License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
