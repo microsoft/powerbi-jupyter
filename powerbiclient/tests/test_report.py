@@ -19,6 +19,7 @@ DEFAULT_DATA_ROWS = 10
 REPORT_PAGES = ['dummy_report_pages']
 PAGE_VISUALS = ['dummy_page_visuals']
 REPORT_BOOKMARKS = ['dummy_report_bookmarks']
+REPORT_FILTERS = ['dummy_report_filters']
 
 
 class TestCommAndTraitlets:
@@ -236,6 +237,29 @@ class TestEventHandlers:
         # Assert
         assert 'loaded' not in report._registered_event_handlers
 
+    def test_unsetting_event_handler(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = True
+        event_name = 'loaded'
+
+        # Act
+        def loaded_callback():
+            pass
+
+        report.on(event_name, loaded_callback)
+
+        # Assert
+        assert event_name in report._registered_event_handlers.keys()
+        assert report._registered_event_handlers[event_name] == loaded_callback
+        assert report._observing_events == True
+
+        # Act
+        report.off(event_name)
+
+        # Assert
+        assert event_name not in report._registered_event_handlers.keys()
+
 
 class TestExportData:
     def test_throws_when_not_embedded(self):
@@ -340,3 +364,29 @@ class TestGetBookmarks:
         assert returned_bookmarks == REPORT_BOOKMARKS
         assert report._get_bookmarks_request == report.GET_BOOKMARKS_REQUEST_DEFAULT_STATE
         assert report._report_bookmarks == report.REPORT_BOOKMARKS_DEFAULT_STATE
+
+class TestGetFilters:
+    def test_throws_when_not_embedded(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report._embedded = False
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            report.get_filters()
+
+    def test_returned_data(self):
+        # Arrange
+        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+
+        # Data sent by frontend (Setting this upfront will prevent get_filters from waiting for list of report level filters)
+        report._report_filters = REPORT_FILTERS
+        report._embedded = True
+
+        # Act
+        returned_filters = report.get_filters()
+
+        # Assert
+        assert returned_filters == REPORT_FILTERS
+        assert report._get_filters_request == report.GET_FILTERS_REQUEST_DEFAULT_STATE
+        assert report._report_filters == report.REPORT_FILTERS_DEFAULT_STATE

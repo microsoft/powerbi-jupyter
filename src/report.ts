@@ -65,6 +65,8 @@ export class ReportModel extends DOMWidgetModel {
         event_name: null,
         event_details: null,
       },
+      _get_filters_request: false,
+      _report_filters: [],
       _report_filters_request: REPORT_FILTER_REQUEST_DEFAULT_STATE,
       _get_pages_request: false,
       _report_pages: [],
@@ -139,6 +141,7 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:container_height', this.dimensionsChanged, this);
     this.model.on('change:container_width', this.dimensionsChanged, this);
     this.model.on('change:_export_visual_data_request', this.exportVisualDataRequestChanged, this);
+    this.model.on('change:_get_filters_request', this.getFiltersRequestChanged, this);
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
     this.model.on('change:_get_pages_request', this.getPagesRequestChanged, this);
     this.model.on('change:_get_visuals_page_name', this.getVisualsPageNameChanged, this);
@@ -332,6 +335,43 @@ export class ReportView extends DOMWidgetView {
       if (stringifiedError === '{}') {
         stringifiedError = error.toString();
       }
+
+      console.error(error);
+      this.model.set('_client_error', stringifiedError);
+      this.touch();
+    }
+  }
+
+  async getFiltersRequestChanged(): Promise<void> {
+    if (!this.report) {
+      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
+      this.touch();
+      return;
+    }
+
+    const get_filters_request = this.model.get('_get_filters_request') as boolean;
+    if (!get_filters_request) {
+      // Reset of get filters request
+      return;
+    }
+
+    try {
+      // Get list of filters applied on the report
+      const filters: models.IFilter[] = await this.report.getFilters();
+
+      if (!filters) {
+        throw 'No filters available';
+      }
+
+      this.model.set('_report_filters', filters);
+      this.touch();
+    } catch (error) {
+      let stringifiedError = JSON.stringify(error);
+      if (stringifiedError === '{}') {
+        stringifiedError = error.toString();
+      }
+
       console.error(error);
       this.model.set('_client_error', stringifiedError);
       this.touch();
@@ -369,6 +409,7 @@ export class ReportView extends DOMWidgetView {
       if (stringifiedError === '{}') {
         stringifiedError = error.toString();
       }
+
       console.error(error);
       this.model.set('_client_error', stringifiedError);
       this.touch();
@@ -408,6 +449,7 @@ export class ReportView extends DOMWidgetView {
       if (stringifiedError === '{}') {
         stringifiedError = error.toString();
       }
+
       console.error(error);
       this.model.set('_client_error', stringifiedError);
       this.touch();
@@ -448,6 +490,7 @@ export class ReportView extends DOMWidgetView {
       if (stringifiedError === '{}') {
         stringifiedError = error.toString();
       }
+
       console.error(error);
       this.model.set('_client_error', stringifiedError);
       this.touch();
@@ -500,6 +543,7 @@ export class ReportView extends DOMWidgetView {
       if (stringifiedError === '{}') {
         stringifiedError = error.toString();
       }
+
       console.error(error);
       this.model.set('_client_error', stringifiedError);
       this.touch();

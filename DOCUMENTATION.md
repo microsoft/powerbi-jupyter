@@ -10,6 +10,8 @@
   * [Set width and height of the report container in pixels](#Set-width-and-height-of-the-report-container-in-pixels)
   * [Export the data of a given visual of the report](#Export-the-data-of-a-given-visual-of-the-report)
   * [Register a callback to a report event](#Register-a-callback-to-a-report-event)
+  * [Unregister a callback for a report event](#Unregister-a-callback-for-a-report-event)
+  * [Get the list of applied report level filters](#Get-the-list-of-applied-report-level-filters)
   * [Add report level filters in the report](#Add-report-level-filters-in-the-report)
   * [Remove all report level filters](#Remove-all-report-level-filters)
   * [Get the list of the report's pages](#Get-the-list-of-the-report's-pages)
@@ -263,6 +265,8 @@ Register a callback to execute when the report emits the target event
 - `event` _string_ - Name of Power BI event (eg. 'loaded', 'rendered', 'error')
 - `callback` _function_ - User defined function. Callback function is invoked with event details as parameter
 
+**Note:** _Currently supports only 'loaded', 'rendered' and 'error' report events_
+
 **Example**:
 ```python
 # Create a method to be executed on report 'loaded' event to print 'Report is loaded'
@@ -271,6 +275,52 @@ def loaded_callback(event_details):
 
 # Bind callback method with the report 'loaded' event
 report.on('loaded', loaded_callback)
+```
+
+<br>
+
+<a name="powerbiclient.report.Report.off"></a>
+## Unregister a callback for a report event
+## off
+
+```python
+off(event)
+```
+
+Unregisters a callback on target event
+
+**Arguments**:
+
+- `event` _string_ - Name of Power BI event (eg. 'loaded', 'rendered', 'error')
+
+**Note:** _Currently supports only 'loaded', 'rendered' and 'error' report events_
+
+**Example**:
+```python
+# Unsubscribe the report 'loaded' event
+report.off('loaded')
+```
+
+<br>
+
+<a name="powerbiclient.report.Report.get_filters"></a>
+## Get the list of applied report level filters
+## get\_filters
+
+```python
+get_filters()
+```
+
+Returns the list of filters applied on the embedded Power BI report
+
+**Returns**:
+
+- `list` - list of filters
+
+**Example**:
+```python
+# Get the list of filters applied on embedded report
+filters = report.get_filters()
 ```
 
 <br>

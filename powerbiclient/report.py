@@ -66,6 +66,8 @@ class Report(DOMWidget):
         'event_name': None,
         'event_details': None
     }
+    GET_FILTERS_REQUEST_DEFAULT_STATE = False
+    REPORT_FILTERS_DEFAULT_STATE = []
     REPORT_FILTER_REQUEST_DEFAULT_STATE = {
         'filters': [],
         'request_completed': True
@@ -117,6 +119,8 @@ class Report(DOMWidget):
 
     _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
 
+    _get_filters_request = Bool(GET_FILTERS_REQUEST_DEFAULT_STATE).tag(sync=True)
+    _report_filters = List(REPORT_FILTERS_DEFAULT_STATE).tag(sync=True)
     _report_filters_request = Dict(REPORT_FILTER_REQUEST_DEFAULT_STATE).tag(sync=True)
 
     _get_pages_request = Bool(GET_PAGES_REQUEST_DEFAULT_STATE).tag(sync=True)
@@ -488,6 +492,62 @@ class Report(DOMWidget):
 
             # Start observing Power BI events
             self.observe(get_event_data, '_event_data')
+
+    def off(self, event):
+        """Unregisters a callback on target event
+        Parameters
+
+        Args:
+            event (string): Name of Power BI event (eg. 'loaded', 'rendered', 'error')
+        """
+        # Check if event is one of the Report.ALLOWED_EVENTS list
+        if event not in self.ALLOWED_EVENTS:
+            raise Exception(event + " event is not valid")
+
+        # Check if event is one of the Report.SUPPORTED_EVENTS list
+        if event not in self.SUPPORTED_EVENTS:
+            raise Exception(event + " event is not supported")
+
+        # Remove handler if registered for the current event
+        if event in self._registered_event_handlers:
+            self._registered_event_handlers.pop(event)
+
+    def get_filters(self):
+        """Returns the list of filters applied on the embedded Power BI report
+
+        Returns:
+            list: list of filters
+        """
+        if not self._embedded:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+
+        # Start getting filters on client side
+        self._get_filters_request = True
+
+        # Check if ipython kernel is available
+        if get_ipython():
+            # Wait for client-side to send list of filters
+            with ui_events() as ui_poll:
+                # While list of report filters is not received
+                while self._report_filters == self.REPORT_FILTERS_DEFAULT_STATE:
+                    ui_poll(self.PROCESS_EVENTS_ITERATION)
+                    time.sleep(self.POLLING_INTERVAL)
+                    if self._client_error:
+                        break
+
+        filters = self._report_filters
+
+        # Reset the _get_filters_request and _report_filters's value
+        self._get_filters_request = bool(self.GET_FILTERS_REQUEST_DEFAULT_STATE)
+        self._report_filters = list(self.REPORT_FILTERS_DEFAULT_STATE)
+
+        # Throw client side error
+        if self._client_error:
+            error_message = self._client_error
+            self._client_error = self.CLIENT_ERROR_DEFAULT_STATE
+            raise Exception(error_message)
+
+        return filters
 
     def update_filters(self, filters):
         """Set report level filters in the embedded report.
