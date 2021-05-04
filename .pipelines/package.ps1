@@ -5,6 +5,22 @@ Write-Host "start: python setup.py bdist_wheel"
 Write-Host "done: python setup.py bdist_wheel"
 $exitCode += $LASTEXITCODE;
 
+if ($exitCode -ne 0) {
+    Write-Host "Failed to create wheel file"
+    exit $exitCode
+}
+
+Write-Host "start: npm pack"
+& npm pack
+Write-Host "done: npm pack"
+
+$exitCode += $LASTEXITCODE;
+
+if ($exitCode -ne 0) {
+    Write-Host "Failed to create npm pack"
+    exit $exitCode
+}
+
 Write-Host "start: Get content of current folder"
 & dir
 Write-Host "done: Get content of current folder"
