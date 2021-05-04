@@ -1,5 +1,5 @@
 {
-  "name": "powerbi-client-frontend",
+  "name": "powerbi-jupyter-client",
   "version": "0.1.0",
   "description": "A Custom Jupyter Widget Library",
   "keywords": [

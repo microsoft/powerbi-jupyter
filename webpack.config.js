@@ -39,7 +39,7 @@ module.exports = [
   },
 
   /**
-   * Embeddable powerbi-client-frontend bundle
+   * Embeddable powerbi-jupyter-client bundle
    *
    * This bundle is almost identical to the notebook extension bundle. The only
    * difference is in the configuration of the webpack public path for the
@@ -54,8 +54,8 @@ module.exports = [
         filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'amd',
-        library: "powerbi-client-frontend",
-        publicPath: 'https://unpkg.com/powerbi-client-frontend@' + version + '/dist/'
+        library: "powerbi-jupyter-client",
+        publicPath: 'https://unpkg.com/powerbi-jupyter-client@' + version + '/dist/'
     },
     devtool: 'source-map',
     module: {
@@ -75,7 +75,7 @@ module.exports = [
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),
-      library: "powerbi-client-frontend",
+      library: "powerbi-jupyter-client",
       libraryTarget: 'amd'
     },
     module: {

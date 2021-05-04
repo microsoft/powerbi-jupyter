@@ -6,7 +6,7 @@ define(function() {
     window['requirejs'].config({
         map: {
             '*': {
-                'powerbi-client-frontend': 'nbextensions/powerbiclient/index',
+                'powerbi-jupyter-client': 'nbextensions/powerbiclient/index',
             },
         }
     });

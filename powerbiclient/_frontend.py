@@ -8,5 +8,5 @@
 Information about the frontend package of the widgets.
 """
 
-module_name = "powerbi-client-frontend"
+module_name = "powerbi-jupyter-client"
 module_version = "^0.1.0"
