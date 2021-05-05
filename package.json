@@ -12,7 +12,8 @@
     "lib/**/*.js",
     "dist/*.js",
     "css/*.css",
-    "powerbiclient/nbextension/static/*.js"
+    "powerbiclient/nbextension/static/*.js",
+    "powerbiclient/nbextension/static/*.js.map"
   ],
   "homepage": "https://github.com/Microsoft/powerbi-jupyter",
   "bugs": {
