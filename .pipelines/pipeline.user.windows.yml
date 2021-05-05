@@ -102,6 +102,7 @@ package:
         - to: 'Release'
           include:
             - "**/dist/*.whl"
+            - "**/*.tgz"
 
 test:
   commands:
