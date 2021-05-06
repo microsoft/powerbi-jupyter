@@ -114,7 +114,7 @@ class Report(DOMWidget):
     container_height = Float(0).tag(sync=True)
     container_width = Float(0).tag(sync=True)
 
-    _export_visual_data_request = Dict(None).tag(sync=True)
+    _export_visual_data_request = Dict(EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE).tag(sync=True)
     _visual_data = Unicode(VISUAL_DATA_DEFAULT_STATE).tag(sync=True)
 
     _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
