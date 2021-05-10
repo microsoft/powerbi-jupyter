@@ -9,7 +9,13 @@ git clone https://github.com/Microsoft/PowerBI-Jupyter.git
 
 Navigate to `powerbi-jupyter` directory after cloning
 
-First install the python package. This will also build the JS packages:
+First install the node packages. This will build the JS package:
+```bash
+npm install
+npm run build:lib
+```
+
+Now, install the python package:
 ```bash
 pip install -e ".[test, demo]"
 ```
