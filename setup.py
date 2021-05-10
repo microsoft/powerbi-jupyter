@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 from glob import glob
+from os import path
 from os.path import join as pjoin
 
 
@@ -26,6 +27,11 @@ ensure_python('>=3.4')
 
 # Get our version
 version = get_version(pjoin(name, '_version.py'))
+
+# Get Readme file content
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 nb_path = pjoin(HERE, name, 'nbextension', 'static')
 lab_path = pjoin(HERE, name, 'labextension')
@@ -62,8 +68,8 @@ cmdclass['jsdeps'] = combine_commands(
 setup_args = dict(
     name            = name,
     description     = 'A Custom Jupyter Widget Library',
-    long_description= 'README',
-    long_description_content_type= 'text/markdown',
+    long_description = long_description,
+    long_description_content_type = 'text/markdown',
     version         = version,
     scripts         = glob(pjoin('scripts', '*')),
     cmdclass        = cmdclass,
