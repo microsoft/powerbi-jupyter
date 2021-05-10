@@ -1,6 +1,6 @@
 {
   "name": "powerbi-jupyter-client",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A Custom Jupyter Widget Library",
   "keywords": [
     "jupyter",
@@ -19,7 +19,7 @@
   "bugs": {
     "url": "https://github.com/Microsoft/powerbi-jupyter/issues"
   },
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "author": {
     "name": "Microsoft"
   },
