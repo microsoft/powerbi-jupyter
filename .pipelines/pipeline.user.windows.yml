@@ -75,6 +75,7 @@ build:
             - 'LICENSE.txt'
             - 'package.json'
             - 'README.md'
+            - 'powerbiclient/nbextension/static/*.*'
 
         - to: 'source'
           include:

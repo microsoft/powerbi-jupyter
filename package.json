@@ -1,6 +1,6 @@
 {
   "name": "powerbi-jupyter-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Custom Jupyter Widget Library",
   "keywords": [
     "jupyter",
@@ -41,7 +41,6 @@
     "clean:nbextension": "rimraf powerbiclient/nbextension/static/index.js",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
-    "prepack": "npm run build:lib",
     "test": "npm run test:firefox",
     "test:chrome": "karma start --browsers=Chrome tests/karma.conf.js",
     "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true tests/karma.conf.js",

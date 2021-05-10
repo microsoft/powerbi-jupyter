@@ -28,11 +28,14 @@ Write-Host "start: try install latest npm version"
 & npm install npm@latest -g
 Write-Host "done: try install latest npm version"
 
+& npm install
+
 # Do not update $exitCode because we do not want to fail if install latest pip, wheel and npm version fails.
 
-Write-Host 'start: pip install -e ".[test, demo]"'
-& python -m pip install -e ".[test, demo]" --no-warn-script-location
-Write-Host 'done: pip install -e ".[test, demo]"'
-$exitCode += $LASTEXITCODE;
+# TODO: support python kernel testing in CDPX pipeline without using prepack script
+# Write-Host 'start: pip install -e ".[test, demo]"'
+# & python -m pip install -e ".[test]" --no-warn-script-location
+# Write-Host 'done: pip install -e ".[test]"'
+# $exitCode += $LASTEXITCODE;
 
 exit $exitCode
