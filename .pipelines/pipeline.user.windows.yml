@@ -55,6 +55,13 @@ version:
   minor: 0          # <---- Required field but not being used for 'custom' scheme
   system: 'custom'  # <---- Set this to 'custom'. we will build the version using package.json in versioning commands.
 
+versioning:
+  commands:
+    - !!defaultcommand
+      name: 'Set Version'
+      arguments: 'version.ps1'
+      command: '.pipelines\cdpx_run_ps.cmd'
+
 restore:
   commands:
     - !!defaultcommand
