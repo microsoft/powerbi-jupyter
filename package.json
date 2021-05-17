@@ -1,6 +1,6 @@
 {
   "name": "powerbi-jupyter-client",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "description": "A Custom Jupyter Widget Library",
   "keywords": [
     "jupyter",
@@ -11,6 +11,7 @@
   "files": [
     "lib/**/*.js",
     "dist/*.js",
+    "dist/*.js.map",
     "css/*.css"
   ],
   "homepage": "https://github.com/Microsoft/powerbi-jupyter",
