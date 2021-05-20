@@ -157,3 +157,6 @@ powerbiclient/labextension
 
 # VS Code
 .vscode
+
+# package-lock
+package-lock.json

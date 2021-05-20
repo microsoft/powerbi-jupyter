@@ -191,7 +191,7 @@ export class ReportView extends DOMWidgetView {
     // Check if the embedding mode is create mode
     if (createReportMode) {
       // Create blank Power BI report
-      this.report = powerbi.createReport(this.reportContainer, reportConfig) as Report;
+      this.report = powerbi.createReport(this.reportContainer, reportConfig as models.IReportCreateConfiguration) as Report;
     } else {
       // Phased loading
       this.report = powerbi.load(this.reportContainer, reportConfig) as Report;
