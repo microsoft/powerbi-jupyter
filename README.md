@@ -24,7 +24,7 @@ jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbiclient
 ```
 For the list of features, refer [DOCUMENTATION](./DOCUMENTATION.md).
 
-## [Demo Notebook](\demo\demo.ipynb)
+## [Demo Notebook](./demo/demo.ipynb)
 A Jupyter notebook that embeds a sample report.
 It demonstrates the complete flow of embedding and interacting with Power BI report i.e. embedding a Power BI report, setting report event handlers, get list of pages, get list of visuals, export and visualize visual data and apply filters.
 
