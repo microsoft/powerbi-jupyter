@@ -22,7 +22,7 @@ the nbextension:
 ```bash
 jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbiclient
 ```
-For the list of features, refer [DOCUMENTATION](\DOCUMENTATION.md).
+For the list of features, refer [DOCUMENTATION](./DOCUMENTATION.md).
 
 ## [Demo Notebook](/demo/demo.ipynb)
 A Jupyter notebook that embeds a sample report.
