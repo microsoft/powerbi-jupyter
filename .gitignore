@@ -160,3 +160,6 @@ powerbiclient/labextension
 
 # package-lock
 package-lock.json
+
+# Other
+owners.txt
