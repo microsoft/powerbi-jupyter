@@ -21,11 +21,15 @@ import { getActivePageSize, getRequestedPage, setTokenExpirationListener } from 
 import { IPageNode } from 'page';
 import { IReportNode } from 'report';
 
+// Jupyter SDK type to be passed with service instance creation
+const JUPYTER_SDK_TYPE = 'powerbi-jupyter';
+
 // Initialize powerbi service
 const powerbi = new service.Service(
   factories.hpmFactory,
   factories.wpmpFactory,
-  factories.routerFactory
+  factories.routerFactory,
+  { type: JUPYTER_SDK_TYPE, sdkWrapperVersion: MODULE_VERSION }
 );
 
 const EXPORT_DATA_DEFAULT_STATE: ExportVisualDataRequest = {

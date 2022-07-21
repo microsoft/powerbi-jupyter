@@ -32,7 +32,7 @@
     "build": "npm run build:lib && npm run build:nbextension",
     "build:labextension": "npm run clean:labextension && mkdirp powerbiclient/labextension && cd powerbiclient/labextension && npm pack ../..",
     "build:lib": "tsc",
-    "build:nbextension": "webpack -p",
+    "build:nbextension": "webpack --mode production",
     "build:all": "npm run build:labextension && npm run build:nbextension",
     "clean": "npm run clean:lib && npm run clean:nbextension",
     "clean:lib": "rimraf lib",
@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^4.1.0",
-    "powerbi-client": "2.17.1"
+    "powerbi-client": "^2.21.1"
   },
   "devDependencies": {
     "@phosphor/application": "^1.6.0",
@@ -87,7 +87,7 @@
     "ts-loader": "^5.2.1",
     "typescript": "~3.8",
     "webpack": "^5.71.0",
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^4.10.0"
   },
   "jupyterlab": {
     "extension": "lib/plugin"
