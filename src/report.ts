@@ -18,8 +18,6 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 // Import the CSS
 import '../css/report.css';
 import { getActivePageSize, getRequestedPage, setTokenExpirationListener } from './utils';
-import { IPageNode } from 'page';
-import { IReportNode } from 'report';
 
 // Jupyter SDK type to be passed with service instance creation
 const JUPYTER_SDK_TYPE = 'powerbi-jupyter';
@@ -106,14 +104,6 @@ interface ExportVisualDataRequest {
 interface ReportFilterRequest {
   filters: models.ReportLevelFilters[];
   request_completed: boolean;
-}
-
-interface PageWithOptionalReport {
-  report?: IReportNode;
-}
-
-interface VisualWithOptionalPage {
-  page?: IPageNode;
 }
 
 interface DOMRectSize {
@@ -441,7 +431,7 @@ export class ReportView extends DOMWidgetView {
       }
 
       // Remove 'report' property from Page object to handle nested property loop
-      const pagesWithoutReport = pages.map((page: PageWithOptionalReport) => {
+      const pagesWithoutReport = pages.map((page) => {
         delete page.report;
         return page;
       });
@@ -482,7 +472,7 @@ export class ReportView extends DOMWidgetView {
       }
 
       // Remove 'page' property from Visual object to handle nested property loop
-      const visualsWithoutPage = visuals.map((visual: VisualWithOptionalPage) => {
+      const visualsWithoutPage = visuals.map((visual) => {
         delete visual.page;
         return visual;
       });
