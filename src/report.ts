@@ -133,8 +133,8 @@ export class ReportView extends DOMWidgetView {
 
     // Observe changes in the traitlets in Python, and define custom callback.
     this.model.on('change:_embed_config', this.embedConfigChanged, this);
-    this.model.on('change:container_height', this.dimensionsChanged, this);
-    this.model.on('change:container_width', this.dimensionsChanged, this);
+    this.model.on('change:container_height', this.containerSizeChanged, this);
+    this.model.on('change:container_width', this.containerSizeChanged, this);
     this.model.on('change:_export_visual_data_request', this.exportVisualDataRequestChanged, this);
     this.model.on('change:_get_filters_request', this.getFiltersRequestChanged, this);
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
@@ -144,9 +144,11 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:_get_bookmarks_request', this.getBookmarksRequestChanged, this);
   }
 
-  dimensionsChanged(): void {
-    this.reportContainer.style.height = `${this.model.get('container_height')}px`;
-    this.reportContainer.style.width = `${this.model.get('container_width')}px`;
+  containerSizeChanged(): void {
+    if (this.reportContainer) {
+      this.reportContainer.style.height = `${this.model.get('container_height')}px`;
+      this.reportContainer.style.width = `${this.model.get('container_width')}px`;
+    }
   }
 
   setTokenExpiredFlag(): void {
@@ -216,16 +218,22 @@ export class ReportView extends DOMWidgetView {
           }
         }
 
-        // Get dimensions of output cell
-        const DOMRect: DOMRectSize = this.el.getBoundingClientRect();
+        let width = this.model.get('container_width') as number;
+        let height = this.model.get('container_height') as number;
 
-        const outputCellWidth = DOMRect.width || 980;
-        const newHeight = outputCellWidth * aspectRatio;
+        if (!width || !height) {
+          // Get dimensions of output cell
+          const DOMRect: DOMRectSize = this.el.getBoundingClientRect();
+
+          width = DOMRect.width || 980;
+          height = width * aspectRatio;
+        }
 
         // Set dimensions of report container
-        this.reportContainer.style.width = `${outputCellWidth}px`;
-        this.reportContainer.style.height = `${newHeight}px`;
+        this.reportContainer.style.width = `${width}px`;
+        this.reportContainer.style.height = `${height}px`;
 
+        
         // Show the report container
         this.reportContainer.style.visibility = 'visible';
 

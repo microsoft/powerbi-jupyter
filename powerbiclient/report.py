@@ -145,7 +145,7 @@ class Report(DOMWidget, HasTraits):
                 raise TraitError('Invalid pageName ', proposal['value']['pageName'])
             if (type(proposal['value']['visualName']) is not str):
                 raise TraitError('Invalid visualName ', proposal['value']['visualName'])
-            if (type(proposal['value']['rows']) is not int) or (proposal['value']['rows'] < 0):
+            if (proposal['value']['rows'] is not None) and ((type(proposal['value']['rows']) is not int) or (proposal['value']['rows'] < 0)):
                 raise TraitError('Invalid rows ', proposal['value']['rows'])
             if type(proposal['value']['exportDataType']) is not int:
                 raise TraitError('Invalid exportDataType ', proposal['value']['underlyingData'])
@@ -327,11 +327,9 @@ class Report(DOMWidget, HasTraits):
         """Set width and height of Power BI report in px
 
         Args:
-            container_height (number): report height
-            container_width (number): report width
+            container_height (float): report height
+            container_width (float): report width
         """
-        if not self._embedded:
-            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
         if container_height < 0:
             raise TraitError('Invalid report height {0}'.format(container_height))
         if container_width < 0:
@@ -340,13 +338,13 @@ class Report(DOMWidget, HasTraits):
         self.container_height = container_height
         self.container_width = container_width
 
-    def export_visual_data(self, page_name, visual_name, rows=10, export_data_type=ExportDataType.SUMMARIZED.value):
+    def export_visual_data(self, page_name, visual_name, rows=None, export_data_type=ExportDataType.SUMMARIZED.value):
         """Returns the data of given visual of the embedded Power BI report
 
         Args:
             page_name (string): Page name of the report's page containing the target visual
             visual_name (string): Visual's unique name 
-            rows (int, optional): Number of rows of data. Defaults to 10
+            rows (int, optional): Number of rows of data to export (default - exports all rows)
             export_data_type (number, optional): Type of data to be exported (SUMMARIZED: 0, UNDERLYING: 1).
                 (Default = SUMMARIZED)
 
