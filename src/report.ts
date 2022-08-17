@@ -79,6 +79,7 @@ export class ReportModel extends DOMWidgetModel {
       _report_bookmarks: [],
       _token_expired: false,
       _client_error: null,
+      _init_error: null
     };
   }
 
@@ -257,12 +258,9 @@ export class ReportView extends DOMWidgetView {
     });
 
     this.report.on('error', (errorMessage) => {
-      // Invoke error event handler on kernel side
-      this.model.set('_event_data', {
-        event_name: 'error',
-        event_details: errorMessage.detail,
-      });
-
+      // Invoke error handling on kernel side
+      const messageDetail = (errorMessage as any)?.detail;
+      this.model.set('_init_error', `${messageDetail?.message} - ${messageDetail?.detailedMessage}`);
       this.touch();
     });
 
