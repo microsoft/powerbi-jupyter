@@ -40,7 +40,7 @@ undefined = object()
 def mock_comm():
     _widget_attrs['_comm_default'] = getattr(Widget, '_comm_default', undefined)
     Widget._comm_default = lambda self: MockComm()
-    _widget_attrs['_ipython_display_'] = Widget()
+    _widget_attrs['_ipython_display_'] = Widget
     def raise_not_implemented(*args, **kwargs):
         raise NotImplementedError()
     Widget._ipython_display_ = raise_not_implemented
