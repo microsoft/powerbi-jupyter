@@ -7,7 +7,6 @@
 import pytest
 
 from ipykernel.comm import Comm
-import ipywidgets
 from ipywidgets import Widget
 
 class MockComm(Comm):
