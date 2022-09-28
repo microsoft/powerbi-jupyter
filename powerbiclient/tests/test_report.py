@@ -5,12 +5,15 @@
 # Licensed under the MIT license.
 
 import pytest
+import requests_mock
 
 from traitlets.traitlets import TraitError
 from ..report import Report
 
 ACCESS_TOKEN = 'dummy_access_token'
 EMBED_URL = 'dummy_embed_url'
+GROUP_ID = 'dummy_group_id'
+REPORT_ID = 'dummy_report_id'
 PAGE_NAME = 'dummy_page_name'
 VISUAL_NAME = 'dummy_visual_name'
 VISUAL_DATA = 'dummy_visual_data'
@@ -21,19 +24,25 @@ PAGE_VISUALS = ['dummy_page_visuals']
 REPORT_BOOKMARKS = ['dummy_report_bookmarks']
 REPORT_FILTERS = ['dummy_report_filters']
 
+def create_test_report(embedded=True, permissions=None):
+    with requests_mock.Mocker() as rm:
+        request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{GROUP_ID}/reports/{REPORT_ID}"
+        rm.get(request_url, json={ 'embedUrl': EMBED_URL })
+        report = Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
+        report._embedded = embedded
+        return report
 
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
         report.comm = mock_comm
 
         new_height = 450
         new_width = 800
 
         # Act
-        report.set_dimensions(new_height, new_width)
+        report.set_size(new_height, new_width)
 
         # Assert that comm sends all traitlet changes to frontend
         assert mock_comm.log_send[0][1]['data']['state'] == {
@@ -45,8 +54,7 @@ class TestCommAndTraitlets:
 
     def test_export_visual_data_request_validators(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
 
         # Act + Assert
         with pytest.raises(TraitError):
@@ -54,8 +62,7 @@ class TestCommAndTraitlets:
 
     def test_report_filters_request_validators(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
 
         # Act + Assert
         with pytest.raises(TraitError):
@@ -67,7 +74,7 @@ class TestCommAndTraitlets:
 
         # Act + Assert
         with pytest.raises(TraitError):
-            report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL, token_type='AAD')
+            report = create_test_report(permissions="INVALID_PERMISSIONS")
 
         assert report is None
 
@@ -75,7 +82,7 @@ class TestCommAndTraitlets:
 class TestReportConstructor:
     def test_report_constructor(self):
         # Act
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report(embedded=False)
 
         # Assert
         assert report._embed_config == {
@@ -85,40 +92,22 @@ class TestReportConstructor:
             'tokenType': 0,
             'tokenExpiration': 0,
             'viewMode': 0,
-            'permissions': 0,
+            'permissions': None,
             'datasetId': None
         }
         assert report._embedded == False
-
-    def test_report_constructor_token_type(self):
-        # Act
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL, token_type=1)
-
-        # Assert
-        assert report._embed_config == {
-            'type': 'report',
-            'accessToken': ACCESS_TOKEN,
-            'embedUrl': EMBED_URL,
-            'tokenType': 1,
-            'tokenExpiration': 0,
-            'viewMode': 0,
-            'permissions': 0,
-            'datasetId': None
-        }
 
 
 class TestSettingNewEmbedConfig:
     def test_set_embed_config(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        # Simulate that report was earlier embedded
-        report._embedded = True
+        report = create_test_report()
 
         new_access_token = "new_dummy_access_token"
         new_embed_url = 'new_dummy_embed_url'
 
         # Act
-        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config['permissions'], dataset_id=report._embed_config['datasetId'], token_type=report._embed_config['tokenType'], token_expiration=report._embed_config['tokenExpiration'])
+        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config['permissions'], dataset_id=report._embed_config['datasetId'], token_expiration=report._embed_config['tokenExpiration'])
 
         # Assert
         assert report._embed_config == {
@@ -128,7 +117,7 @@ class TestSettingNewEmbedConfig:
             'tokenType': 0,
             'tokenExpiration': 0,
             'viewMode': 0,
-            'permissions': 0,
+            'permissions': None,
             'datasetId': None
         }
         assert report._embedded == False
@@ -136,13 +125,12 @@ class TestSettingNewEmbedConfig:
 
 class TestChangingNewReportSize:
     def test_change_size(self):
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
 
         new_height = 500
         new_width = 900
 
-        report.set_dimensions(new_height, new_width)
+        report.set_size(new_height, new_width)
 
         # Assert traitlets are updated
         assert report.container_height == new_height
@@ -152,8 +140,7 @@ class TestChangingNewReportSize:
 class TestEventHandlers:
     def test_throws_for_invalid_event(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
         event_name = 'tileClicked'
 
         # Act
@@ -170,8 +157,7 @@ class TestEventHandlers:
 
     def test_throws_for_unsupported_event(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
         event_name = 'saved'
 
         # Act
@@ -188,8 +174,7 @@ class TestEventHandlers:
 
     def test_setting_event_handler(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
         event_name = 'loaded'
 
         # Act
@@ -205,8 +190,7 @@ class TestEventHandlers:
 
     def test_setting_event_handler_again(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
         event_name = 'loaded'
 
         # Act
@@ -229,7 +213,7 @@ class TestEventHandlers:
 
     def test_not_setting_event_handler(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report()
 
         # Act
         # Does not set any handler
@@ -239,8 +223,7 @@ class TestEventHandlers:
 
     def test_unsetting_event_handler(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = True
+        report = create_test_report()
         event_name = 'loaded'
 
         # Act
@@ -264,8 +247,7 @@ class TestEventHandlers:
 class TestExportData:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = False
+        report = create_test_report(embedded=False)
 
         # Act + Assert
         with pytest.raises(Exception):
@@ -273,10 +255,9 @@ class TestExportData:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report()
         # Data sent by frontend (Setting this upfront will prevent extract_data from waiting for data)
         report._visual_data = VISUAL_DATA
-        report._embedded = True
 
         # Act
         returned_data = report.export_visual_data(PAGE_NAME, VISUAL_NAME, VISUAL_DATA_ROWS)
@@ -290,8 +271,7 @@ class TestExportData:
 class TestGetPages:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = False
+        report = create_test_report(embedded=False)
 
         # Act + Assert
         with pytest.raises(Exception):
@@ -299,10 +279,9 @@ class TestGetPages:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report()
         # Data sent by frontend (Setting this upfront will prevent get_pages from waiting for list of pages)
         report._report_pages = REPORT_PAGES
-        report._embedded = True
 
         # Act
         returned_pages = report.get_pages()
@@ -316,8 +295,7 @@ class TestGetPages:
 class TestGetVisuals:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = False
+        report = create_test_report(embedded=False)
 
         # Act + Assert
         with pytest.raises(Exception):
@@ -325,10 +303,9 @@ class TestGetVisuals:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report()
         # Data sent by frontend (Setting this upfront will prevent get_pages from waiting for list of pages)
         report._page_visuals = PAGE_VISUALS
-        report._embedded = True
 
         # Act
         returned_visuals = report.visuals_on_page(PAGE_NAME)
@@ -342,8 +319,7 @@ class TestGetVisuals:
 class TestGetBookmarks:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = False
+        report = create_test_report(embedded=False)
 
         # Act + Assert
         with pytest.raises(Exception):
@@ -351,11 +327,10 @@ class TestGetBookmarks:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report()
 
         # Data sent by frontend (Setting this upfront will prevent get_bookmarks from waiting for list of bookmarks)
         report._report_bookmarks = REPORT_BOOKMARKS
-        report._embedded = True
 
         # Act
         returned_bookmarks = report.get_bookmarks()
@@ -368,8 +343,7 @@ class TestGetBookmarks:
 class TestGetFilters:
     def test_throws_when_not_embedded(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
-        report._embedded = False
+        report = create_test_report(embedded=False)
 
         # Act + Assert
         with pytest.raises(Exception):
@@ -377,11 +351,10 @@ class TestGetFilters:
 
     def test_returned_data(self):
         # Arrange
-        report = Report(access_token=ACCESS_TOKEN, embed_url=EMBED_URL)
+        report = create_test_report()
 
         # Data sent by frontend (Setting this upfront will prevent get_filters from waiting for list of report level filters)
         report._report_filters = REPORT_FILTERS
-        report._embedded = True
 
         # Act
         returned_filters = report.get_filters()
