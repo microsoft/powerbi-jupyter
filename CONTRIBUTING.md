@@ -21,7 +21,9 @@ pip install -e ".[test, demo]"
 ```
 
 When developing your extensions, you need to manually enable your extensions with the
-notebook / lab frontend. For lab, this is done by the command:
+notebook / lab frontend. 
+
+For lab, this is done by the command:
 
 ```
 jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
@@ -79,8 +81,8 @@ If you make changes to the python code then you will need to restart the noteboo
 ### Frontend:
 `npm run test`<br/>
 `npm run test:chrome`<br/>
-`npm run firefox`<br/>
-`npm run ie`<br/>
+`npm run test:firefox`<br/>
+`npm run test:ie`<br/>
 `npm run debug`<br/>
 
 ### Python:

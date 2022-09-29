@@ -44,6 +44,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+compiledTests
 
 # Translations
 *.mo
@@ -163,3 +164,4 @@ package-lock.json
 
 # Other
 owners.txt
+.npmrc

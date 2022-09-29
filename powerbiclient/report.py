@@ -14,15 +14,15 @@ import requests
 from IPython import get_ipython
 from ipywidgets import DOMWidget
 from jupyter_ui_poll import ui_events
-from traitlets import Bool, Dict, Float, Unicode, List, TraitError, validate
+from traitlets import Bool, Dict, Float, Unicode, List, TraitError, validate, HasTraits, observe
 
-from ._frontend import module_name, module_version
-from .models import Permissions, EmbedMode, TokenType, ExportDataType, EmbedType
+from .models import EmbedMode, TokenType, ExportDataType
+from .authentication import DeviceCodeLoginAuthentication, AuthenticationResult
+from ._version import __version__
 
-from .authentication import DeviceCodeLoginAuthentication, CREATE_REPORT_SCOPES
+MODULE_NAME = "powerbi-jupyter-client"
 
-
-class Report(DOMWidget):
+class Report(DOMWidget, HasTraits):
     """PowerBI report embedding widget"""
 
     # Name of the widget view class in front-end
@@ -32,16 +32,16 @@ class Report(DOMWidget):
     _model_name = Unicode('ReportModel').tag(sync=True)
 
     # Name of the front-end module containing widget view
-    _view_module = Unicode('powerbi-jupyter-client').tag(sync=True)
+    _view_module = Unicode(MODULE_NAME).tag(sync=True)
 
     # Name of the front-end module containing widget model
-    _model_module = Unicode('powerbi-jupyter-client').tag(sync=True)
+    _model_module = Unicode(MODULE_NAME).tag(sync=True)
 
     # Version of the front-end module containing widget view
-    _view_module_version = Unicode('^0.1.0').tag(sync=True)
+    _view_module_version = Unicode(__version__).tag(sync=True)
 
     # Version of the front-end module containing widget model
-    _model_module_version = Unicode('^0.1.0').tag(sync=True)
+    _model_module_version = Unicode(__version__).tag(sync=True)
 
     # Default values for widget traits
     EMBED_CONFIG_DEFAULT_STATE = {
@@ -81,6 +81,7 @@ class Report(DOMWidget):
     REPORT_BOOKMARK_DEFAULT_NAME = ''
     TOKEN_EXPIRED_DEFAULT_STATE = False
     CLIENT_ERROR_DEFAULT_STATE = ''
+    INIT_ERROR_DEFAULT_STATE = ''
 
     # Other constants
     REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
@@ -91,17 +92,14 @@ class Report(DOMWidget):
     # Check for UI every n seconds
     POLLING_INTERVAL = 0.5
 
-    # Authentication object
-    _auth = None
-
     # Allowed events list for Power BI report
     ALLOWED_EVENTS = ['loaded', 'saved', 'rendered', 'saveAsTriggered', 'error', 'dataSelected', 'buttonClicked', 'filtersApplied', 'pageChanged', 'commandTriggered', 'swipeStart', 'swipeEnd', 'bookmarkApplied', 'dataHyperlinkClicked', 'visualRendered', 'visualClicked', 'selectionChanged']
 
     # Supported events list for Report widget
-    SUPPORTED_EVENTS = ['loaded', 'rendered', 'error']
+    SUPPORTED_EVENTS = ['loaded', 'rendered']
 
-    # Default request body for generate token API
-    DEFAULT_EMBED_TOKEN_REQUEST_BODY = { "accessLevel": "View" }
+    # Authentication object
+    _auth = None
 
     # Widget specific properties.
     # Widget properties are defined as traitlets. Any property tagged with `sync=True`
@@ -138,6 +136,8 @@ class Report(DOMWidget):
 
     _client_error = Unicode(CLIENT_ERROR_DEFAULT_STATE).tag(sync=True)
 
+    _init_error = Unicode(INIT_ERROR_DEFAULT_STATE).tag(sync=True)
+
     @validate('_export_visual_data_request')
     def _valid_export_visual_data_request(self, proposal):
         if proposal['value'] != self.EXPORT_VISUAL_DATA_REQUEST_DEFAULT_STATE:
@@ -145,7 +145,7 @@ class Report(DOMWidget):
                 raise TraitError('Invalid pageName ', proposal['value']['pageName'])
             if (type(proposal['value']['visualName']) is not str):
                 raise TraitError('Invalid visualName ', proposal['value']['visualName'])
-            if (type(proposal['value']['rows']) is not int) or (proposal['value']['rows'] < 0):
+            if (proposal['value']['rows'] is not None) and ((type(proposal['value']['rows']) is not int) or (proposal['value']['rows'] < 0)):
                 raise TraitError('Invalid rows ', proposal['value']['rows'])
             if type(proposal['value']['exportDataType']) is not int:
                 raise TraitError('Invalid exportDataType ', proposal['value']['underlyingData'])
@@ -176,77 +176,51 @@ class Report(DOMWidget):
                 raise TraitError('Invalid tokenExpiration ', proposal['value']['tokenExpiration'])
             if (type(proposal['value']['viewMode']) is not int):
                 raise TraitError('Invalid viewMode ', proposal['value']['viewMode'])
-            if (type(proposal['value']['permissions']) is not int):
+            if (proposal['value']['permissions'] is not None and type(proposal['value']['permissions']) is not int):
+                print("invalid permissions")
                 raise TraitError('Invalid permissions ', proposal['value']['permissions'])
 
         return proposal['value']
 
+    # Raise exception for errors when embedding the report
+    @observe('_init_error')
+    def _on_error(self, change):
+        raise Exception(change['new'])
+
     # Methods
-    def __init__(self, access_token=None, embed_url=None, token_type=TokenType.AAD.value, group_id=None, report_id=None, auth=None, embed_token_request_body=None , view_mode=EmbedMode.VIEW.value, permissions=Permissions.READ.value, client_id=None, tenant=None, scopes=None, dataset_id=None, **kwargs):
+    def __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=None, dataset_id=None, **kwargs):
         """Create an instance of Power BI report
 
         Args:
-            access_token (string): Optional.
-                access token, which will be used to embed a Power BI report.
-                If not provided, authentication object will be used (to be provided using `auth` parameter)
-
-            embed_url (string): Optional.
-                embed URL of Power BI report.
-                If not provided, `group_id` and `report_id` parameters will be used to generate embed URL
-
-            token_type (number): Optional.
-                type of access token (0: AAD, 1: EMBED).
-                (Default = AAD)
-
-            group_id (string): Optional.
-                Id of Power BI Group or Workspace where your report resides.
-                It will be used if `embed_url` is not provided
+            group_id (string): Required.
+                Id of Power BI Workspace where your report resides.
 
             report_id (string): Optional.
-                Id of Power BI report.
-                It will be used if `embed_url` is not provided
+                Id of Power BI report. To be provided if user wants to view or edit a report.
 
-            auth (object): Optional.
-                Authentication object.
-                It will be used if `access_token` is not provided.
-                If not provided, Power BI User will be authenticated automatically using Device Flow authentication
+            access_token (string): Optional.
+                Access token, which will be used to embed a Power BI report.
+                If not provided, authentication object will be used (to be provided using `auth` parameter).
 
-            embed_token_request_body (JSON): Optional.
-                JSON formatted request body to be used while calling Reports GenerateTokenInGroup API.
-                \n For embedding Power BI report, refer: https://docs.microsoft.com/en-us/rest/api/power-bi/embedtoken/reports_generatetokeningroup.
-                \n For creating Power BI report, refer: https://docs.microsoft.com/en-us/rest/api/power-bi/embedtoken/datasets_generatetokeningroup.
-                It will be used if MasterUserAuthentication or ServicePrincipalAuthentication class object is provided using `auth` parameter.
-                (Default = { "accessLevel": "View" })
+            auth (string or object): Optional.
+                We have 3 authentication options to embed a Power BI report:
+                 - Access token (string)
+                 - Authentication object (object) - instance of AuthenticationResult (DeviceCodeLoginAuthentication or InteractiveLoginAuthentication)
+                 - If not provided, Power BI user will be authenticated using Device Flow authentication
 
             view_mode (number): Optional.
                 Mode for embedding Power BI report (VIEW: 0, EDIT: 1, CREATE: 2).
-                To be provided if you want to edit or create a report.
+                To be provided if user wants to edit or create a report.
                 (Default = VIEW)
             
             permissions (number): Optional.
                 Permissions required while embedding report in EDIT mode.
+                Required when the report is embedded in EDIT mode by passing `1` in `view_mode` parameter.
                 Values for permissions:
-                \n `READ` - Users can view the report.
-                \n `READWRITE` - Users can view, edit, and save the report.
-                \n `COPY` - Users can save a copy of the report by using Save As.
-                \n `CREATE` - Users can create a new report.
-                \n `ALL` - Users can create, view, edit, save, and save a copy of the report.
-                \n To be provided if the report is embedded in EDIT mode by passing `1` in `view_mode` parameter.
-                (Default = READ)
-
-            client_id (string): Optional.
-                Your app has a client Id after you register it on AAD.
-                To be provided if user wants to authenticate using own Azure AD app and `access_token` or `auth` is not provided.
-                Power BI User will be authenticated automatically using Device Flow authentication using this client Id.
-                (Default = Microsoft Azure Cross-platform Command Line Interface AAD app Id)
-
-            scopes (list[string]): Optional.
-                Scopes required to access Power BI API
-                (Default = Power BI API default permissions)
-
-            tenant (string): Optional.
-                Organization tenant Id
-                (Default = "organizations")
+                `READWRITE` - Users can view, edit, and save the report.
+                `COPY` - Users can save a copy of the report by using Save As.
+                `CREATE` - Users can create a new report.
+                `ALL` - Users can create, view, edit, save, and save a copy of the report.
 
             dataset_id (string): Optional.
                 Create report based on the dataset configured on Power BI workspace.
@@ -257,73 +231,37 @@ class Report(DOMWidget):
         """
         token_expiration = 0
         try:
-            # Get access token for the report using authentication
-            if not access_token:
-                if not auth:
+            # Get access token using authentication
+            if isinstance(auth, str):
+                access_token = auth
+            else:
+                if auth is None:
+                    # Use DeviceCodeLoginAuthentication if no authentication is provided
                     if not Report._auth:
-                        if view_mode == EmbedMode.CREATE.value:
-                            if not client_id:
-                                raise Exception("client_id is required")
-
-                            if not scopes:
-                                scopes = CREATE_REPORT_SCOPES
-
-                            # Set DeviceCodeLoginAuthentication as authentication method to get access token for creating Power BI report
-                            Report._auth = DeviceCodeLoginAuthentication(client_id=client_id, scopes=scopes, tenant=tenant)
-                        else:
-                            # Set DeviceCodeLoginAuthentication to be the default global authentication method
-                            Report._auth = DeviceCodeLoginAuthentication(client_id=client_id, scopes=scopes, tenant=tenant)
+                        Report._auth = DeviceCodeLoginAuthentication()
                     auth = Report._auth
+                elif not isinstance(auth, AuthenticationResult):
+                    raise Exception("Given auth parameter is invalid")
+                
                 self._auth = auth
+                access_token = self._auth.get_access_token()
+                token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
 
-                # Perform UserOwnsData embedding
-                if self._auth.embed_type is EmbedType.USEROWNSDATA.value:
-                    access_token = self._auth.get_access_token()
-                    token_type = TokenType.AAD.value
-                    token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
-
-                # Perform AppOwnsData embedding
-                else:
-                    if not embed_token_request_body:
-                        embed_token_request_body = self.DEFAULT_EMBED_TOKEN_REQUEST_BODY
-
-                    # Generate embed token using access token
-                    if view_mode == EmbedMode.CREATE.value:
-                        if not group_id or not dataset_id:
-                            raise Exception("Group Id and Dataset Id are required")
-                        access_token = self._generate_embed_token(group_id=group_id, report_id=None, dataset_id=dataset_id, access_token=self._auth.get_access_token(), token_request_body=embed_token_request_body)
-                    else:
-                        if not group_id or not report_id:
-                            raise Exception("Group Id and Report Id are required")
-                        access_token = self._generate_embed_token(group_id=group_id, report_id=report_id, dataset_id=None, access_token=self._auth.get_access_token(), token_request_body=embed_token_request_body)
-                    token_type = TokenType.EMBED.value
-
-            # Get embed URL for the report using access token
-            if not embed_url:
-                token = access_token
-                if token_type == TokenType.EMBED.value:
-                    if not self._auth:
-                        raise Exception("Cannot get embed URL using embed token")
-                    token = self._auth.get_access_token()
-
-                if view_mode == EmbedMode.CREATE.value:
-                    if not group_id or not dataset_id:
-                        raise Exception("Group Id and Dataset Id are required")
-                    request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/datasets/{dataset_id}"
-                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + token})
-                    if not response.ok:
-                        raise Exception("Get embed URL failed with status code ", response.status_code)
-                    embed_url = response.json()['createReportEmbedURL']
-                else:
-                    if not group_id or not report_id:
-                        raise Exception("Group Id and Report Id are required")
-                    request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/reports/{report_id}"
-                    response = requests.get(request_url, headers={'Authorization': 'Bearer ' + token})
-                    if not response.ok:
-                        raise Exception("Get embed URL failed with status code ", response.status_code)
-                    embed_url = response.json()['embedUrl']
+            # Get embed URL            
+            if view_mode == EmbedMode.CREATE.value:
+                if not group_id or not dataset_id:
+                    raise Exception("Group Id and Dataset Id are required")
+                request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/datasets/{dataset_id}"
+                response_key = "createReportEmbedURL"
+            else:
+                if not group_id or not report_id:
+                    raise Exception("Group Id and Report Id are required")
+                request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/reports/{report_id}"
+                response_key = "embedUrl"
+            embed_url = self._get_embed_url(request_url=request_url, token=access_token, response_key=response_key)
+        
         except Exception as ex:
-            raise Exception("Could not create access token or embed URL: ", ex)
+            raise Exception("Could not create access token or embed URL: {0}".format(ex))
 
         # Tells if Power BI events are being observed
         self._observing_events = False
@@ -332,7 +270,7 @@ class Report(DOMWidget):
         self._registered_event_handlers = dict(
             self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE)
 
-        self._set_embed_config(access_token=access_token, embed_url=embed_url, view_mode=view_mode, permissions=permissions, dataset_id=dataset_id, token_type=token_type, token_expiration=token_expiration)
+        self._set_embed_config(access_token=access_token, embed_url=embed_url, view_mode=view_mode, permissions=permissions, dataset_id=dataset_id, token_expiration=token_expiration)
         self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
@@ -343,8 +281,14 @@ class Report(DOMWidget):
             if not self._auth:
                 raise Exception("Authentication context not found")
             self._auth.refresh_token()
-            self._set_embed_config(access_token=self._auth.get_access_token(), embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_type=self._embed_config['tokenType'], token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
+            self._set_embed_config(access_token=self._auth.get_access_token(), embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
             self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
+
+    def _get_embed_url(self, request_url, token, response_key):
+        response = requests.get(request_url, headers={'Authorization': 'Bearer ' + token})
+        if not response.ok:
+            raise Exception("Get embed URL failed with status code {0}".format(response.status_code))
+        return response.json()[response_key]
 
     def set_access_token(self, access_token):
         """Set access token for Power BI report
@@ -354,9 +298,9 @@ class Report(DOMWidget):
         """
         if not access_token:
             raise Exception("Access token cannot be empty")
-        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_type=self._embed_config['tokenType'], token_expiration=self._embed_config['tokenExpiration'])
+        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_expiration=self._embed_config['tokenExpiration'])
 
-    def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id, token_type, token_expiration):
+    def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id, token_expiration):
         """Set embed configuration parameters of Power BI report
 
         Args:
@@ -365,14 +309,13 @@ class Report(DOMWidget):
             view_mode (number): mode for embedding Power BI report (0: View, 1: Edit, 2: Create)
             permissions (number): permissions required while embedding report in Edit mode
             dataset_id (string): create report based on the dataset configured on Power BI workspace
-            token_type (number): type of access token (0: Aad, 1: Embed)
             token_expiration (number): expiration timestamp of the access token
         """
         self._embed_config = {
             'type': 'report',
             'accessToken': access_token,
             'embedUrl': embed_url,
-            'tokenType': token_type,
+            'tokenType': TokenType.AAD.value,
             'tokenExpiration': token_expiration,
             'viewMode': view_mode,
             'permissions': permissions,
@@ -380,30 +323,28 @@ class Report(DOMWidget):
         }
         self._embedded = False
 
-    def set_dimensions(self, container_height, container_width):
+    def set_size(self, container_height, container_width):
         """Set width and height of Power BI report in px
 
         Args:
-            container_height (number): report height
-            container_width (number): report width
+            container_height (float): report height
+            container_width (float): report width
         """
-        if not self._embedded:
-            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
         if container_height < 0:
-            raise TraitError('Invalid report height ', container_height)
+            raise TraitError('Invalid report height {0}'.format(container_height))
         if container_width < 0:
-            raise TraitError('Invalid report width ', container_width)
+            raise TraitError('Invalid report width {0}'.format(container_width))
 
         self.container_height = container_height
         self.container_width = container_width
 
-    def export_visual_data(self, page_name, visual_name, rows=10, export_data_type=ExportDataType.SUMMARIZED.value):
+    def export_visual_data(self, page_name, visual_name, rows=None, export_data_type=ExportDataType.SUMMARIZED.value):
         """Returns the data of given visual of the embedded Power BI report
 
         Args:
             page_name (string): Page name of the report's page containing the target visual
             visual_name (string): Visual's unique name 
-            rows (int, optional): Number of rows of data. Defaults to 10
+            rows (int, optional): Number of rows of data to export (default - exports all rows)
             export_data_type (number, optional): Type of data to be exported (SUMMARIZED: 0, UNDERLYING: 1).
                 (Default = SUMMARIZED)
 
@@ -448,10 +389,9 @@ class Report(DOMWidget):
 
     def on(self, event, callback):
         """Register a callback to execute when the report emits the target event
-        Parameters
 
         Args:
-            event (string): Name of Power BI event (eg. 'loaded', 'rendered', 'error')
+            event (string): Name of Power BI event (supported events: 'loaded', 'rendered')
             callback (function): User defined function. Callback function is invoked with event details as parameter
         """
         # Check if event is one of the Report.ALLOWED_EVENTS list
@@ -495,10 +435,9 @@ class Report(DOMWidget):
 
     def off(self, event):
         """Unregisters a callback on target event
-        Parameters
 
         Args:
-            event (string): Name of Power BI event (eg. 'loaded', 'rendered', 'error')
+            event (string): Name of Power BI event (supported events: 'loaded', 'rendered')
         """
         # Check if event is one of the Report.ALLOWED_EVENTS list
         if event not in self.ALLOWED_EVENTS:
@@ -513,7 +452,7 @@ class Report(DOMWidget):
             self._registered_event_handlers.pop(event)
 
     def get_filters(self):
-        """Returns the list of filters applied on the embedded Power BI report
+        """Returns the list of filters applied on the report level
 
         Returns:
             list: list of filters
@@ -550,8 +489,8 @@ class Report(DOMWidget):
         return filters
 
     def update_filters(self, filters):
-        """Set report level filters in the embedded report.
-            Currently supports models.FiltersOperations.Add
+        """Update report level filters in the embedded report.
+            Currently supports models.FiltersOperations.Replace: Replaces an existing filter or adds it if it doesn't exist. 
 
         Args:
             filters ([models.ReportLevelFilters]): List of report level filters
@@ -596,7 +535,7 @@ class Report(DOMWidget):
         self.update_filters([])
 
     def get_pages(self):
-        """Returns the list of pages of the embedded Power BI report
+        """Returns pages list of the embedded Power BI report
 
         Returns:
             list: list of pages
@@ -633,7 +572,7 @@ class Report(DOMWidget):
         return pages
 
     def visuals_on_page(self, page_name):
-        """Returns the list of visuals of the given page of the embedded Power BI report
+        """Returns visuals list of the given page of the embedded Power BI report
 
         Args:
             page_name (string): Page name of the embedded report
@@ -729,27 +668,3 @@ class Report(DOMWidget):
             raise Exception(error_message)
 
         return bookmarks
-
-    # Utility method to generate embed token for a Power BI report
-    def _generate_embed_token(self, group_id, report_id, dataset_id, access_token, token_request_body):
-        """Generate embed token for Power BI report
-            Refer: https://docs.microsoft.com/en-us/rest/api/power-bi/embedtoken/reports_generatetokeningroup
-
-        Args:
-            group_id (string): Id of Power BI Group or Workspace where your report resides.
-            report_id (string): Id of Power BI report.
-            access_token (string): access token, which will be used to generate embed token for Power BI report.
-            token_request_body (string): JSON formatted request body to be used while calling Reports GenerateTokenInGroup API.
-
-        Returns:
-            string: Report embed token
-        """
-        if dataset_id:
-            request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/datasets/{dataset_id}/GenerateToken"
-        else:
-            request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{group_id}/reports/{report_id}/GenerateToken"
-        response = requests.post(request_url, headers={'Authorization': 'Bearer ' + access_token}, data=token_request_body)
-        if not response.ok:
-            raise Exception("Generate embed token failed with status code ", response.status_code)
-
-        return response.json()['token']

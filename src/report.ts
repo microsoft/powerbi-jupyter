@@ -18,14 +18,16 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 // Import the CSS
 import '../css/report.css';
 import { getActivePageSize, getRequestedPage, setTokenExpirationListener } from './utils';
-import { IPageNode } from 'page';
-import { IReportNode } from 'report';
+
+// Jupyter SDK type to be passed with service instance creation
+const JUPYTER_SDK_TYPE = 'powerbi-jupyter';
 
 // Initialize powerbi service
 const powerbi = new service.Service(
   factories.hpmFactory,
   factories.wpmpFactory,
-  factories.routerFactory
+  factories.routerFactory,
+  { type: JUPYTER_SDK_TYPE, sdkWrapperVersion: MODULE_VERSION }
 );
 
 const EXPORT_DATA_DEFAULT_STATE: ExportVisualDataRequest = {
@@ -77,6 +79,7 @@ export class ReportModel extends DOMWidgetModel {
       _report_bookmarks: [],
       _token_expired: false,
       _client_error: null,
+      _init_error: null
     };
   }
 
@@ -102,14 +105,6 @@ interface ExportVisualDataRequest {
 interface ReportFilterRequest {
   filters: models.ReportLevelFilters[];
   request_completed: boolean;
-}
-
-interface PageWithOptionalReport {
-  report?: IReportNode;
-}
-
-interface VisualWithOptionalPage {
-  page?: IPageNode;
 }
 
 interface DOMRectSize {
@@ -138,8 +133,8 @@ export class ReportView extends DOMWidgetView {
 
     // Observe changes in the traitlets in Python, and define custom callback.
     this.model.on('change:_embed_config', this.embedConfigChanged, this);
-    this.model.on('change:container_height', this.dimensionsChanged, this);
-    this.model.on('change:container_width', this.dimensionsChanged, this);
+    this.model.on('change:container_height', this.containerSizeChanged, this);
+    this.model.on('change:container_width', this.containerSizeChanged, this);
     this.model.on('change:_export_visual_data_request', this.exportVisualDataRequestChanged, this);
     this.model.on('change:_get_filters_request', this.getFiltersRequestChanged, this);
     this.model.on('change:_report_filters_request', this.reportFiltersChanged, this);
@@ -149,9 +144,11 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:_get_bookmarks_request', this.getBookmarksRequestChanged, this);
   }
 
-  dimensionsChanged(): void {
-    this.reportContainer.style.height = `${this.model.get('container_height')}px`;
-    this.reportContainer.style.width = `${this.model.get('container_width')}px`;
+  containerSizeChanged(): void {
+    if (this.reportContainer) {
+      this.reportContainer.style.height = `${this.model.get('container_height')}px`;
+      this.reportContainer.style.width = `${this.model.get('container_width')}px`;
+    }
   }
 
   setTokenExpiredFlag(): void {
@@ -221,16 +218,22 @@ export class ReportView extends DOMWidgetView {
           }
         }
 
-        // Get dimensions of output cell
-        const DOMRect: DOMRectSize = this.el.getBoundingClientRect();
+        let width = this.model.get('container_width') as number;
+        let height = this.model.get('container_height') as number;
 
-        const outputCellWidth = DOMRect.width || 980;
-        const newHeight = outputCellWidth * aspectRatio;
+        if (!width || !height) {
+          // Get dimensions of output cell
+          const DOMRect: DOMRectSize = this.el.getBoundingClientRect();
+
+          width = DOMRect.width || 980;
+          height = width * aspectRatio;
+        }
 
         // Set dimensions of report container
-        this.reportContainer.style.width = `${outputCellWidth}px`;
-        this.reportContainer.style.height = `${newHeight}px`;
+        this.reportContainer.style.width = `${width}px`;
+        this.reportContainer.style.height = `${height}px`;
 
+        
         // Show the report container
         this.reportContainer.style.visibility = 'visible';
 
@@ -263,12 +266,9 @@ export class ReportView extends DOMWidgetView {
     });
 
     this.report.on('error', (errorMessage) => {
-      // Invoke error event handler on kernel side
-      this.model.set('_event_data', {
-        event_name: 'error',
-        event_details: errorMessage.detail,
-      });
-
+      // Invoke error handling on kernel side
+      const messageDetail = (errorMessage as any)?.detail;
+      this.model.set('_init_error', `${messageDetail?.message} - ${messageDetail?.detailedMessage}`);
       this.touch();
     });
 
@@ -437,7 +437,7 @@ export class ReportView extends DOMWidgetView {
       }
 
       // Remove 'report' property from Page object to handle nested property loop
-      const pagesWithoutReport = pages.map((page: PageWithOptionalReport) => {
+      const pagesWithoutReport = pages.map((page) => {
         delete page.report;
         return page;
       });
@@ -478,7 +478,7 @@ export class ReportView extends DOMWidgetView {
       }
 
       // Remove 'page' property from Visual object to handle nested property loop
-      const visualsWithoutPage = visuals.map((visual: VisualWithOptionalPage) => {
+      const visualsWithoutPage = visuals.map((visual) => {
         delete visual.page;
         return visual;
       });

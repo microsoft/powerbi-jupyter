@@ -29,8 +29,3 @@ class EmbedMode(IntEnum):
 class ExportDataType(IntEnum):
     SUMMARIZED = 0
     UNDERLYING = 1
-
-# Types of embedding Power BI report
-class EmbedType(IntEnum):
-    USEROWNSDATA = 0
-    APPOWNSDATA = 1
