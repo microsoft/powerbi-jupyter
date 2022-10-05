@@ -7,8 +7,8 @@ try {
     Write-Host "Build Number is" $buildNumber
   
     # This will allow you to use it from env var in later steps of the same phase
-    [Environment]::SetEnvironmentVariable("PowerBIJupyterVersion", $version, "User")
-    [Environment]::SetEnvironmentVariable("CustomBuildNumber", $buildNumber, "User")
+    Write-Host "##vso[task.setvariable variable=Version]${version}"
+    Write-Host "##vso[task.setvariable variable=CustomBuildNumber]${buildNumber}"
     Write-Host "##vso[build.updatebuildnumber]${buildNumber}"                         # This will update build number on your build
   }
   catch {

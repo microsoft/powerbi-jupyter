@@ -56,147 +56,109 @@ extends:
         failOnAlert: false
 
     stages:
-    - stage: build
-      jobs:
-      - job: main
-        pool:
-          type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
-        
-        variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-          ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-          ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
-          # ob_sdl_baseline_baselineFile: $(Build.SourcesDirectory)\.gdn\build.nonofficial.gdnbaselines
-          # ob_sdl_codeSignValidation_excludes: -|**\*.js # Example -|**\*.js;-|**\Test*\**
-          ob_artifactBaseName: 'drop'
-          ob_sdl_cg_failOnAlert: false
+      - stage: build
+        jobs:
+          - job: main
+            pool:
+              type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
-        steps:
-          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
-            displayName: 'Setup BuildNumber'
-            inputs:
-              system: 'RevisionCounter'
-              major: '1'
-              minor: '0'
-              exclude_commit: true
+            variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+              ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+              ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
+              # ob_sdl_baseline_baselineFile: $(Build.SourcesDirectory)\.gdn\build.nonofficial.gdnbaselines
+              # ob_sdl_codeSignValidation_excludes: -|**\*.js # Example -|**\*.js;-|**\Test*\**
+              ob_artifactBaseName: "drop"
+              ob_sdl_cg_failOnAlert: false
 
+            steps:
+      - stage: build
+        jobs:
+          - job: main
+            pool:
+              type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
-          # one CmdLine@2 for each CDPx stage (restore/build/package/test) as needed
-          #- task: CmdLine@2
-          #  displayName: '<name from pipeline.user.full.yml'
-          #  inputs:
-          #    script: '$(Build.SourcesDirectory)\<script name>'
-          #    workingDirectory: '$(Build.SourcesDirectory)'
+            variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+              ob_outputDirectory: "$(OUTPUTROOT)" # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+              ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
 
-          #  One CopyFiles@2 for each CDPx artifacts entry for each stage (restore/build/package/test) as needed
-          #- task: CopyFiles@2
-          #  inputs:
-          #    SourceFolder: '<'from' from artifacts section>'
-          #    Contents: '**\*'
-          #    TargetFolder: '<'to' from artifacts section
-                
-          # Move this block after a task block to "see" current file layout on host agent.
-          # Usually this belongs at the bottom of the build ( right before inline diffs ).  
-          # - task: CmdLine@2 
-          #   displayName: 'Generate file list'
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       md $(Build.SourcesDirectory)\out
-          #       dir /b /s * > $(Build.SourcesDirectory)\out\filelist.txt
+            steps:
+              # Custom Versioning - we will build the version using package.json in versioning commands.
+              - task: CmdLine@2
+                displayName: "Set Version"
+                inputs:
+                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd version.ps1'
+                  workingDirectory: "$(Build.SourcesDirectory)"
 
-################################################################################################
-#                              Remove tasks below before handoff                               #
-################################################################################################
-#        ↓ 
-#        ↓- task: After you uncomment below tasks, please make sure your '-' align to the first '-' of this line.
-#        ↓ 
-          
-          # # Uncomment this task if your CDPx yaml has publish_to_legacy_artifacts set to TRUE 
-          # - task: DownloadBuildArtifacts@1
-          #   displayName: '⚡️Download CDPx Build Artifact'
-          #   inputs:
-          #     buildType: 'specific'
-          #     project: '$(System.TeamProjectId)'
-          #     pipeline: '<cdpx pipeline/definition ID>'
-          #     buildVersionToDownload: 'specific'
-          #     buildId: '<cdpx build ID>'
-          #     downloadType: 'single'
-          #     artifactName: 'drop'
-          #     downloadPath: '$(REPOROOT)\cdpxArt'
-          
-          # # Uncomment this task if your CDPx yaml has publish_to_pipeline_artifacts set to TRUE
-          # - task: DownloadPipelineArtifact@2
-          #   displayName: '⚡️Download CDPx Pipeline Artifact'
-          #   inputs:
-          #     buildType: 'specific'
-          #     project: '$(System.TeamProjectId)'
-          #     definition: '<cdpx pipeline/definition ID>'
-          #     buildVersionToDownload: 'specific'
-          #     pipelineId: '<cdpx build ID>'   #Correspond the buildId in above task. The name 'pipelineId' here is a bit confusing.
-          #     artifactName: 'drop'
-          #     targetPath: '$(REPOROOT)\cdpxArt'
-          
-          # - task: Bash@3
-          #   displayName: '⚡️Install Powershell'
-          #   condition: ne(variables['Agent.OS'], 'Windows_NT')
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       #!/bin/bash
-          #       apt-get update
-          #       apt-get install -y wget apt-transport-https software-properties-common
-          #       wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
-          #       dpkg -i packages-microsoft-prod.deb
-          #       apt-get update
-          #       apt-get install -y powershell
-          
-          # - task: PowerShell@2
-          #   displayName: '⚡️Diff Build Outputs'
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       [System.Collections.ArrayList] $cdpxFiles = @()
-          #       [System.Collections.ArrayList] $cdpxFolders = @()
-          #       [System.Collections.ArrayList] $obpFiles = @()
-          #       [System.Collections.ArrayList] $obpFolders = @()
-          #       [System.Collections.ArrayList] $intersection = @()
-          # 
-          #       $cdpxArtifactDirectory = Join-Path $(REPOROOT) "cdpxArt"
-          #       if (($(Get-ChildItem $cdpxArtifactDirectory).Count -eq 1) -and (Test-Path $(Join-Path $cdpxArtifactDirectory "drop"))) {
-          #         $cdpxOutputsDirectory = Join-Path $(Join-Path $cdpxArtifactDirectory "drop") "outputs"
-          #       }
-          #       else {
-          #         $cdpxOutputsDirectory = Join-Path $cdpxArtifactDirectory "outputs"
-          #       }
-          # 
-          #       Get-ChildItem $cdpxOutputsDirectory -recurse -force -directory | % { $null = $cdpxFolders.Add($($_.FullName).Replace($cdpxOutputsDirectory, "")) }
-          #       Get-ChildItem $cdpxOutputsDirectory -recurse -force -file | % { $null = $cdpxFiles.Add($($_.FullName).Replace($cdpxOutputsDirectory, "")) }
-          #       
-          #       $obpOutputsDirectory = Join-Path $(ob_outputDirectory) "outputs"
-          #       Get-ChildItem $obpOutputsDirectory -recurse -force -directory | % { $null = $obpFolders.Add($($_.FullName).Replace($obpOutputsDirectory, "")) }
-          #       Get-ChildItem $obpOutputsDirectory -recurse -force -file | % { $null = $obpFiles.Add($($_.FullName).Replace($obpOutputsDirectory, "")) }
-          # 
-          #       Write-Output "CDPx build metadata:" 
-          #       Write-Output "    Directories: $($cdpxFolders.Count)"
-          #       Write-Output "    Files: $($cdpxFiles.Count)"
-          # 
-          #       Write-Output "OBP build metadata:" 
-          #       Write-Output "    Directories: $($obpFolders.Count)"
-          #       Write-Output "    Files: $($obpFiles.Count)"
-          #       Write-Output "--------------------------------------------------"
-          #       
-          #       foreach ($file in $cdpxFiles) {
-          #         if ($obpFiles.Contains($file)) {
-          #           $null = $intersection.Add($file)
-          #         }
-          #       }
-          # 
-          #       foreach ($file in $intersection) {
-          #         $obpFiles.Remove($file)
-          #         $cdpxFiles.Remove($file)
-          #       }
-          # 
-          #       Write-Output "CDPx build files missing in OBP build:"
-          #       $cdpxFiles | % { Write-Output "    $_" }
-          #       Write-Output "OBP build files missing in CDPx build:"
-          #       $obpFiles | % { Write-Output "    $_" }
+              - task: CmdLine@2
+                displayName: "PIP Install"
+                inputs:
+                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd restore.ps1'
+                  workingDirectory: "$(Build.SourcesDirectory)"
+
+              # Commands to run during the build stage.
+              - task: CmdLine@2
+                displayName: "Build"
+                inputs:
+                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd build.ps1'
+                  workingDirectory: "$(Build.SourcesDirectory)"
+
+              # Copying build artifacts to the Output folder.
+              - task: CopyFiles@2
+                displayName: "Copy Dist to Output folder"
+                inputs:
+                  Contents: |
+                    $(Build.SourcesDirectory)\dist\**
+                    $(Build.SourcesDirectory)\LICENSE.txt
+                    $(Build.SourcesDirectory)\package.json
+                    $(Build.SourcesDirectory)\README.md
+                    $(Build.SourcesDirectory)\powerbiclient\nbextension\static\*.*
+                  TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
+
+              # Copying source artifacts to the Output folder.
+              - task: CopyFiles@2
+                displayName: "Copy source to Output folder"
+                inputs:
+                  Contents: |
+                    $(Build.SourcesDirectory)\**
+                    !.__pycache__\**\*
+                    !.pipelines\**\*
+                    !$(Build.SourcesDirectory)\dist\**
+                    !$(Build.SourcesDirectory)\lib\**
+                    !$(Build.SourcesDirectory)\demo\**
+                    !$(Build.SourcesDirectory)\node_modules\**
+                    !$(Build.SourcesDirectory)\tests\**
+                    !$(Build.SourcesDirectory)\powerbiclient\tests\**
+                  TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
+
+              # Commands to run during the packaging stage.
+              - task: CmdLine@2
+                displayName: "Package"
+                inputs:
+                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd package.ps1'
+                  workingDirectory: '$(Build.SourcesDirectory)\'
+
+              # Copying source artifacts to the Output folder.
+              - task: CopyFiles@2
+                displayName: "Copy Relase to Output folder"
+                inputs:
+                  Contents: |
+                    $(Build.SourcesDirectory)dist\*.whl
+                    $(Build.SourcesDirectory)\*.tgz
+                  TargetFolder: '$(OUTPUTROOT)\outputs\build\Release'
+
+              # Commands to run during the testing stage.
+              - task: CmdLine@2
+                displayName: "Test powerbi-jupyter"
+                inputs:
+                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd test.ps1'
+                  workingDirectory: "$(Build.SourcesDirectory)"
+
+              # Publish the test results - need to specify publishing stage in OneBranch.
+              - task: PublishTestResults@2
+                condition: succeededOrFailed()
+                displayName: "Test powerbi-jupyter (PublishTestResults)"
+                inputs:
+                  testResultsFormat: "jasmine"
+                  testResultsFiles: "**coverage/**/index.html"
+                  searchFolder: "$(Build.SourcesDirectory)/reports"
+                  failTaskOnFailedTests: true
