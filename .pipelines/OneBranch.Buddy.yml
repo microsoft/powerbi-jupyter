@@ -56,109 +56,99 @@ extends:
         failOnAlert: false
 
     stages:
-      - stage: build
-        jobs:
-          - job: main
-            pool:
-              type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    - stage: build
+      jobs:
+      - job: main
+        pool:
+          type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
-            variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-              ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-              ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
-              # ob_sdl_baseline_baselineFile: $(Build.SourcesDirectory)\.gdn\build.nonofficial.gdnbaselines
-              # ob_sdl_codeSignValidation_excludes: -|**\*.js # Example -|**\*.js;-|**\Test*\**
-              ob_artifactBaseName: "drop"
-              ob_sdl_cg_failOnAlert: false
+        variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+          ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+          ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
+          # ob_sdl_baseline_baselineFile: $(Build.SourcesDirectory)\.gdn\build.nonofficial.gdnbaselines
+          # ob_sdl_codeSignValidation_excludes: -|**\*.js # Example -|**\*.js;-|**\Test*\**
+          ob_artifactBaseName: 'drop'
+          ob_sdl_cg_failOnAlert: false
 
-            steps:
-      - stage: build
-        jobs:
-          - job: main
-            pool:
-              type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+        steps:
+          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
+            displayName: 'Setup BuildNumber'
+            inputs:
+              system: 'RevisionCounter'
+              major: '1'
+              minor: '0'
+              exclude_commit: true
 
-            variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-              ob_outputDirectory: "$(OUTPUTROOT)" # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-              ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
+          - task: CmdLine@2
+            displayName: "PIP Install"
+            inputs:
+              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd restore.ps1'
+              workingDirectory: "$(Build.SourcesDirectory)"
 
-            steps:
-              # Custom Versioning - we will build the version using package.json in versioning commands.
-              - task: CmdLine@2
-                displayName: "Set Version"
-                inputs:
-                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd version.ps1'
-                  workingDirectory: "$(Build.SourcesDirectory)"
+          # Commands to run during the build stage.
+          - task: CmdLine@2
+            displayName: "Build"
+            inputs:
+              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd build.ps1'
+              workingDirectory: "$(Build.SourcesDirectory)"
 
-              - task: CmdLine@2
-                displayName: "PIP Install"
-                inputs:
-                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd restore.ps1'
-                  workingDirectory: "$(Build.SourcesDirectory)"
+          # Copying build artifacts to the Output folder.
+          - task: CopyFiles@2
+            displayName: "Copy Dist to Output folder"
+            inputs:
+              Contents: |
+                $(Build.SourcesDirectory)\dist\**
+                $(Build.SourcesDirectory)\LICENSE.txt
+                $(Build.SourcesDirectory)\package.json
+                $(Build.SourcesDirectory)\README.md
+                $(Build.SourcesDirectory)\powerbiclient\nbextension\static\*.*
+              TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
 
-              # Commands to run during the build stage.
-              - task: CmdLine@2
-                displayName: "Build"
-                inputs:
-                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd build.ps1'
-                  workingDirectory: "$(Build.SourcesDirectory)"
+          # Copying source artifacts to the Output folder.
+          - task: CopyFiles@2
+            displayName: "Copy source to Output folder"
+            inputs:
+              Contents: |
+                $(Build.SourcesDirectory)\**
+                !.__pycache__\**\*
+                !.pipelines\**\*
+                !$(Build.SourcesDirectory)\dist\**
+                !$(Build.SourcesDirectory)\lib\**
+                !$(Build.SourcesDirectory)\demo\**
+                !$(Build.SourcesDirectory)\node_modules\**
+                !$(Build.SourcesDirectory)\tests\**
+                !$(Build.SourcesDirectory)\powerbiclient\tests\**
+              TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
-              # Copying build artifacts to the Output folder.
-              - task: CopyFiles@2
-                displayName: "Copy Dist to Output folder"
-                inputs:
-                  Contents: |
-                    $(Build.SourcesDirectory)\dist\**
-                    $(Build.SourcesDirectory)\LICENSE.txt
-                    $(Build.SourcesDirectory)\package.json
-                    $(Build.SourcesDirectory)\README.md
-                    $(Build.SourcesDirectory)\powerbiclient\nbextension\static\*.*
-                  TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
+          # Commands to run during the packaging stage.
+          - task: CmdLine@2
+            displayName: "Package"
+            inputs:
+              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd package.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)\'
 
-              # Copying source artifacts to the Output folder.
-              - task: CopyFiles@2
-                displayName: "Copy source to Output folder"
-                inputs:
-                  Contents: |
-                    $(Build.SourcesDirectory)\**
-                    !.__pycache__\**\*
-                    !.pipelines\**\*
-                    !$(Build.SourcesDirectory)\dist\**
-                    !$(Build.SourcesDirectory)\lib\**
-                    !$(Build.SourcesDirectory)\demo\**
-                    !$(Build.SourcesDirectory)\node_modules\**
-                    !$(Build.SourcesDirectory)\tests\**
-                    !$(Build.SourcesDirectory)\powerbiclient\tests\**
-                  TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
+          # Copying source artifacts to the Output folder.
+          - task: CopyFiles@2
+            displayName: "Copy Relase to Output folder"
+            inputs:
+              Contents: |
+                $(Build.SourcesDirectory)dist\*.whl
+                $(Build.SourcesDirectory)\*.tgz
+              TargetFolder: '$(OUTPUTROOT)\outputs\build\Release'
 
-              # Commands to run during the packaging stage.
-              - task: CmdLine@2
-                displayName: "Package"
-                inputs:
-                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd package.ps1'
-                  workingDirectory: '$(Build.SourcesDirectory)\'
+          # Commands to run during the testing stage.
+          - task: CmdLine@2
+            displayName: "Test powerbi-jupyter"
+            inputs:
+              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd test.ps1'
+              workingDirectory: "$(Build.SourcesDirectory)"
 
-              # Copying source artifacts to the Output folder.
-              - task: CopyFiles@2
-                displayName: "Copy Relase to Output folder"
-                inputs:
-                  Contents: |
-                    $(Build.SourcesDirectory)dist\*.whl
-                    $(Build.SourcesDirectory)\*.tgz
-                  TargetFolder: '$(OUTPUTROOT)\outputs\build\Release'
-
-              # Commands to run during the testing stage.
-              - task: CmdLine@2
-                displayName: "Test powerbi-jupyter"
-                inputs:
-                  script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd test.ps1'
-                  workingDirectory: "$(Build.SourcesDirectory)"
-
-              # Publish the test results - need to specify publishing stage in OneBranch.
-              - task: PublishTestResults@2
-                condition: succeededOrFailed()
-                displayName: "Test powerbi-jupyter (PublishTestResults)"
-                inputs:
-                  testResultsFormat: "jasmine"
-                  testResultsFiles: "**coverage/**/index.html"
-                  searchFolder: "$(Build.SourcesDirectory)/reports"
-                  failTaskOnFailedTests: true
+          # Publish the test results - need to specify publishing stage in OneBranch.
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            displayName: "Test powerbi-jupyter (PublishTestResults)"
+            inputs:
+              testResultsFormat: "jasmine"
+              testResultsFiles: "**coverage/**/index.html"
+              searchFolder: "$(Build.SourcesDirectory)/reports"
+              failTaskOnFailedTests: true
