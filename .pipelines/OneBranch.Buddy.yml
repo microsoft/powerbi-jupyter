@@ -82,7 +82,7 @@ extends:
           - task: npmAuthenticate@0
             displayName: 'NPM Authenticate'
             inputs:
-              workingFile: '$(Build.SourcesDirectory)/.npmrc'
+              workingFile: '$(Build.SourcesDirectory)\.npmrc'
 
           - task: NodeTool@0
             displayName: 'Install Node.js'
