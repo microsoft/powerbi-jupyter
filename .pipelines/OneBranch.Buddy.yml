@@ -89,7 +89,6 @@ extends:
             inputs:
               versionSpec: '16.x'
 
-
           - task: CmdLine@2
             displayName: "PIP Install"
             inputs:
@@ -102,6 +101,16 @@ extends:
             inputs:
               script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd build.ps1'
               workingDirectory: "$(Build.SourcesDirectory)"
+
+            # Signing the files created by the build script
+            - task: onebranch.pipeline.signing@1
+              displayName: 'Sign binaries'
+              inputs:
+                command: 'sign'
+                signing_environment: 'azure-ado'
+                signing_profile: 'internal_azure_service'
+                files_to_sign: 'dist\**;LICENSE.txt;package.json;README.md;powerbiclient\nbextension\static\*.*'
+                search_root: '$(Build.SourcesDirectory)'
 
           # Copying build artifacts to the Output folder.
           - task: CopyFiles@2
@@ -137,6 +146,16 @@ extends:
             inputs:
               script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd package.ps1'
               workingDirectory: '$(Build.SourcesDirectory)\'
+
+            # Signing the files created by the packaging script
+            - task: onebranch.pipeline.signing@1
+              displayName: 'Sign binaries'
+              inputs:
+                command: 'sign'
+                signing_environment: 'azure-ado'
+                signing_profile: 'internal_azure_service'
+                files_to_sign: 'dist\*.whl;**\*.tgz'
+                search_root: '$(Build.SourcesDirectory)'
 
           # Copying source artifacts to the Output folder.
           - task: CopyFiles@2
