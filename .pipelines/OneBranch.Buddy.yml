@@ -157,14 +157,14 @@ extends:
               files_to_sign: 'dist\*.whl;**\*.tgz'
               search_root: '$(Build.SourcesDirectory)'
 
-          # Copying source artifacts to the Output folder.
+          # Copying tgz packages and whl to the Output folder.
           - task: CopyFiles@2
-            displayName: "Copy Relase to Output folder"
+            displayName: "Copy tgz package to Output folder"
             inputs:
               Contents: |
-                $(Build.SourcesDirectory)dist\*.whl
+                $(Build.SourcesDirectory)\dist\*.whl
                 $(Build.SourcesDirectory)\*.tgz
-              TargetFolder: '$(OUTPUTROOT)\outputs\build\Release'
+              TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
 
           # Commands to run during the testing stage.
           - task: CmdLine@2
