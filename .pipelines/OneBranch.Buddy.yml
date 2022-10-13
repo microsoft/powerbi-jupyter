@@ -71,13 +71,12 @@ extends:
           ob_sdl_cg_failOnAlert: false
 
         steps:
-          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
-            displayName: 'Setup BuildNumber'
+          # Custom Versioning - we will build the version using package.json in versioning commands.
+          - task: CmdLine@2
+            displayName: "Set Version"
             inputs:
-              system: 'RevisionCounter'
-              major: '1'
-              minor: '0'
-              exclude_commit: true
+              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd version.ps1'
+              workingDirectory: "$(Build.SourcesDirectory)"
 
           - task: npmAuthenticate@0
             displayName: 'NPM Authenticate'
@@ -90,7 +89,7 @@ extends:
               versionSpec: '16.x'
 
           - task: CmdLine@2
-            displayName: "PIP Install"
+            displayName: "Restore"
             inputs:
               script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd restore.ps1'
               workingDirectory: "$(Build.SourcesDirectory)"
