@@ -180,4 +180,4 @@ extends:
               testResultsFormat: "jasmine"
               testResultsFiles: "**coverage/**/index.html"
               searchFolder: "$(Build.SourcesDirectory)/reports"
-              failTaskOnFailedTests: true
+              failTaskOnFailedTests: false
