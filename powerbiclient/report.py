@@ -155,7 +155,7 @@ class Report(DOMWidget, HasTraits):
     # Traits validators
     @validate('_report_filters_request')
     def _valid_report_filters_request(self, proposal):
-        if proposal['value'] != self.REPORT_FILTER_REQUEST_DEFAULT_STATE:
+        if proposal['value'] == self.REPORT_FILTER_REQUEST_DEFAULT_STATE:
             if (type(proposal['value']['filters']) is not list):
                 raise TraitError('Invalid filters ', proposal['value']['filters'])
 
