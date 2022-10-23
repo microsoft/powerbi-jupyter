@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^4.1.0",
-    "powerbi-client": "^2.21.1"
+    "powerbi-client": "^2.22.0"
   },
   "devDependencies": {
     "@phosphor/application": "^1.6.0",

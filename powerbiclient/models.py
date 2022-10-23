@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 # Permissions for embedding Power BI report
 class Permissions(IntEnum):
@@ -29,3 +29,8 @@ class EmbedMode(IntEnum):
 class ExportDataType(IntEnum):
     SUMMARIZED = 0
     UNDERLYING = 1
+
+# Types of data to be exported
+class ReportCreationMode(Enum):
+    DEFAULT = "Default"
+    QUICK_EXPLORE = "QuickExplore"

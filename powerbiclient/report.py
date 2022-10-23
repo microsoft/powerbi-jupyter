@@ -17,10 +17,8 @@ from jupyter_ui_poll import ui_events
 from traitlets import Bool, Dict, Float, Unicode, List, TraitError, validate, HasTraits, observe
 
 from .models import EmbedMode, TokenType, ExportDataType
-from .authentication import DeviceCodeLoginAuthentication, AuthenticationResult
+from .utils import MODULE_NAME, get_access_token_details
 from ._version import __version__
-
-MODULE_NAME = "powerbi-jupyter-client"
 
 class Report(DOMWidget, HasTraits):
     """PowerBI report embedding widget"""
@@ -229,25 +227,11 @@ class Report(DOMWidget, HasTraits):
         Returns:
             object: Report object
         """
-        token_expiration = 0
-        try:
-            # Get access token using authentication
-            if isinstance(auth, str):
-                access_token = auth
-            else:
-                if auth is None:
-                    # Use DeviceCodeLoginAuthentication if no authentication is provided
-                    if not Report._auth:
-                        Report._auth = DeviceCodeLoginAuthentication()
-                    auth = Report._auth
-                elif not isinstance(auth, AuthenticationResult):
-                    raise Exception("Given auth parameter is invalid")
-                
-                self._auth = auth
-                access_token = self._auth.get_access_token()
-                token_expiration = self._auth.get_access_token_details().get('id_token_claims').get('exp')
 
-            # Get embed URL            
+        access_token, token_expiration = get_access_token_details(powerbi_widget=Report, auth=auth)
+
+        # Get embed URL  
+        try:          
             if view_mode == EmbedMode.CREATE.value:
                 if not group_id or not dataset_id:
                     raise Exception("Group Id and Dataset Id are required")
@@ -261,7 +245,7 @@ class Report(DOMWidget, HasTraits):
             embed_url = self._get_embed_url(request_url=request_url, token=access_token, response_key=response_key)
         
         except Exception as ex:
-            raise Exception("Could not create access token or embed URL: {0}".format(ex))
+            raise Exception("Could not get embed URL: {0}".format(ex))
 
         # Tells if Power BI events are being observed
         self._observing_events = False
