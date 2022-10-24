@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+from ..quick_visualize import QuickVisualize
+
+ACCESS_TOKEN = 'dummy_access_token'
+DATASET_CREATE_CONFIG = {
+    'locale': 'en-US',
+    'tableSchemaList': [{ 'name': "Table", 'columns': [{ 'name': "Name", 'dataType': "Text" }] }],
+    'data': [{ 'name': "Table", 'rows': [["test1"], ["test2"]] }]
+}
+QUICK_CREATE_EMBED_URL = 'https://app.powerbi.com/quickCreate'
+REPORT_CREATION_MODE = 'QuickExplore'
+EMBED_CONFIG = {
+    'type': 'quickCreate',
+    'accessToken': ACCESS_TOKEN,
+    'embedUrl': QUICK_CREATE_EMBED_URL,
+    'tokenType': 0,
+    'tokenExpiration': 0,
+    'datasetCreateConfig': DATASET_CREATE_CONFIG,
+    'reportCreationMode': REPORT_CREATION_MODE
+}
+
+
+class TestQuickVisualizeConstructor:
+    def test_quick_visualize_constructor(self):
+        # Act
+        qv = QuickVisualize(auth=ACCESS_TOKEN, dataset_create_config=DATASET_CREATE_CONFIG)
+
+        # Assert
+        assert qv._embed_config == EMBED_CONFIG
+        assert qv._embedded == False
+
+
+class TestUpdateEmbedConfig:
+    def test_update_access_token(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN, dataset_create_config=DATASET_CREATE_CONFIG)
+        new_access_token = "new_dummy_access_token"
+
+        # Act
+        qv._update_embed_config(access_token=new_access_token)
+
+        # Assert - only access token is updated
+        assert qv._embed_config == {
+            'type': 'quickCreate',
+            'accessToken': new_access_token,
+            'embedUrl': QUICK_CREATE_EMBED_URL,
+            'tokenType': 0,
+            'tokenExpiration': 0,
+            'datasetCreateConfig': DATASET_CREATE_CONFIG,
+            'reportCreationMode': REPORT_CREATION_MODE
+        }
+        assert qv._embedded == False
+
+    def test_update_token_expiration(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN, dataset_create_config=DATASET_CREATE_CONFIG)
+        new_token_expiration = 30
+
+        # Act
+        qv._update_embed_config(token_expiration=new_token_expiration)
+
+        # Assert - only token_expiration is updated
+        assert qv._embed_config == {
+            'type': 'quickCreate',
+            'accessToken': ACCESS_TOKEN,
+            'embedUrl': QUICK_CREATE_EMBED_URL,
+            'tokenType': 0,
+            'tokenExpiration': new_token_expiration,
+            'datasetCreateConfig': DATASET_CREATE_CONFIG,
+            'reportCreationMode': REPORT_CREATION_MODE
+        }
+        assert qv._embedded == False
+
+    def test_update_dataset_create_config(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN, dataset_create_config=DATASET_CREATE_CONFIG)
+        new_dataset_create_config = {
+            'locale': 'en-US',
+            'tableSchemaList': [{ 'name': "Table", 'columns': [{ 'name': "new_Name", 'dataType': "Text" }] }],
+            'data': [{ 'name': "Table", 'rows': [["new_test1"], ["new_test2"]] }]
+        }
+
+        # Act
+        qv._update_embed_config(dataset_create_config=new_dataset_create_config)
+
+        # Assert - only token_expiration is updated
+        assert qv._embed_config == {
+            'type': 'quickCreate',
+            'accessToken': ACCESS_TOKEN,
+            'embedUrl': QUICK_CREATE_EMBED_URL,
+            'tokenType': 0,
+            'tokenExpiration': 0,
+            'datasetCreateConfig': new_dataset_create_config,
+            'reportCreationMode': REPORT_CREATION_MODE
+        }
+        assert qv._embedded == False
