@@ -5,7 +5,7 @@
 # Licensed under the MIT license.
 
 """
-Embeds Power BI Report
+Power BI quick visualization widget
 """
 
 from ipywidgets import DOMWidget
@@ -18,7 +18,7 @@ from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token
 QUICK_CREATE_EMBED_URL = "https://app.powerbi.com/quickCreate"
 
 class QuickVisualize(DOMWidget, HasTraits):
-    """Basic widget"""
+    """Power BI quick visualization widget"""
 
     # Name of the widget view class in front-end
     _view_name = Unicode('QuickVisualizeView').tag(sync=True)
@@ -99,10 +99,11 @@ class QuickVisualize(DOMWidget, HasTraits):
 
         Args:
             dataset_create_config (object): Required.
-                # TODO: add description
+                dict which represents the datasetCreateConfiguration which is used to quick visualize of the data
+                format: https://github.com/microsoft/powerbi-models/blob/3e232ad6ad7408b1e5db2bc1e0479733054b1a7b/src/models.ts#L1140-L1146
 
             auth (string or object): Optional.
-                We have 3 authentication options to embed a Power BI report:
+                We have 3 authentication options to embed Power BI quick visualization:
                  - Access token (string)
                  - Authentication object (object) - instance of AuthenticationResult (DeviceCodeLoginAuthentication or InteractiveLoginAuthentication)
                  - If not provided, Power BI user will be authenticated using Device Flow authentication
@@ -130,7 +131,7 @@ class QuickVisualize(DOMWidget, HasTraits):
         """Set access token for Power BI quick visualization
 
         Args:
-            access_token (string): report access token
+            access_token (string)
         """
         if not access_token:
             raise Exception("Access token cannot be empty")

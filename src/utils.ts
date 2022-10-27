@@ -73,7 +73,7 @@ export async function setTokenExpirationListener(
     widgetView.setTokenExpiredFlag();
   } else {
     // Set timeout so minutesToRefresh minutes before token expires, setTokenExpiredFlag will be invoked
-    console.log('Access Token will be expired in ' + timeout + ' milliseconds.');
+    console.log('Access Token will expire in ' + timeout + ' milliseconds.');
     setTimeout(() => {
       widgetView.setTokenExpiredFlag();
     }, timeout);

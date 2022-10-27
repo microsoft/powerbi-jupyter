@@ -47,10 +47,12 @@ def is_dataset_create_config_valid(dataset_create_config):
     
     return True
 
-def get_access_token_details(powerbi_widget, auth):
+def get_access_token_details(powerbi_widget, auth=None):
     """ Get access token details: access token and token expiration
 
     Args:
+        powerbi_widget (Report | QuickVisulize): Required.
+            Instance of Power BI widget, can be Report or QuickVisualize
         auth (string or object): Optional.
             We have 3 authentication options to embed a Power BI report:
                 - Access token (string)
