@@ -4,48 +4,114 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+from pandas.api.types import is_numeric_dtype
+import re
+
 from .authentication import DeviceCodeLoginAuthentication, AuthenticationResult
+from .models import DataType
 
 MODULE_NAME = "powerbi-jupyter-client"
+data_types_map = {
+    'string': DataType.TEXT.value,
+    'int32': DataType.INT32.value,
+    'bool': DataType.LOGICAL.value,
+    'datetime64[ns]': DataType.DATE_TIME.value,
+    'object': DataType.TEXT.value # default
+}
 
-#TODO: update method to convert df into dataset_config
+
 def get_dataset_config(df, locale='en-US'):
+    """ Utility methond to get dataset create configuration dict from Pandas DataFrame
+
+    Args:
+        df (object): Required.
+            Pandas DataFrame instance
+        locale (string): Optional.
+            Locale of the data
+            Supported locales can be found: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN 
+
+    Returns: 
+        dict: dataset_create_config
+    """
+    if df is None:
+        raise Exception("Parameter df is required")
+
+    table_name = 'Table'
+    columns_schema = []
+
+    for col in df.columns:
+        # Find the correct DataType according to Pandas dtype
+        dtype_key = str(df[col].dtype)
+        if dtype_key in data_types_map:
+            data_type = data_types_map[dtype_key]
+        elif is_numeric_dtype(df[col]):
+            data_type = DataType.NUMBER.value
+        elif re.search(r"datetime64\[ns, .*\]", dtype_key):
+            data_type = DataType.DATE_TIME_ZONE.value
+        else:
+            data_type = DataType.TEXT.value
+
+        # Logical values should be with lower case: true / false
+        if data_type == DataType.LOGICAL.value:
+            df[col] = df[col].astype('string').str.lower()
+        
+        columns_schema.append({ 'name': col, 'dataType': data_type })
+
     return {
         'locale': locale,
         'tableSchemaList': [
             {
-            'name': "Table",
-            'columns': [
-                {
-                    'name': "Name",
-                    'dataType': "Text"
-                },
-                {
-                    'name': "Id",
-                    'dataType': "Int32"
-                },
-                {
-                    'name': "Phone number",
-                    'dataType': "Text"
-                }
-            ]
+                'name': table_name,
+                'columns': columns_schema
             }
         ],
         'data': [
             {
-            'name': "Table",
-            'rows': [["test1", "1", "123-456"], ["test2", "2", "456-789"]]
+                'name': table_name,
+                'rows': df.astype('string').values.tolist()
             }
         ]
     }
 
+
 def is_dataset_create_config_valid(dataset_create_config):
+    """ Validate dataset_create_config
+
+    Args:
+        dataset_create_config (dict): Required.
+            dict which represent the datasetCreateConfiguration which is used to quick visualize of the data
+            https://github.com/microsoft/powerbi-models/blob/3e232ad6ad7408b1e5db2bc1e0479733054b1a7b/src/models.ts#L1140-L1146
+
+    Returns:
+        bool: True if dataset_create_config is valid, False otherwise
+    """
     if dataset_create_config is None or type(dataset_create_config) is not dict:
         return False
 
-    #TODO: add validation
+    if len(dataset_create_config.keys()) != 3:
+        return False
+
+    # Validate locale
+    locale = dataset_create_config.get('locale')
+    if not locale or type(locale) != str:
+        return False
+    
+    # Validate table schema list
+    table_schema_list = dataset_create_config.get('tableSchemaList')
+    if not table_schema_list or type(table_schema_list) != list or len(table_schema_list) != 1:
+        return False
+    if not table_schema_list[0].get('name') or not table_schema_list[0].get('columns'):
+        return False
+
+    # Validate data
+    data = dataset_create_config.get('data')
+    if not data or type(data) != list or len(data) != 1:
+        return False
+    if not data[0].get('name') or not data[0].get('rows'):
+        return False
     
     return True
+
 
 def get_access_token_details(powerbi_widget, auth):
     """ Get access token details: access token and token expiration

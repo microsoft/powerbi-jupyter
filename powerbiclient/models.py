@@ -34,3 +34,17 @@ class ExportDataType(IntEnum):
 class ReportCreationMode(Enum):
     DEFAULT = "Default"
     QUICK_EXPLORE = "QuickExplore"
+
+class DataType(Enum):
+    NUMBER = "Number"
+    CURRENCY = "Currency"
+    INT32 = "Int32"
+    PERCENTAGE = "Percentage"
+    DATE_TIME = "DateTime"
+    DATE_TIME_ZONE = "DateTimeZone"
+    DATE = "Date"
+    TIME = "Time"
+    DURATION = "Duration"
+    TEXT = "Text"
+    LOGICAL = "Logical"
+    BINARY = "Binary"
