@@ -69,7 +69,6 @@ export class QuickVisualizeView extends DOMWidgetView {
         // Set new access token
         this.quickCreate.setAccessToken(quickCreateConfig.accessToken);
 
-        // TODO: understand the logic of token expiration
         if (embedConfig.tokenExpiration) {
           // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
           setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);

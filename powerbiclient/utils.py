@@ -62,10 +62,11 @@ def get_access_token_details(powerbi_widget, auth=None):
     Returns:
         tuple: (access_token, token_expiration)
     """
-    token_expiration = 0
 
     # auth is the access token string
     if isinstance(auth, str):
+        # In this authentication way we cannot refresh the access token so token_expiration should be None
+        token_expiration = None
         return auth, token_expiration
     
     try:
