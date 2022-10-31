@@ -23,7 +23,7 @@ variables:
   ROOT: $(Build.SourcesDirectory)
   REPOROOT: $(Build.SourcesDirectory)
   OUTPUTROOT: $(REPOROOT)\out
-  NUGET_XMLDOC_MODE: none
+  NUGET_XMLDOC_MODE: skip
 
   WindowsContainerImage: 'cdpxwin1809.azurecr.io/global/obinfra/windows/1809/vs2019:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
 
@@ -58,10 +58,11 @@ extends:
 
         steps:
           # Custom Versioning - we will build the version using package.json in versioning commands.
-          - task: CmdLine@2
+          - task: PowerShell@2
             displayName: 'Set Version'
             inputs:
-              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd version.ps1'
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\version.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
           # Add the versioning task after running Version script
@@ -80,25 +81,25 @@ extends:
             inputs:
               workingFile: '$(Build.SourcesDirectory)\.npmrc'
 
-          # Commands to run during the restore stage
-          - task: CmdLine@2
+          - task: PowerShell@2
             displayName: 'Restore'
             inputs:
-              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd restore.ps1'
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\restore.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
-          # Commands to run during the build stage
-          - task: CmdLine@2
+          - task: PowerShell@2
             displayName: 'Build'
             inputs:
-              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd build.ps1'
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\build.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
-          # Commands to run during the packaging stage
-          - task: CmdLine@2
+          - task: PowerShell@2
             displayName: 'Package'
             inputs:
-              script: '$(Build.SourcesDirectory)\.pipelines\onebranch_run_ps.cmd package.ps1'
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\package.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
           # Signing the files created by the build and packaging script
@@ -108,10 +109,10 @@ extends:
               command: 'sign'
               signing_environment: 'azure-ado'
               signing_profile: 'internal_azure_service'
-              files_to_sign: 'dist\**;LICENSE.txt;package.json;README.md;powerbiclient\nbextension\static\*.*;dist\*.whl;**\*.tgz'
+              files_to_sign: 'dist\**;LICENSE.txt;package.json;README.md;powerbiclient\nbextension\static\*.*;**\dist\*.whl;**\*.tgz'
               search_root: '$(Build.SourcesDirectory)'
 
-          # Copying build artifacts to the Output folder.
+          # Copying build artifacts to the Output folder
           - task: CopyFiles@2
             displayName: 'Copy Dist to Output folder'
             inputs:
@@ -123,7 +124,7 @@ extends:
                 $(Build.SourcesDirectory)\powerbiclient\nbextension\static\*.*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
 
-          # Copying source artifacts to the Output folder.
+          # Copying source artifacts to the Output folder
           - task: CopyFiles@2
             displayName: 'Copy Source to Output folder'
             inputs:
@@ -139,11 +140,11 @@ extends:
                 !$(Build.SourcesDirectory)\powerbiclient\tests\**
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
-          # Copying tgz package and whl to the Output folder.
+          # Copying tgz package and whl file to the Output folder
           - task: CopyFiles@2
-            displayName: 'Copy tgz package to Output folder'
+            displayName: 'Copy tgz package and whl file to Output folder'
             inputs:
               Contents: |
-                $(Build.SourcesDirectory)\dist\*.whl
-                $(Build.SourcesDirectory)\*.tgz
-              TargetFolder: '$(OUTPUTROOT)\outputs\package\tgz-package'
+                $(Build.SourcesDirectory)\**\dist\*.whl
+                $(Build.SourcesDirectory)\**\*.tgz
+              TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
