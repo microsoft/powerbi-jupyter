@@ -170,7 +170,7 @@ class Report(DOMWidget, HasTraits):
                 raise TraitError('Invalid embedUrl ', proposal['value']['embedUrl'])
             if (type(proposal['value']['tokenType']) is not int):
                 raise TraitError('Invalid tokenType ', proposal['value']['tokenType'])
-            if (type(proposal['value']['tokenExpiration']) is not int):
+            if (proposal['value']['tokenExpiration'] is not None and type(proposal['value']['tokenExpiration']) is not int):
                 raise TraitError('Invalid tokenExpiration ', proposal['value']['tokenExpiration'])
             if (type(proposal['value']['viewMode']) is not int):
                 raise TraitError('Invalid viewMode ', proposal['value']['viewMode'])

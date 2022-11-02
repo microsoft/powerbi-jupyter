@@ -80,7 +80,7 @@ class QuickVisualize(DOMWidget, HasTraits):
             raise TraitError('Invalid embedUrl ', proposal['value']['embedUrl'])
         if (type(proposal['value']['tokenType']) is not int):
             raise TraitError('Invalid tokenType ', proposal['value']['tokenType'])
-        if (type(proposal['value']['tokenExpiration']) is not int):
+        if (proposal['value']['tokenExpiration'] is not None and type(proposal['value']['tokenExpiration']) is not int):
             raise TraitError('Invalid tokenExpiration ', proposal['value']['tokenExpiration'])
         if (not is_dataset_create_config_valid(proposal['value']['datasetCreateConfig'])):
             raise TraitError('Invalid datasetCreateConfig ', proposal['value']['datasetCreateConfig'])
@@ -138,13 +138,16 @@ class QuickVisualize(DOMWidget, HasTraits):
         self._update_embed_config(access_token=access_token)
 
     def _update_embed_config(self, access_token=None, token_expiration=None, dataset_create_config=None):
-        if access_token is not None:
-            self._embed_config['accessToken'] = access_token
-
-        if token_expiration is not None:
-            self._embed_config['tokenExpiration'] = token_expiration
-
-        if dataset_create_config is not None:
-            self._embed_config['datasetCreateConfig'] = dataset_create_config
-        
+        """
+            Set embed configuration parameters of Power BI quick visualization
+        """
+        self._embed_config = {
+            'type': 'quickCreate',
+            'accessToken': access_token or self._embed_config['accessToken'],
+            'embedUrl': QUICK_CREATE_EMBED_URL,
+            'tokenType': TokenType.AAD.value,
+            'tokenExpiration': token_expiration or self._embed_config['tokenExpiration'],
+            'datasetCreateConfig': dataset_create_config or self._embed_config['datasetCreateConfig'],
+            'reportCreationMode': ReportCreationMode.QUICK_EXPLORE.value
+        }
         self._embedded = False

@@ -52,7 +52,7 @@ def get_access_token_details(powerbi_widget, auth=None):
 
     Args:
         powerbi_widget (Report | QuickVisulize): Required.
-            Instance of Power BI widget, can be Report or QuickVisualize
+            One of Power BI widget classes, can be Report or QuickVisualize
         auth (string or object): Optional.
             We have 3 authentication options to embed a Power BI report:
                 - Access token (string)
@@ -77,7 +77,9 @@ def get_access_token_details(powerbi_widget, auth=None):
             auth = powerbi_widget._auth
         elif not isinstance(auth, AuthenticationResult):
             raise Exception("Given auth parameter is invalid")
-        
+        else:
+            powerbi_widget._auth = auth
+
         access_token = auth.get_access_token()
         token_expiration = auth.get_access_token_details().get('id_token_claims').get('exp')
         return access_token, token_expiration
