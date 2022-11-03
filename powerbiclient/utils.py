@@ -98,18 +98,24 @@ def is_dataset_create_config_valid(dataset_create_config):
     
     # Validate table schema list
     table_schema_list = dataset_create_config.get('tableSchemaList')
-    if not table_schema_list or type(table_schema_list) != list or len(table_schema_list) != 1:
-        return False
-    if not table_schema_list[0].get('name') or not table_schema_list[0].get('columns'):
+    if not is_dataset_create_config_items_valid(table_schema_list, ['name', 'columns']):
         return False
 
     # Validate data
     data = dataset_create_config.get('data')
-    if not data or type(data) != list or len(data) != 1:
-        return False
-    if not data[0].get('name') or not data[0].get('rows'):
+    if not is_dataset_create_config_items_valid(table_schema_list, ['name', 'rows']):
         return False
     
+    return True
+
+def is_dataset_create_config_items_valid(lst, expected_item_fields):
+    if not lst or type(lst) != list or len(lst) != 1:
+        return False
+
+    for field in expected_item_fields:
+        if not lst[0].get(field):
+            return False
+
     return True
 
 
