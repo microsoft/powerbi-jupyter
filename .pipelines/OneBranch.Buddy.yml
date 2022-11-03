@@ -140,7 +140,7 @@ extends:
                 !$(Build.SourcesDirectory)\powerbiclient\tests\**
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
-          # Copying tgz package and whl file to the Output folder
+          # Copying tgz package and whl to Output folder
           - task: CopyFiles@2
             displayName: 'Copy tgz package and whl file to Output folder'
             inputs:
