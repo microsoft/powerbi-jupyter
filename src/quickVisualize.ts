@@ -69,7 +69,6 @@ export class QuickVisualizeView extends DOMWidgetView {
         // Set new access token
         this.quickCreate.setAccessToken(quickCreateConfig.accessToken);
 
-        // TODO: understand the logic of token expiration
         if (embedConfig.tokenExpiration) {
           // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
           setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
@@ -83,27 +82,32 @@ export class QuickVisualizeView extends DOMWidgetView {
 
     this.quickCreate = powerbi.quickCreate(this.quickCreateContainer, quickCreateConfig);
 
-    // TODO: show iframe when report is loaded once "loaded" event is implemented
-
     if (embedConfig.tokenExpiration) {
       // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
       setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
     }
 
+    // TODO: show iframe when report is loaded once "loaded" event is implemented
     try {
-      // Set default aspect ratio
-      const aspectRatio = 9 / 16;
-      // Get dimensions of output cell
-      const DOMRect = this.el.getBoundingClientRect();
+      // this.el is updated with correct width when report is loaded. Using timeout until "loaded" event is implemented
+      setTimeout(() => {
+        // Set default aspect ratio
+        const aspectRatio = 9 / 16;
+        // Get dimensions of output cell
+        const DOMRect = this.el.getBoundingClientRect();
 
-      const width = DOMRect.width || 980;
-      const height = width * aspectRatio;
+        const width = DOMRect.width || 980;
+        const height = width * aspectRatio;
 
-      // Set dimensions of quick create container
-      this.quickCreateContainer.style.width = `${width}px`;
-      this.quickCreateContainer.style.height = `${height}px`;
+        console.log('DOMRect:', DOMRect);
+        console.log(`width=${width}, height=${height}`);
 
-      this.quickCreateContainer.style.visibility = 'visible';
+        // Set dimensions of quick create container
+        this.quickCreateContainer.style.width = `${width}px`;
+        this.quickCreateContainer.style.height = `${height}px`;
+
+        this.quickCreateContainer.style.visibility = 'visible';
+      }, 500)
     } catch (error) {
       console.error(error);
     }

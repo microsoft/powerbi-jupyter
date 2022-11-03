@@ -119,10 +119,12 @@ def is_dataset_create_config_items_valid(lst, expected_item_fields):
     return True
 
 
-def get_access_token_details(powerbi_widget, auth):
+def get_access_token_details(powerbi_widget, auth=None):
     """ Get access token details: access token and token expiration
 
     Args:
+        powerbi_widget (Report | QuickVisulize): Required.
+            One of Power BI widget classes, can be Report or QuickVisualize
         auth (string or object): Optional.
             We have 3 authentication options to embed a Power BI report:
                 - Access token (string)
@@ -132,10 +134,11 @@ def get_access_token_details(powerbi_widget, auth):
     Returns:
         tuple: (access_token, token_expiration)
     """
-    token_expiration = 0
 
     # auth is the access token string
     if isinstance(auth, str):
+        # In this authentication way we cannot refresh the access token so token_expiration should be None
+        token_expiration = None
         return auth, token_expiration
     
     try:
@@ -146,7 +149,9 @@ def get_access_token_details(powerbi_widget, auth):
             auth = powerbi_widget._auth
         elif not isinstance(auth, AuthenticationResult):
             raise Exception("Given auth parameter is invalid")
-        
+        else:
+            powerbi_widget._auth = auth
+
         access_token = auth.get_access_token()
         token_expiration = auth.get_access_token_details().get('id_token_claims').get('exp')
         return access_token, token_expiration

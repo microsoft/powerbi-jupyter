@@ -52,8 +52,8 @@ class AuthenticationResult:
     def refresh_token(self):
         """ Acquire token(s) based on a refresh token obtained from authentication result
         """
-        app = msal.PublicClientApplication(client_id=self._client_id)
-        token_result = app.acquire_token_by_refresh_token(self._access_token_result.get('refresh_token'), self._scopes)
+        app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        token_result = app.acquire_token_by_refresh_token(self._access_token_result.get('refresh_token'), DEFAULT_SCOPES)
         if "access_token" not in token_result:
             raise RuntimeError(token_result.get('error_description'))
         self._access_token_result = token_result
