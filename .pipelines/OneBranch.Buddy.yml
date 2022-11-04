@@ -148,3 +148,21 @@ extends:
                 $(Build.SourcesDirectory)\**\dist\*.whl
                 $(Build.SourcesDirectory)\**\*.tgz
               TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
+
+          # Commands to run during the testing stage
+          - task: PowerShell@2
+            displayName: "Test powerbi-jupyter"
+            inputs:
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)'
+
+          # Publish the test results - need to specify publishing stage in OneBranch
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            displayName: "Test powerbi-jupyter (PublishTestResults)"
+            inputs:
+              testResultsFormat: "jasmine"
+              testResultsFiles: "**coverage/**/index.html"
+              searchFolder: "$(Build.SourcesDirectory)/reports"
+              failTaskOnFailedTests: true
