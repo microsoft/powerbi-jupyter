@@ -9,13 +9,14 @@ Power BI quick visualization widget
 """
 
 from ipywidgets import DOMWidget
-from traitlets import Bool, Dict, HasTraits, Unicode, TraitError, validate, observe
+from traitlets import Bool, Dict, Float, HasTraits, Unicode, TraitError, validate, observe
 
 from ._version import __version__
 from .models import TokenType, ReportCreationMode
 from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token_details
 
 QUICK_CREATE_EMBED_URL = "https://app.powerbi.com/quickCreate"
+
 
 class QuickVisualize(DOMWidget, HasTraits):
     """Power BI quick visualization widget"""
@@ -63,6 +64,8 @@ class QuickVisualize(DOMWidget, HasTraits):
     _embedded = Bool(False).tag(sync=True)
     _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
     _init_error = Unicode(INIT_ERROR_DEFAULT_STATE).tag(sync=True)
+    container_height = Float(0).tag(sync=True)
+    container_width = Float(0).tag(sync=True)
 
     # Authentication object
     _auth = None
@@ -70,22 +73,28 @@ class QuickVisualize(DOMWidget, HasTraits):
     @validate('_embed_config')
     def _valid_embed_config(self, proposal):
         if proposal['value'] == self.EMBED_CONFIG_DEFAULT_STATE:
-                return proposal['value']
+            return proposal['value']
 
         if (type(proposal['value']['type']) is not str):
             raise TraitError('Invalid type ', proposal['value']['type'])
         if ((type(proposal['value']['accessToken']) is not str) or (proposal['value']['accessToken'] == '')):
-            raise TraitError('Invalid accessToken ', proposal['value']['accessToken'])
+            raise TraitError('Invalid accessToken ',
+                             proposal['value']['accessToken'])
         if (type(proposal['value']['embedUrl']) is not str):
-            raise TraitError('Invalid embedUrl ', proposal['value']['embedUrl'])
+            raise TraitError('Invalid embedUrl ',
+                             proposal['value']['embedUrl'])
         if (type(proposal['value']['tokenType']) is not int):
-            raise TraitError('Invalid tokenType ', proposal['value']['tokenType'])
+            raise TraitError('Invalid tokenType ',
+                             proposal['value']['tokenType'])
         if (proposal['value']['tokenExpiration'] is not None and type(proposal['value']['tokenExpiration']) is not int):
-            raise TraitError('Invalid tokenExpiration ', proposal['value']['tokenExpiration'])
+            raise TraitError('Invalid tokenExpiration ',
+                             proposal['value']['tokenExpiration'])
         if (not is_dataset_create_config_valid(proposal['value']['datasetCreateConfig'])):
-            raise TraitError('Invalid datasetCreateConfig ', proposal['value']['datasetCreateConfig'])
+            raise TraitError('Invalid datasetCreateConfig ',
+                             proposal['value']['datasetCreateConfig'])
         if (type(proposal['value']['reportCreationMode']) is not str):
-            raise TraitError('Invalid reportCreationMode ', proposal['value']['reportCreationMode'])
+            raise TraitError('Invalid reportCreationMode ',
+                             proposal['value']['reportCreationMode'])
         return proposal['value']
 
     # Raise exception for errors when embedding the Power BI quick visualization
@@ -112,19 +121,22 @@ class QuickVisualize(DOMWidget, HasTraits):
             object: QuickVisualize object
         """
 
-        access_token, token_expiration = get_access_token_details(powerbi_widget=QuickVisualize, auth=auth)
-        self._update_embed_config(access_token=access_token, token_expiration=token_expiration, dataset_create_config=dataset_create_config)
+        access_token, token_expiration = get_access_token_details(
+            powerbi_widget=QuickVisualize, auth=auth)
+        self._update_embed_config(
+            access_token=access_token, token_expiration=token_expiration, dataset_create_config=dataset_create_config)
         self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
         super(QuickVisualize, self).__init__(**kwargs)
-    
+
     def _update_access_token(self, change):
         if change.new == True:
             if not self._auth:
                 raise Exception("Authentication context not found")
             self._auth.refresh_token()
-            self._update_embed_config(access_token=self._auth.get_access_token(), token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
+            self._update_embed_config(
+                access_token=self._auth.get_access_token(), token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
             self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
 
     def set_access_token(self, access_token):
@@ -151,3 +163,18 @@ class QuickVisualize(DOMWidget, HasTraits):
             'reportCreationMode': ReportCreationMode.QUICK_EXPLORE.value
         }
         self._embedded = False
+
+    def set_size(self, container_height, container_width):
+        """Set width and height of Power BI quick visualization in px
+
+        Args:
+            container_height (float)
+            container_width (float)
+        """
+        if container_height < 0:
+            raise TraitError('Invalid height {0}'.format(container_height))
+        if container_width < 0:
+            raise TraitError('Invalid width {0}'.format(container_width))
+
+        self.container_height = container_height
+        self.container_width = container_width
