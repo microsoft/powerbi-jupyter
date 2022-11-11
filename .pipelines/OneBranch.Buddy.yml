@@ -151,18 +151,36 @@ extends:
 
           # Commands to run during the testing stage
           - task: PowerShell@2
-            displayName: "Test powerbi-jupyter"
+            displayName: 'Test powerbi-jupyter'
             inputs:
               targetType: 'filePath'
               filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
+          
+          - task: CopyFiles@2
+            displayName: 'Copy testto Output folder'
+            inputs:
+              SourceFolder: $(Build.SourcesDirectory)/reports
+              Contents: |
+                **coverage\**\index.html
+              TargetFolder: '$(OUTPUTROOT)\outputs\package\test'
+
 
           # Publish the test results - need to specify publishing stage in OneBranch
-          - task: PublishTestResults@2
+          - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()
-            displayName: "Test powerbi-jupyter (PublishTestResults)"
+            displayName: 'Test powerbi-jupyter (PublishTestResults)'
             inputs:
-              testResultsFormat: "jasmine"
-              testResultsFiles: "**coverage/**/index.html"
-              searchFolder: "$(Build.SourcesDirectory)/reports"
-              failTaskOnFailedTests: true
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)/reports'
+              artifactName: 'drop'
+              Contents: |
+                $(Build.SourcesDirectory)\**coverage\**\index.html
+
+          - task: CopyFiles@2
+            displayName: 'Copy testto Output folder'
+            inputs:
+              SourceFolder: $(Build.SourcesDirectory)/reports
+              Contents: |
+                **coverage\**\index.html
+              TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
