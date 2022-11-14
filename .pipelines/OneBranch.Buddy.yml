@@ -157,10 +157,10 @@ extends:
               filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
-          - task: CopyFiles@2
-            displayName: 'Copy test to Output folder'
+          - task: PublishTestResults@2
+            displayName: 'Publish test results (powerbi-juptyer)'
             inputs:
-              SourceFolder: $(Build.SourcesDirectory)/reports
-              Contents: |
-                **coverage\**\index.html
-              TargetFolder: '$(OUTPUTROOT)\outputs\package\test'
+              testResultsFormat: jasmine
+              testResultsFiles: '**\**\**coverage\**\index.html'
+              searchFolder: '$(Build.SourcesDirectory)\reports'
+              failTaskOnFailedTests: true
