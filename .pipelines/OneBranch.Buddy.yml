@@ -156,11 +156,3 @@ extends:
               targetType: 'filePath'
               filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
-
-          - task: PublishTestResults@2
-            displayName: 'Publish test results (powerbi-juptyer)'
-            inputs:
-              testResultsFormat: jasmine
-              testResultsFiles: '**\*'
-              searchFolder: '$(Build.SourcesDirectory)\reports'
-              failTaskOnFailedTests: true
