@@ -161,6 +161,6 @@ extends:
             displayName: 'Publish test results (powerbi-juptyer)'
             inputs:
               testResultsFormat: jasmine
-              testResultsFiles: '**\**\**coverage\**\index.html'
+              testResultsFiles: '**\*'
               searchFolder: '$(Build.SourcesDirectory)\reports'
               failTaskOnFailedTests: true
