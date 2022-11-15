@@ -130,6 +130,7 @@ extends:
                 package.json
                 README.md
                 powerbiclient\nbextension\static\*.*
+                !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
 
           # Copying source artifacts to the Output folder
@@ -139,7 +140,7 @@ extends:
               SourceFolder: $(Build.SourcesDirectory)
               Contents: |
                 **\*
-                !.__pycache__\**\*
+                !__pycache__\**\*
                 !.pipelines\**\*
                 !dist\**
                 !lib\**
@@ -157,4 +158,5 @@ extends:
               Contents: |
                 dist\*.whl
                 **\*.tgz
+                !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
