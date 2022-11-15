@@ -102,6 +102,13 @@ extends:
               filePath: '$(Build.SourcesDirectory)\.pipelines\package.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
+          - task: PowerShell@2
+            displayName: 'Test powerbi-jupyter'
+            inputs:
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)'
+
           # Signing the files created by the build and packaging script
           - task: onebranch.pipeline.signing@1
             displayName: 'Sign binaries'
@@ -116,43 +123,38 @@ extends:
           - task: CopyFiles@2
             displayName: 'Copy Dist to Output folder'
             inputs:
+              SourceFolder: $(Build.SourcesDirectory)
               Contents: |
-                $(Build.SourcesDirectory)\dist\**
-                $(Build.SourcesDirectory)\LICENSE.txt
-                $(Build.SourcesDirectory)\package.json
-                $(Build.SourcesDirectory)\README.md
-                $(Build.SourcesDirectory)\powerbiclient\nbextension\static\*.*
+                dist\**\*
+                LICENSE.txt
+                package.json
+                README.md
+                powerbiclient\nbextension\static\*.*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
 
           # Copying source artifacts to the Output folder
           - task: CopyFiles@2
             displayName: 'Copy Source to Output folder'
             inputs:
+              SourceFolder: $(Build.SourcesDirectory)
               Contents: |
-                $(Build.SourcesDirectory)\**
+                **\*
                 !.__pycache__\**\*
                 !.pipelines\**\*
-                !$(Build.SourcesDirectory)\dist\**
-                !$(Build.SourcesDirectory)\lib\**
-                !$(Build.SourcesDirectory)\demo\**
-                !$(Build.SourcesDirectory)\node_modules\**
-                !$(Build.SourcesDirectory)\tests\**
-                !$(Build.SourcesDirectory)\powerbiclient\tests\**
+                !dist\**
+                !lib\**
+                !demo\**
+                !node_modules\**
+                !tests\**
+                !powerbiclient\tests\**
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
           # Copying tgz package and whl to Output folder
           - task: CopyFiles@2
             displayName: 'Copy tgz package and whl file to Output folder'
             inputs:
+              SourceFolder: $(Build.SourcesDirectory)
               Contents: |
-                $(Build.SourcesDirectory)\**\dist\*.whl
-                $(Build.SourcesDirectory)\**\*.tgz
+                dist\*.whl
+                **\*.tgz
               TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
-
-          # Commands to run during the testing stage
-          - task: PowerShell@2
-            displayName: 'Test powerbi-jupyter'
-            inputs:
-              targetType: 'filePath'
-              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
-              workingDirectory: '$(Build.SourcesDirectory)'
