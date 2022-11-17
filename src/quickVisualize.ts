@@ -25,7 +25,9 @@ export class QuickVisualizeModel extends DOMWidgetModel {
       _embed_config: {},
       _embedded: false,
       _token_expired: false,
-      _init_error: null
+      _init_error: null,
+      container_height: 0,
+      container_width: 0,
     };
   };
 
@@ -52,6 +54,15 @@ export class QuickVisualizeView extends DOMWidgetView {
 
     // Observe changes in the traitlets in Python, and define custom callback.
     this.model.on('change:_embed_config', this.embedConfigChanged, this);
+    this.model.on('change:container_height', this.containerSizeChanged, this);
+    this.model.on('change:container_width', this.containerSizeChanged, this);
+  }
+
+  containerSizeChanged(): void {
+    if (this.quickCreateContainer) {
+      this.quickCreateContainer.style.height = `${this.model.get('container_height')}px`;
+      this.quickCreateContainer.style.width = `${this.model.get('container_width')}px`;
+    }
   }
 
   setTokenExpiredFlag(): void {
@@ -93,14 +104,17 @@ export class QuickVisualizeView extends DOMWidgetView {
       setTimeout(() => {
         // Set default aspect ratio
         const aspectRatio = 9 / 16;
-        // Get dimensions of output cell
-        const DOMRect = this.el.getBoundingClientRect();
 
-        const width = DOMRect.width || 980;
-        const height = width * aspectRatio;
+        let width = this.model.get('container_width') as number;
+        let height = this.model.get('container_height') as number;
 
-        console.log('DOMRect:', DOMRect);
-        console.log(`width=${width}, height=${height}`);
+        if (!width || !height) {
+          // Get dimensions of output cell
+          const DOMRect = this.el.getBoundingClientRect();
+
+          width = DOMRect.width || 980;
+          height = width * aspectRatio;
+        }
 
         // Set dimensions of quick create container
         this.quickCreateContainer.style.width = `${width}px`;
