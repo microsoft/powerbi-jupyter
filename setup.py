@@ -94,7 +94,8 @@ setup_args = dict(
         'ipywidgets>=7.0.0',
         'jupyter-ui-poll>=0.1.2',
         'msal>=1.8.0',
-        'requests>=2.25.1'
+        'requests>=2.25.1',
+        'pandas'
     ],
     extras_require = {
         'test': [
