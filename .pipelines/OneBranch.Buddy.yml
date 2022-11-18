@@ -71,11 +71,6 @@ extends:
               system: 'Custom'
               customVersion: '$(CustomBuildNumber)'
 
-          - task: NodeTool@0
-            displayName: 'Install Node.js'
-            inputs:
-              versionSpec: '16.x'
-
           - task: npmAuthenticate@0
             displayName: 'NPM Authenticate'
             inputs:
