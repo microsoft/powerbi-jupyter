@@ -111,7 +111,7 @@ extends:
               command: 'sign'
               signing_environment: 'azure-ado'
               signing_profile: 'internal_azure_service'
-              files_to_sign: '**'
+              files_to_sign: '*;dist\**\*;css\*;docs\**\*;powerbiclient.egg-info\*;powerbiclient\**\*;src\*'
               search_root: '$(Build.SourcesDirectory)'
 
           # Copying build artifacts to the Output folder
@@ -134,15 +134,12 @@ extends:
             inputs:
               SourceFolder: $(Build.SourcesDirectory)
               Contents: |
-                **\*
-                !__pycache__\**\*
-                !.pipelines\**\*
-                !dist\**
-                !lib\**
-                !demo\**
-                !node_modules\**
-                !tests\**
-                !powerbiclient\tests\**
+                *
+                css\*
+                docs\**\*
+                powerbiclient.egg-info\*
+                powerbiclient\**\*
+                src\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
           # Copying tgz package and whl to Output folder
