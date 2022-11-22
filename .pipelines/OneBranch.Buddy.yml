@@ -104,23 +104,13 @@ extends:
               filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
-          # Signing the files created by the build and packaging script
-          - task: onebranch.pipeline.signing@1
-            displayName: 'Sign binaries'
-            inputs:
-              command: 'sign'
-              signing_environment: 'azure-ado'
-              signing_profile: 'internal_azure_service'
-              files_to_sign: '*;dist\**\*;css\*;docs\**\*;powerbiclient.egg-info\*;powerbiclient\**\*;src\*'
-              search_root: '$(Build.SourcesDirectory)'
-
           # Copying build artifacts to the Output folder
           - task: CopyFiles@2
             displayName: 'Copy Dist to Output folder'
             inputs:
               SourceFolder: $(Build.SourcesDirectory)
               Contents: |
-                dist\**\*
+                dist\*
                 LICENSE.txt
                 package.json
                 README.md
@@ -133,13 +123,15 @@ extends:
             inputs:
               SourceFolder: $(Build.SourcesDirectory)
               Contents: |
-                *
-                css\*
-                docs\**\*
-                powerbiclient.egg-info\*
-                powerbiclient\**\*
-                src\*
-                !**\__pycache__\*
+                **\*
+                !__pycache__\*
+                !.pipelines\*
+                !dist\*
+                !lib\*
+                !demo\*
+                !node_modules\**\*
+                !tests\**\*
+                !powerbiclient\tests\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
           # Copying tgz package and whl to Output folder
@@ -152,3 +144,13 @@ extends:
                 **\*.tgz
                 !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\package\Release'
+
+          # Signing the files created by the build and packaging script
+          - task: onebranch.pipeline.signing@1
+            displayName: 'Sign binaries'
+            inputs:
+              command: 'sign'
+              signing_environment: 'azure-ado'
+              signing_profile: 'internal_azure_service'
+              files_to_sign: '**'
+              search_root: '$(OUTPUTROOT)'
