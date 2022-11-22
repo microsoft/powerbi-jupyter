@@ -125,7 +125,6 @@ extends:
                 package.json
                 README.md
                 powerbiclient\nbextension\static\*.*
-                !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
 
           # Copying source artifacts to the Output folder
@@ -140,6 +139,7 @@ extends:
                 powerbiclient.egg-info\*
                 powerbiclient\**\*
                 src\*
+                !**\__pycache__\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
           # Copying tgz package and whl to Output folder
