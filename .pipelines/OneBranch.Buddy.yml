@@ -115,6 +115,7 @@ extends:
                 package.json
                 README.md
                 powerbiclient\nbextension\static\*.*
+                !dist\*.whl
               TargetFolder: '$(OUTPUTROOT)\outputs\build\build_artifacts'
 
           # Copying source artifacts to the Output folder
