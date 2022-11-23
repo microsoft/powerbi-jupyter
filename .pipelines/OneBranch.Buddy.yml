@@ -124,7 +124,7 @@ extends:
               SourceFolder: $(Build.SourcesDirectory)
               Contents: |
                 **\*
-                !__pycache__\*
+                !**\__pycache__
                 !.pipelines\*
                 !dist\*
                 !lib\*
@@ -132,6 +132,7 @@ extends:
                 !node_modules\**\*
                 !tests\**\*
                 !powerbiclient\tests\*
+                !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
           # Copying tgz package and whl to Output folder
