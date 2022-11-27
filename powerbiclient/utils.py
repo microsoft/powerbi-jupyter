@@ -16,7 +16,7 @@ data_types_map = {
     'int32': DataType.INT32.value,
     'bool': DataType.LOGICAL.value,
     'datetime64[ns]': DataType.DATE_TIME.value,
-    'object': DataType.TEXT.value # default
+    'object': DataType.TEXT.value  # default
 }
 
 
@@ -54,8 +54,8 @@ def get_dataset_config(df, locale='en-US'):
         # Logical values should be with lower case: true / false
         if data_type == DataType.LOGICAL.value:
             df[col] = df[col].astype('string').str.lower()
-        
-        columns_schema.append({ 'name': col, 'dataType': data_type })
+
+        columns_schema.append({'name': col, 'dataType': data_type})
 
     return {
         'locale': locale,
@@ -95,7 +95,7 @@ def is_dataset_create_config_valid(dataset_create_config):
     locale = dataset_create_config.get('locale')
     if not locale or type(locale) != str:
         return False
-    
+
     # Validate table schema list
     table_schema_list = dataset_create_config.get('tableSchemaList')
     if not is_dataset_create_config_items_valid(table_schema_list, ['name', 'columns']):
@@ -103,10 +103,11 @@ def is_dataset_create_config_valid(dataset_create_config):
 
     # Validate data
     data = dataset_create_config.get('data')
-    if not is_dataset_create_config_items_valid(table_schema_list, ['name', 'rows']):
+    if not is_dataset_create_config_items_valid(data, ['name', 'rows']):
         return False
-    
+
     return True
+
 
 def is_dataset_create_config_items_valid(lst, expected_item_fields):
     if not lst or type(lst) != list or len(lst) != 1:
@@ -140,7 +141,7 @@ def get_access_token_details(powerbi_widget, auth=None):
         # In this authentication way we cannot refresh the access token so token_expiration should be None
         token_expiration = None
         return auth, token_expiration
-    
+
     try:
         if auth is None:
             # Use DeviceCodeLoginAuthentication if no authentication is provided
@@ -155,6 +156,6 @@ def get_access_token_details(powerbi_widget, auth=None):
         access_token = auth.get_access_token()
         token_expiration = auth.get_access_token_details().get('id_token_claims').get('exp')
         return access_token, token_expiration
-    
+
     except Exception as ex:
         raise Exception("Could not get access token: {0}".format(ex))
