@@ -5,7 +5,7 @@ Write-Host "Package full name: $packPath"
 $exitCode = 0;
 
 Write-Host "start: verify package name"
-$version = [Environment]::GetEnvironmentVariable("PowerBIJupyterVersion", "User")
+$version = (Get-Content "package.json") -join "`n" | ConvertFrom-Json | Select -ExpandProperty "version"
 $expectedPackNamePattern = "^powerbiclient-$version-(.*).whl$"
 $packName = $package.Name
 if (-Not ($packName -match $expectedPackNamePattern)) {
