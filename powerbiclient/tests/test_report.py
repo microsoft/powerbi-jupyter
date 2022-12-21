@@ -24,13 +24,16 @@ PAGE_VISUALS = ['dummy_page_visuals']
 REPORT_BOOKMARKS = ['dummy_report_bookmarks']
 REPORT_FILTERS = ['dummy_report_filters']
 
+
 def create_test_report(embedded=True, permissions=None):
     with requests_mock.Mocker() as rm:
         request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{GROUP_ID}/reports/{REPORT_ID}"
-        rm.get(request_url, json={ 'embedUrl': EMBED_URL })
-        report = Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
+        rm.get(request_url, json={'embedUrl': EMBED_URL})
+        report = Report(group_id=GROUP_ID, report_id=REPORT_ID,
+                        auth=ACCESS_TOKEN, permissions=permissions)
         report._embedded = embedded
         return report
+
 
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
@@ -90,7 +93,7 @@ class TestReportConstructor:
             'accessToken': ACCESS_TOKEN,
             'embedUrl': EMBED_URL,
             'tokenType': 0,
-            'tokenExpiration': 0,
+            'tokenExpiration': None,
             'viewMode': 0,
             'permissions': None,
             'datasetId': None
@@ -107,7 +110,8 @@ class TestSettingNewEmbedConfig:
         new_embed_url = 'new_dummy_embed_url'
 
         # Act
-        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config['permissions'], dataset_id=report._embed_config['datasetId'], token_expiration=report._embed_config['tokenExpiration'])
+        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config[
+                                 'permissions'], dataset_id=report._embed_config['datasetId'], token_expiration=report._embed_config['tokenExpiration'])
 
         # Assert
         assert report._embed_config == {
@@ -115,7 +119,7 @@ class TestSettingNewEmbedConfig:
             'accessToken': new_access_token,
             'embedUrl': new_embed_url,
             'tokenType': 0,
-            'tokenExpiration': 0,
+            'tokenExpiration': None,
             'viewMode': 0,
             'permissions': None,
             'datasetId': None
@@ -260,7 +264,8 @@ class TestExportData:
         report._visual_data = VISUAL_DATA
 
         # Act
-        returned_data = report.export_visual_data(PAGE_NAME, VISUAL_NAME, VISUAL_DATA_ROWS)
+        returned_data = report.export_visual_data(
+            PAGE_NAME, VISUAL_NAME, VISUAL_DATA_ROWS)
 
         # Assert
         assert returned_data == VISUAL_DATA
@@ -339,6 +344,7 @@ class TestGetBookmarks:
         assert returned_bookmarks == REPORT_BOOKMARKS
         assert report._get_bookmarks_request == report.GET_BOOKMARKS_REQUEST_DEFAULT_STATE
         assert report._report_bookmarks == report.REPORT_BOOKMARKS_DEFAULT_STATE
+
 
 class TestGetFilters:
     def test_throws_when_not_embedded(self):
