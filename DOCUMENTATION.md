@@ -36,12 +36,12 @@
 <br>
 # Quick start
 The below example shows how to:
-- Import Report class, models and authentication modules
+- Import Report class and authentication modules
 - Use device authentication to authenticate to Power BI
 - Embed report by group id and report id
 
 ```python
-# Import Report class and models
+# Import Report class
 from powerbiclient import Report
 
 # Import DeviceCodeLoginAuthentication class to authenticate to Power BI
@@ -256,7 +256,7 @@ from powerbiclient import Report
 
 <a name="powerbiclient.report.Report.__init__"></a>
 ### \_\_init\_\_ Report
-Create an instance of Power BI report
+Create an instance of a Power BI report. Provide a report ID for viewing or editing an existing report, or a dataset ID for creating a new report.
 
 ```python
 __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=None, dataset_id=None, **kwargs)
@@ -264,11 +264,11 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
 
 **Arguments**:
 
-- `group_id` _string_ - Required.
-  Id of Power BI Workspace where your report resides.
+- `group_id` _string_ - Optional.
+  Id of Power BI Workspace where your report resides. If value is not provided, My workspace will be used.
   
 - `report_id` _string_ - Optional.
-  Id of Power BI report. To be provided if user wants to view or edit a report.
+  Id of Power BI report. Must be provided to view or edit an existing report.
   
 - `auth` _object_ - Optional.
   We have 3 authentication options to embed a Power BI report:
@@ -291,7 +291,7 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
   
 - `dataset_id` _string_ - Optional.
   Create report based on the dataset configured on Power BI workspace.
-  To be provided if user wants to create a report.
+  Must be provided to create a new report from an existing dataset if report_id is not provided.
   
 **Returns**:
 
