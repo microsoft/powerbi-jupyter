@@ -248,6 +248,7 @@ class Report(DOMWidget, HasTraits):
 
         # Get embed URL
         try:
+            group_url = f"/groups/{group_id}" if group_id is not None else ''
             if view_mode == EmbedMode.CREATE.value:
                 if not dataset_id:
                     raise Exception("Dataset Id is required")
