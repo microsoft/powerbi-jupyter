@@ -5,8 +5,6 @@ import { DOMWidgetModel, DOMWidgetView, ISerializers } from '@jupyter-widgets/ba
 
 import {
   Report,
-  service,
-  factories,
   models,
   VisualDescriptor,
   Page,
@@ -17,18 +15,7 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 
 // Import the CSS
 import '../css/report.css';
-import { getActivePageSize, getRequestedPage, setTokenExpirationListener } from './utils';
-
-// Jupyter SDK type to be passed with service instance creation
-const JUPYTER_SDK_TYPE = 'powerbi-jupyter';
-
-// Initialize powerbi service
-const powerbi = new service.Service(
-  factories.hpmFactory,
-  factories.wpmpFactory,
-  factories.routerFactory,
-  { type: JUPYTER_SDK_TYPE, sdkWrapperVersion: MODULE_VERSION }
-);
+import { getActivePageSize, getRequestedPage, powerbi, setTokenExpirationListener, getTokenExpirationTimeout } from './utils';
 
 const EXPORT_DATA_DEFAULT_STATE: ExportVisualDataRequest = {
   pageName: undefined,
@@ -43,9 +30,6 @@ const REPORT_FILTER_REQUEST_DEFAULT_STATE = {
 };
 
 const REPORT_NOT_EMBEDDED_MESSAGE = 'Power BI report is not embedded';
-
-// Set threshold to refresh token in minutes
-const TOKEN_REFRESH_THRESHOLD = 10;
 
 export class ReportModel extends DOMWidgetModel {
   defaults(): any {
@@ -170,14 +154,21 @@ export class ReportView extends DOMWidgetView {
       ) {
         // Set new access token
         this.report.setAccessToken(accessToken);
-        if (embedConfig.tokenExpiration) {
+
+        if (reportConfig.accessToken) {
           // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-          setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
+          setTokenExpirationListener(reportConfig.accessToken, this);
         }
       }
       this.model.set('_embedded', true);
       this.touch();
       return;
+    } else {
+      // Refresh access token before embedding if token is expired
+      if (!reportConfig.accessToken || getTokenExpirationTimeout(reportConfig.accessToken) <= 0) {
+        this.setTokenExpiredFlag();
+        return;
+      }
     }
 
     // Flag for checking create mode
@@ -200,9 +191,9 @@ export class ReportView extends DOMWidgetView {
     this.report.on('loaded', async () => {
       console.log('Loaded');
 
-      if (embedConfig.tokenExpiration) {
+      if (reportConfig.accessToken) {
         // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-        setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
+        setTokenExpirationListener(embedConfig.accessToken, this);
       }
 
       try {
@@ -233,7 +224,6 @@ export class ReportView extends DOMWidgetView {
         this.reportContainer.style.width = `${width}px`;
         this.reportContainer.style.height = `${height}px`;
 
-        
         // Show the report container
         this.reportContainer.style.visibility = 'visible';
 

@@ -121,8 +121,7 @@ def is_dataset_create_config_items_valid(lst, expected_item_fields):
 
 
 def get_access_token_details(powerbi_widget, auth=None):
-    """ Get access token details: access token and token expiration
-
+    """ Get an access token
     Args:
         powerbi_widget (Report | QuickVisulize): Required.
             One of Power BI widget classes, can be Report or QuickVisualize
@@ -133,14 +132,13 @@ def get_access_token_details(powerbi_widget, auth=None):
                 - If not provided, Power BI user will be authenticated using Device Flow authentication
 
     Returns:
-        tuple: (access_token, token_expiration)
+        string: access_token
     """
 
     # auth is the access token string
     if isinstance(auth, str):
         # In this authentication way we cannot refresh the access token so token_expiration should be None
-        token_expiration = None
-        return auth, token_expiration
+        return auth
 
     try:
         if auth is None:
@@ -154,8 +152,7 @@ def get_access_token_details(powerbi_widget, auth=None):
             powerbi_widget._auth = auth
 
         access_token = auth.get_access_token()
-        token_expiration = auth.get_access_token_details().get('id_token_claims').get('exp')
-        return access_token, token_expiration
+        return access_token
 
     except Exception as ex:
         raise Exception("Could not get access token: {0}".format(ex))

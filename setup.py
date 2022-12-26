@@ -102,7 +102,8 @@ setup_args = dict(
             'pytest>=4.6',
             'pytest-cov',
             'nbval',
-            'requests_mock'
+            'requests_mock',
+            'mock'
         ],
         'demo': [
             'pandas',

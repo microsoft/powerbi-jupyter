@@ -9,8 +9,6 @@
     * [Import powerbiclient.authentication](#Import-powerbiclient.authentication)
     * [Create instance of Authentication](#\_\_init\_\_-AuthenticationResult)
     * [Get access token](#get\_access\_token)
-    * [Get authentication result](#get\_access\_token\_details)
-    * [Refresh token](#refresh\_token)
   * [Device Flow Authentication](#Device-Flow-Authentication)
     * [Import DeviceCodeLoginAuthentication](#Import-DeviceCodeLoginAuthentication)
     * [Create instance of Device Flow Authentication](#\_\_init\_\_-DeviceCodeLoginAuthentication)
@@ -90,13 +88,8 @@ class AuthenticationResult()
 Create instance of Authentication
 
 ```python
-__init__(self, access_token_result)
+__init__(self)
 ```
-
-**Arguments**:
-
-- `access_token_result` _dict_ - Authentication result. A dict representing the json response from AAD. A successful response would contain "access_token" key.
-
 
 **Returns**:
 
@@ -108,8 +101,12 @@ __init__(self, access_token_result)
 ### get\_access\_token
 
 ```python
-get_access_token()
+get_access_token(self, force_refresh=False)
 ```
+
+**Arguments**:
+
+- `force_refresh` - whether to force refresh a new token or not, default is False
 
 **Returns**:
 
@@ -119,44 +116,6 @@ get_access_token()
 ```python
 # Get the access token using authentication object
 access_token = auth.get_access_token()
-```
-
-<br>
-
-<a name="powerbiclient.authentication.AuthenticationResult.get_access_token_details"></a>
-### get\_access\_token\_details
-
-Returns the authentication result - a dict representing the json response from AAD.
-
-```python
-get_access_token_details()
-```
-
-
-**Returns**:
-
-- `dict` - authentication result
-
-**Example**:
-```python
-# Get the authentication result using authentication object
-auth_result = auth.get_access_token_details()
-```
-
-<br>
-
-<a name="powerbiclient.authentication.AuthenticationResult.refresh_token"></a>
-### refresh\_token
-Acquire a token based on the refresh token obtained from the authentication result
-
-```python
-refresh_token()
-```
-
-**Example**:
-```python
-# Acquire a new access token from refresh token using authentication object
-auth.refresh_token()
 ```
 
 <br>

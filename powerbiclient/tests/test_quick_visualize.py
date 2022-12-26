@@ -19,7 +19,6 @@ EMBED_CONFIG = {
     'accessToken': ACCESS_TOKEN,
     'embedUrl': QUICK_CREATE_EMBED_URL,
     'tokenType': 0,
-    'tokenExpiration': None,
     'datasetCreateConfig': DATASET_CREATE_CONFIG,
     'reportCreationMode': REPORT_CREATION_MODE
 }
@@ -74,28 +73,6 @@ class TestUpdateEmbedConfig:
             'accessToken': new_access_token,
             'embedUrl': QUICK_CREATE_EMBED_URL,
             'tokenType': 0,
-            'tokenExpiration': None,
-            'datasetCreateConfig': DATASET_CREATE_CONFIG,
-            'reportCreationMode': REPORT_CREATION_MODE
-        }
-        assert qv._embedded == False
-
-    def test_update_token_expiration(self):
-        # Arrange
-        qv = QuickVisualize(auth=ACCESS_TOKEN,
-                            dataset_create_config=DATASET_CREATE_CONFIG)
-        new_token_expiration = 30
-
-        # Act
-        qv._update_embed_config(token_expiration=new_token_expiration)
-
-        # Assert - only token_expiration is updated
-        assert qv._embed_config == {
-            'type': 'quickCreate',
-            'accessToken': ACCESS_TOKEN,
-            'embedUrl': QUICK_CREATE_EMBED_URL,
-            'tokenType': 0,
-            'tokenExpiration': new_token_expiration,
             'datasetCreateConfig': DATASET_CREATE_CONFIG,
             'reportCreationMode': REPORT_CREATION_MODE
         }
@@ -121,7 +98,6 @@ class TestUpdateEmbedConfig:
             'accessToken': ACCESS_TOKEN,
             'embedUrl': QUICK_CREATE_EMBED_URL,
             'tokenType': 0,
-            'tokenExpiration': None,
             'datasetCreateConfig': new_dataset_create_config,
             'reportCreationMode': REPORT_CREATION_MODE
         }

@@ -20,43 +20,36 @@ DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 class AuthenticationResult:
 
     # Methods
-    def __init__(self, access_token_result):
+    def __init__(self):
         """ Create an instance of AuthenticationResult
-
-        Args:
-            access_token_result (dict): Authentication result
 
         Returns:
             object: AuthenticationResult object
         """
-        self._access_token_result = access_token_result
+        self._app = None
 
-    def get_access_token(self):
+    def get_access_token(self, force_refresh=False):
         """ Returns the access token
 
         Returns:
             string: access token
         """
+        if self._app is None:
+            raise RuntimeError('No application found')
 
-        return self._access_token_result.get('access_token')
+        accounts = self._app.get_accounts()
+        if len(accounts) == 0:
+            raise RuntimeError('No accounts found for application')
 
-    def get_access_token_details(self):
-        """ Returns the authentication result with access token
+        token_result = self._app.acquire_token_silent_with_error(scopes=DEFAULT_SCOPES, account=accounts[0], force_refresh=force_refresh)
 
-        Returns:
-            dict: authentication result
-        """
+        if not token_result:
+            raise RuntimeError('Failed to get access token')
+        
+        if ('access_token' not in token_result) or ('error' in token_result):
+            raise RuntimeError(token_result.get('error', 'Failed to get access token'))
 
-        return self._access_token_result
-
-    def refresh_token(self):
-        """ Acquire token(s) based on a refresh token obtained from authentication result
-        """
-        app = msal.PublicClientApplication(client_id=CLIENT_ID)
-        token_result = app.acquire_token_by_refresh_token(self._access_token_result.get('refresh_token'), DEFAULT_SCOPES)
-        if "access_token" not in token_result:
-            raise RuntimeError(token_result.get('error_description'))
-        self._access_token_result = token_result
+        return token_result.get('access_token')
 
 
 class DeviceCodeLoginAuthentication(AuthenticationResult):
@@ -68,20 +61,18 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
         Returns:
             object: Device Flow object
         """
-        auth_result = self._acquire_token_device_code()
-        super().__init__(auth_result)
+        super().__init__()
+        self._acquire_token_device_code()
 
     def _acquire_token_device_code(self):
-        """ Returns the authentication result captured using device flow
-
-        Returns:
-            dict: authentication result
+        """ Acquires a token with device code flow and saves the public client application
         """
         app = msal.PublicClientApplication(client_id=CLIENT_ID)
         flow = app.initiate_device_flow(scopes=DEFAULT_SCOPES)
 
         if "user_code" not in flow:
-            raise ValueError("Fail to create device flow. Err: %s" % json.dumps(flow, indent=4))
+            raise ValueError("Fail to create device flow. Err: %s" %
+                             json.dumps(flow, indent=4))
 
         # Display the device code
         print("Performing device flow authentication. Please follow the instructions below.\n{0}".format(flow["message"]))
@@ -96,9 +87,9 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
 
         if "access_token" in result:
             print("\nDevice flow authentication successfully completed.\nYou are now logged in.")
-            return result
+            self._app = app
         else:
-            raise RuntimeError(result.get("error_description"))
+            raise RuntimeError(result.get("error_description", "Device code flow failed"))
 
 
 class InteractiveLoginAuthentication(AuthenticationResult):
@@ -110,14 +101,11 @@ class InteractiveLoginAuthentication(AuthenticationResult):
         Returns:
             object: Interactive authentication object
         """
-        auth_result = self._acquire_token_interactive()
-        super().__init__(auth_result)
+        super().__init__()
+        self._acquire_token_interactive()
 
     def _acquire_token_interactive(self):
-        """Returns the authentication result captured using interactive login
-
-        Returns:
-            dict: authentication result
+        """ Acquires a token interactively i.e. via a local browser and saves the public client application
         """
         app = msal.PublicClientApplication(client_id=CLIENT_ID)
         print("A local browser window will open for interactive sign in.")
@@ -125,6 +113,6 @@ class InteractiveLoginAuthentication(AuthenticationResult):
 
         if "access_token" in result:
             print("\nInteractive authentication successfully completed.\nYou are now logged in.")
-            return result
+            self._app = app
         else:
-            raise RuntimeError(result.get("error_description"))
+            raise RuntimeError(result.get("error_description", "Interactive flow failed"))

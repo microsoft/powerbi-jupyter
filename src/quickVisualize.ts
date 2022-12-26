@@ -6,11 +6,8 @@ import { DOMWidgetModel, DOMWidgetView } from '@jupyter-widgets/base';
 import { models } from 'powerbi-client';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
-import { powerbi, setTokenExpirationListener } from './utils';
+import { powerbi, setTokenExpirationListener, getTokenExpirationTimeout } from './utils';
 import '../css/report.css';
-
-// Set threshold to refresh token in minutes
-const TOKEN_REFRESH_THRESHOLD = 10;
 
 export class QuickVisualizeModel extends DOMWidgetModel {
   defaults(): any {
@@ -80,28 +77,34 @@ export class QuickVisualizeView extends DOMWidgetView {
         // Set new access token
         this.quickCreate.setAccessToken(quickCreateConfig.accessToken);
 
-        if (embedConfig.tokenExpiration) {
+        if (quickCreateConfig.accessToken) {
           // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-          setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
+          setTokenExpirationListener(quickCreateConfig.accessToken, this);
         }
       }
 
       this.model.set('_embedded', true);
       this.touch();
       return;
+    } else {
+      // Refresh access token before embedding if token is expired
+      if (!quickCreateConfig.accessToken || getTokenExpirationTimeout(quickCreateConfig.accessToken) <= 0) {
+        this.setTokenExpiredFlag();
+        return;
+      }
     }
 
     this.quickCreate = powerbi.quickCreate(this.quickCreateContainer, quickCreateConfig);
-
-    if (embedConfig.tokenExpiration) {
-      // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-      setTokenExpirationListener(embedConfig.tokenExpiration, TOKEN_REFRESH_THRESHOLD, this);
-    }
 
     // TODO: show iframe when report is loaded once "loaded" event is implemented
     try {
       // this.el is updated with correct width when report is loaded. Using timeout until "loaded" event is implemented
       setTimeout(() => {
+        if (quickCreateConfig.accessToken) {
+          // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
+          setTokenExpirationListener(embedConfig.accessToken, this);
+        }
+
         // Set default aspect ratio
         const aspectRatio = 9 / 16;
 

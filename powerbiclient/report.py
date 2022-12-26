@@ -48,7 +48,6 @@ class Report(DOMWidget, HasTraits):
         'accessToken': None,
         'embedUrl': None,
         'tokenType': None,
-        'tokenExpiration': None,
         'viewMode': None,
         'permissions': None,
         'datasetId': None
@@ -185,9 +184,6 @@ class Report(DOMWidget, HasTraits):
             if (type(proposal['value']['tokenType']) is not int):
                 raise TraitError('Invalid tokenType ',
                                  proposal['value']['tokenType'])
-            if (proposal['value']['tokenExpiration'] is not None and type(proposal['value']['tokenExpiration']) is not int):
-                raise TraitError('Invalid tokenExpiration ',
-                                 proposal['value']['tokenExpiration'])
             if (type(proposal['value']['viewMode']) is not int):
                 raise TraitError('Invalid viewMode ',
                                  proposal['value']['viewMode'])
@@ -247,11 +243,10 @@ class Report(DOMWidget, HasTraits):
             object: Report object
         """
 
-        access_token, token_expiration = get_access_token_details(
+        access_token = get_access_token_details(
             powerbi_widget=Report, auth=auth)
 
         # Get embed URL
-        group_url = f"/groups/{group_id}" if group_id is not None else ''
         try:
             if view_mode == EmbedMode.CREATE.value:
                 if not dataset_id:
@@ -276,8 +271,9 @@ class Report(DOMWidget, HasTraits):
         self._registered_event_handlers = dict(
             self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE)
 
-        self._set_embed_config(access_token=access_token, embed_url=embed_url, view_mode=view_mode,
-                               permissions=permissions, dataset_id=dataset_id, token_expiration=token_expiration)
+        self._set_embed_config(access_token=access_token, embed_url=embed_url,
+                               view_mode=view_mode, permissions=permissions, dataset_id=dataset_id)
+
         self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
@@ -286,10 +282,11 @@ class Report(DOMWidget, HasTraits):
     def _update_access_token(self, change):
         if change.new == True:
             if not self._auth:
-                raise Exception("Authentication context not found")
-            self._auth.refresh_token()
-            self._set_embed_config(access_token=self._auth.get_access_token(), embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'], permissions=self._embed_config[
-                                   'permissions'], dataset_id=self._embed_config['datasetId'], token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
+                raise Exception(
+                    "Token expired and authentication context not found")
+            access_token = self._auth.get_access_token(force_refresh=True)
+            self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'],
+                                   permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'])
             self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
 
     def _get_embed_url(self, request_url, token, response_key):
@@ -308,10 +305,10 @@ class Report(DOMWidget, HasTraits):
         """
         if not access_token:
             raise Exception("Access token cannot be empty")
-        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'],
-                               permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'], token_expiration=self._embed_config['tokenExpiration'])
+        self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'],
+                               view_mode=self._embed_config['viewMode'], permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'])
 
-    def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id, token_expiration):
+    def _set_embed_config(self, access_token, embed_url, view_mode, permissions, dataset_id):
         """Set embed configuration parameters of Power BI report
 
         Args:
@@ -320,14 +317,12 @@ class Report(DOMWidget, HasTraits):
             view_mode (number): mode for embedding Power BI report (0: View, 1: Edit, 2: Create)
             permissions (number): permissions required while embedding report in Edit mode
             dataset_id (string): create report based on the dataset configured on Power BI workspace
-            token_expiration (number): expiration timestamp of the access token
         """
         self._embed_config = {
             'type': 'report',
             'accessToken': access_token,
             'embedUrl': embed_url,
             'tokenType': TokenType.AAD.value,
-            'tokenExpiration': token_expiration,
             'viewMode': view_mode,
             'permissions': permissions,
             'datasetId': dataset_id

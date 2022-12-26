@@ -5,15 +5,13 @@
 # Licensed under the MIT license.
 
 import pandas as pd
+from unittest.mock import MagicMock
 
 from ..authentication import AuthenticationResult
 from ..report import Report
 from ..utils import get_access_token_details, get_dataset_config, is_dataset_create_config_valid
 
 ACCESS_TOKEN = 'dummy_access_token'
-TOKEN_EXPIRATION = 30
-AUTH = AuthenticationResult(
-    {'access_token': ACCESS_TOKEN, 'id_token_claims': {'exp': TOKEN_EXPIRATION}})
 LOCALE = 'dummy_locale'
 TABLE_SCHEMA_COLUMNS = [{'name': 'col1', 'dataType': 'Number'}]
 TABLE_SCHEMA_LIST = [
@@ -24,16 +22,16 @@ DATA = [{'name': 'dummy_table_name', 'rows': DATA_ROWS}]
 
 class TestGetAccessTokenDetails:
     def test_happy_path_access_token(self):
-        access_token, token_expiration = get_access_token_details(
+        access_token = get_access_token_details(
             powerbi_widget=Report, auth=ACCESS_TOKEN)
         assert access_token == ACCESS_TOKEN
-        assert token_expiration == None
 
     def test_happy_path_auth_result(self):
-        access_token, token_expiration = get_access_token_details(
-            powerbi_widget=Report, auth=AUTH)
+        mock_auth = AuthenticationResult()
+        mock_auth.get_access_token = MagicMock(return_value=ACCESS_TOKEN)
+        access_token = get_access_token_details(
+            powerbi_widget=Report, auth=mock_auth)
         assert access_token == ACCESS_TOKEN
-        assert token_expiration == TOKEN_EXPIRATION
 
     def test_invalid_auth(self):
         invalid_auth = 1234

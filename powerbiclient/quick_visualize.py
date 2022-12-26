@@ -45,12 +45,11 @@ class QuickVisualize(DOMWidget, HasTraits):
         'accessToken': None,
         'embedUrl': QUICK_CREATE_EMBED_URL,
         'tokenType': TokenType.AAD.value,
-        'tokenExpiration': None,
         'datasetCreateConfig': None,
         'reportCreationMode': ReportCreationMode.QUICK_EXPLORE.value
     }
-    TOKEN_EXPIRED_DEFAULT_STATE = False
     INIT_ERROR_DEFAULT_STATE = ''
+    TOKEN_EXPIRED_DEFAULT_STATE = False
 
     # Authentication object
     _auth = None
@@ -86,9 +85,6 @@ class QuickVisualize(DOMWidget, HasTraits):
         if (type(proposal['value']['tokenType']) is not int):
             raise TraitError('Invalid tokenType ',
                              proposal['value']['tokenType'])
-        if (proposal['value']['tokenExpiration'] is not None and type(proposal['value']['tokenExpiration']) is not int):
-            raise TraitError('Invalid tokenExpiration ',
-                             proposal['value']['tokenExpiration'])
         if (not is_dataset_create_config_valid(proposal['value']['datasetCreateConfig'])):
             raise TraitError('Invalid datasetCreateConfig ',
                              proposal['value']['datasetCreateConfig'])
@@ -121,10 +117,11 @@ class QuickVisualize(DOMWidget, HasTraits):
             object: QuickVisualize object
         """
 
-        access_token, token_expiration = get_access_token_details(
+        access_token = get_access_token_details(
             powerbi_widget=QuickVisualize, auth=auth)
         self._update_embed_config(
-            access_token=access_token, token_expiration=token_expiration, dataset_create_config=dataset_create_config)
+            access_token=access_token, dataset_create_config=dataset_create_config)
+
         self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
@@ -133,10 +130,10 @@ class QuickVisualize(DOMWidget, HasTraits):
     def _update_access_token(self, change):
         if change.new == True:
             if not self._auth:
-                raise Exception("Authentication context not found")
-            self._auth.refresh_token()
-            self._update_embed_config(
-                access_token=self._auth.get_access_token(), token_expiration=self._auth.get_access_token_details().get('id_token_claims').get('exp'))
+                raise Exception(
+                    "Token expired and authentication context not found")
+            access_token = self._auth.get_access_token(force_refresh=True)
+            self._update_embed_config(access_token=access_token)
             self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
 
     def set_access_token(self, access_token):
@@ -149,7 +146,7 @@ class QuickVisualize(DOMWidget, HasTraits):
             raise Exception("Access token cannot be empty")
         self._update_embed_config(access_token=access_token)
 
-    def _update_embed_config(self, access_token=None, token_expiration=None, dataset_create_config=None):
+    def _update_embed_config(self, access_token=None, dataset_create_config=None):
         """
             Set embed configuration parameters of Power BI quick visualization
         """
@@ -158,7 +155,6 @@ class QuickVisualize(DOMWidget, HasTraits):
             'accessToken': access_token or self._embed_config['accessToken'],
             'embedUrl': QUICK_CREATE_EMBED_URL,
             'tokenType': TokenType.AAD.value,
-            'tokenExpiration': token_expiration or self._embed_config['tokenExpiration'],
             'datasetCreateConfig': dataset_create_config or self._embed_config['datasetCreateConfig'],
             'reportCreationMode': ReportCreationMode.QUICK_EXPLORE.value
         }

@@ -93,7 +93,6 @@ class TestReportConstructor:
             'accessToken': ACCESS_TOKEN,
             'embedUrl': EMBED_URL,
             'tokenType': 0,
-            'tokenExpiration': None,
             'viewMode': 0,
             'permissions': None,
             'datasetId': None
@@ -110,8 +109,7 @@ class TestSettingNewEmbedConfig:
         new_embed_url = 'new_dummy_embed_url'
 
         # Act
-        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config[
-                                 'permissions'], dataset_id=report._embed_config['datasetId'], token_expiration=report._embed_config['tokenExpiration'])
+        report._set_embed_config(access_token=new_access_token, embed_url=new_embed_url, view_mode=report._embed_config['viewMode'], permissions=report._embed_config['permissions'], dataset_id=report._embed_config['datasetId'])
 
         # Assert
         assert report._embed_config == {
@@ -119,7 +117,6 @@ class TestSettingNewEmbedConfig:
             'accessToken': new_access_token,
             'embedUrl': new_embed_url,
             'tokenType': 0,
-            'tokenExpiration': None,
             'viewMode': 0,
             'permissions': None,
             'datasetId': None
