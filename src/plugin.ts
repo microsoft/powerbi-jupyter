@@ -7,9 +7,6 @@ import { Widget } from '@phosphor/widgets';
 
 import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 
-import * as reportExports from './report';
-import * as quickVisualizeExports from './quickVisualize';
-
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
 const EXTENSION_ID = 'powerbi-jupyter-client:plugin';
@@ -35,12 +32,6 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
   registry.registerWidget({
     name: MODULE_NAME,
     version: MODULE_VERSION,
-    exports: reportExports,
-  });
-
-  registry.registerWidget({
-    name: MODULE_NAME,
-    version: MODULE_VERSION,
-    exports: quickVisualizeExports,
+    exports: (): any => import('./index'),
   });
 }
