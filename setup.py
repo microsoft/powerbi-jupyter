@@ -12,7 +12,7 @@ from os.path import join as pjoin
 
 from setupbase import (
     create_cmdclass, install_npm, ensure_targets,
-    find_packages, combine_commands, ensure_python,
+    find_packages, combine_commands,
     get_version, HERE
 )
 
@@ -21,9 +21,6 @@ from setuptools import setup
 
 # The name of the project
 name = 'powerbiclient'
-
-# Ensure a valid python version
-ensure_python('>=3.4')
 
 # Get our version
 version = get_version(pjoin(name, '_version.py'))
@@ -53,12 +50,12 @@ data_files_spec = [
     ('share/jupyter/nbextensions/powerbiclient',
         nb_path, '*.js*'),
     ('share/jupyter/lab/extensions', lab_path, '*.tgz'),
-    ('etc/jupyter/nbconfig/notebook.d' , HERE, 'powerbiclient.json')
+    ('etc/jupyter/nbconfig/notebook.d', HERE, 'powerbiclient.json')
 ]
 
 
 cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec,
-    data_files_spec=data_files_spec)
+                           data_files_spec=data_files_spec)
 cmdclass['jsdeps'] = combine_commands(
     install_npm(HERE, build_cmd='build:all'),
     ensure_targets(jstargets),
@@ -66,21 +63,21 @@ cmdclass['jsdeps'] = combine_commands(
 
 
 setup_args = dict(
-    name            = name,
-    description     = 'A Custom Jupyter Widget Library',
-    long_description = long_description,
-    long_description_content_type = 'text/markdown',
-    version         = version,
-    scripts         = glob(pjoin('scripts', '*')),
-    cmdclass        = cmdclass,
-    packages        = find_packages(),
-    author          = 'Microsoft',
-    author_email    = '',
-    url             = 'https://github.com/Microsoft/powerbi-jupyter',
-    license         = 'MIT',
-    platforms       = "Linux, Mac OS X, Windows",
-    keywords        = ['Jupyter', 'Widgets', 'IPython'],
-    classifiers     = [
+    name=name,
+    description='A Custom Jupyter Widget Library',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    version=version,
+    scripts=glob(pjoin('scripts', '*')),
+    cmdclass=cmdclass,
+    packages=find_packages(),
+    author='Microsoft',
+    author_email='',
+    url='https://github.com/Microsoft/powerbi-jupyter',
+    license='MIT',
+    platforms="Linux, Mac OS X, Windows",
+    keywords=['Jupyter', 'Widgets', 'IPython'],
+    classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
@@ -89,15 +86,15 @@ setup_args = dict(
         'Programming Language :: Python :: 3.9',
         'Framework :: Jupyter',
     ],
-    include_package_data = True,
-    install_requires = [
+    include_package_data=True,
+    install_requires=[
         'ipywidgets>=7.0.0',
         'jupyter-ui-poll>=0.1.2',
         'msal>=1.8.0',
         'requests>=2.25.1',
         'pandas'
     ],
-    extras_require = {
+    extras_require={
         'test': [
             'pytest>=4.6',
             'pytest-cov',
@@ -110,8 +107,9 @@ setup_args = dict(
             'matplotlib',
         ],
     },
-    entry_points = {
+    entry_points={
     },
+    python_requires='>=3.4'
 )
 
 if __name__ == '__main__':
