@@ -96,6 +96,7 @@ class QuickVisualize(DOMWidget, HasTraits):
     # Raise exception for errors when embedding the Power BI quick visualization
     @observe('_init_error')
     def _on_error(self, change):
+        self._init_error = self.INIT_ERROR_DEFAULT_STATE
         raise Exception(change['new'])
 
     # Methods
@@ -129,12 +130,12 @@ class QuickVisualize(DOMWidget, HasTraits):
 
     def _update_access_token(self, change):
         if change.new == True:
+            self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
             if not self._auth:
                 raise Exception(
                     "Token expired and authentication context not found")
             access_token = self._auth.get_access_token(force_refresh=True)
             self._update_embed_config(access_token=access_token)
-            self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
 
     def set_access_token(self, access_token):
         """Set access token for Power BI quick visualization

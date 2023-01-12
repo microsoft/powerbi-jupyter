@@ -197,6 +197,7 @@ class Report(DOMWidget, HasTraits):
     # Raise exception for errors when embedding the report
     @observe('_init_error')
     def _on_error(self, change):
+        self._init_error = self.INIT_ERROR_DEFAULT_STATE
         raise Exception(change['new'])
 
     # Methods
@@ -282,13 +283,13 @@ class Report(DOMWidget, HasTraits):
 
     def _update_access_token(self, change):
         if change.new == True:
+            self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
             if not self._auth:
                 raise Exception(
                     "Token expired and authentication context not found")
             access_token = self._auth.get_access_token(force_refresh=True)
             self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'],
                                    permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'])
-            self._token_expired = bool(self.TOKEN_EXPIRED_DEFAULT_STATE)
 
     def _get_embed_url(self, request_url, token, response_key):
         response = requests.get(request_url, headers={
