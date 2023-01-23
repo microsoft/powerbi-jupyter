@@ -21,14 +21,14 @@ data_types_map = {
 
 
 def get_dataset_config(df, locale='en-US'):
-    """ Utility methond to get dataset create configuration dict from Pandas DataFrame
+    """ Utility method to get the dataset create configuration dict from a pandas. To be used as input for instantiating a quick visualization object.
 
     Args:
         df (object): Required.
             Pandas DataFrame instance
         locale (string): Optional.
-            Locale of the data
-            Supported locales can be found: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN 
+            This value is used to evaluate the data and parse values of the given DataFrame. 
+            Supported locales can be found here: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN
 
     Returns: 
         dict: dataset_create_config
@@ -79,8 +79,8 @@ def is_dataset_create_config_valid(dataset_create_config):
 
     Args:
         dataset_create_config (dict): Required.
-            dict which represent the datasetCreateConfiguration which is used to quick visualize of the data
-            https://github.com/microsoft/powerbi-models/blob/3e232ad6ad7408b1e5db2bc1e0479733054b1a7b/src/models.ts#L1140-L1146
+            A dict representing the data used to create the report, formatted as IDatasetCreateConfiguration
+            (See: https://learn.microsoft.com/en-us/javascript/api/overview/powerbi/embed-quick-report#step-11---create-a-dataset-without-a-data-source)
 
     Returns:
         bool: True if dataset_create_config is valid, False otherwise

@@ -237,7 +237,7 @@ class Report(DOMWidget, HasTraits):
                 `ALL` - Users can create, view, edit, save, and save a copy of the report.
 
             dataset_id (string): Optional.
-                Create report based on the dataset configured on Power BI workspace.
+                Create a new report using this dataset in the provided Power BI workspace. 
                 Must be provided to create a new report from an existing dataset if report_id is not provided.
 
         Returns:
@@ -287,7 +287,13 @@ class Report(DOMWidget, HasTraits):
             if not self._auth:
                 raise Exception(
                     "Token expired and authentication context not found")
-            access_token = self._auth.get_access_token(force_refresh=True)
+
+            try:
+                access_token = self._auth.get_access_token(force_refresh=True)
+            except Exception as ex:
+                error_message = f"Refresh token failed.\nDetails: {ex}"
+                Exception(error_message)
+
             self._set_embed_config(access_token=access_token, embed_url=self._embed_config['embedUrl'], view_mode=self._embed_config['viewMode'],
                                    permissions=self._embed_config['permissions'], dataset_id=self._embed_config['datasetId'])
 
@@ -332,7 +338,7 @@ class Report(DOMWidget, HasTraits):
         self._embedded = False
 
     def set_size(self, container_height, container_width):
-        """Set width and height of Power BI report in px
+        """Set height and width of Power BI report in px
 
         Args:
             container_height (float): report height

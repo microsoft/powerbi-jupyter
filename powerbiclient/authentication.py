@@ -17,6 +17,7 @@ CLIENT_ID = "23d8f6bd-1eb0-4cc2-a08c-7bf525c67bcd"
 # Using Power BI default permissions
 DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 
+
 class AuthenticationResult:
 
     # Methods
@@ -24,7 +25,7 @@ class AuthenticationResult:
         """ Create an instance of AuthenticationResult
 
         Returns:
-            object: AuthenticationResult object
+            object: AuthenticationResult object. The authentication result object should be passed only to trusted code in your notebook.
         """
         self._app = None
 
@@ -41,13 +42,15 @@ class AuthenticationResult:
         if len(accounts) == 0:
             raise RuntimeError('No accounts found for application')
 
-        token_result = self._app.acquire_token_silent_with_error(scopes=DEFAULT_SCOPES, account=accounts[0], force_refresh=force_refresh)
+        token_result = self._app.acquire_token_silent_with_error(
+            scopes=DEFAULT_SCOPES, account=accounts[0], force_refresh=force_refresh)
 
         if not token_result:
             raise RuntimeError('Failed to get access token')
-        
+
         if ('access_token' not in token_result) or ('error' in token_result):
-            raise RuntimeError(token_result.get('error', 'Failed to get access token'))
+            raise RuntimeError(token_result.get(
+                'error', 'Failed to get access token'))
 
         return token_result.get('access_token')
 
@@ -59,7 +62,7 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
         """ Initiate a Device Flow Auth instance
 
         Returns:
-            object: Device Flow object
+            object: Device flow object. The device flow object should be passed only to trusted code in your notebook.
         """
         super().__init__()
         self._acquire_token_device_code()
@@ -75,7 +78,8 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
                              json.dumps(flow, indent=4))
 
         # Display the device code
-        print("Performing device flow authentication. Please follow the instructions below.\n{0}".format(flow["message"]))
+        print("Performing device flow authentication. Please follow the instructions below.\n{0}".format(
+            flow["message"]))
 
         # Ideally you should wait here, in order to save some unnecessary polling
         result = app.acquire_token_by_device_flow(flow)
@@ -86,10 +90,11 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
         # and then keep calling acquire_token_by_device_flow(flow) in your own customized loop.
 
         if "access_token" in result:
-            print("\nDevice flow authentication successfully completed.\nYou are now logged in.")
+            print("\nDevice flow authentication successfully completed.\nYou are now logged in .\n\nThe result should be passed only to trusted code in your notebook.")
             self._app = app
         else:
-            raise RuntimeError(result.get("error_description", "Device code flow failed"))
+            error_message = f"Authentication failed. Try again.\nDetails: {result.get('error_description')}"
+            raise RuntimeError(error_message)
 
 
 class InteractiveLoginAuthentication(AuthenticationResult):
@@ -99,7 +104,7 @@ class InteractiveLoginAuthentication(AuthenticationResult):
         """Acquire token interactively i.e. via a local browser
 
         Returns:
-            object: Interactive authentication object
+            object: Interactive authentication object. The interactive authentication object should be passed only to trusted code in your notebook.
         """
         super().__init__()
         self._acquire_token_interactive()
@@ -112,7 +117,8 @@ class InteractiveLoginAuthentication(AuthenticationResult):
         result = app.acquire_token_interactive(scopes=DEFAULT_SCOPES)
 
         if "access_token" in result:
-            print("\nInteractive authentication successfully completed.\nYou are now logged in.")
+            print("\nInteractive authentication successfully completed.\nYou are now logged in.\n\nThe result should be passed only to trusted code in your notebook.")
             self._app = app
         else:
-            raise RuntimeError(result.get("error_description", "Interactive flow failed"))
+            error_message = f"Authentication failed. Try again.\nDetails: {result.get('error_description')}"
+            raise RuntimeError(error_message)

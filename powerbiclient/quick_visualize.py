@@ -105,8 +105,8 @@ class QuickVisualize(DOMWidget, HasTraits):
 
         Args:
             dataset_create_config (object): Required.
-                dict which represents the datasetCreateConfiguration which is used to quick visualize of the data
-                format: https://github.com/microsoft/powerbi-models/blob/3e232ad6ad7408b1e5db2bc1e0479733054b1a7b/src/models.ts#L1140-L1146
+                A dict representing the data used to create the report, formatted as IDatasetCreateConfiguration
+                (See: https://learn.microsoft.com/en-us/javascript/api/overview/powerbi/embed-quick-report#step-11---create-a-dataset-without-a-data-source)
 
             auth (string or object): Optional.
                 We have 3 authentication options to embed Power BI quick visualization:
@@ -134,11 +134,17 @@ class QuickVisualize(DOMWidget, HasTraits):
             if not self._auth:
                 raise Exception(
                     "Token expired and authentication context not found")
-            access_token = self._auth.get_access_token(force_refresh=True)
+
+            try:
+                access_token = self._auth.get_access_token(force_refresh=True)
+            except Exception as ex:
+                error_message = f"Refresh token failed.\nDetails: {ex}"
+                Exception(error_message)
+
             self._update_embed_config(access_token=access_token)
 
     def set_access_token(self, access_token):
-        """Set access token for Power BI quick visualization
+        """Set an access token for the Power BI quick visualization
 
         Args:
             access_token (string)
@@ -162,7 +168,7 @@ class QuickVisualize(DOMWidget, HasTraits):
         self._embedded = False
 
     def set_size(self, container_height, container_width):
-        """Set width and height of Power BI quick visualization in px
+        """Set height and width of Power BI quick visualization in px
 
         Args:
             container_height (float)
