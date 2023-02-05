@@ -15,20 +15,15 @@ DATASET_CREATE_CONFIG = {
 QUICK_CREATE_EMBED_URL = 'https://app.powerbi.com/quickCreate'
 REPORT_CREATION_MODE = 'QuickExplore'
 EMBED_CONFIG = {
-    'type': 'quickCreate',
     'accessToken': ACCESS_TOKEN,
-    'embedUrl': QUICK_CREATE_EMBED_URL,
-    'tokenType': 0,
     'datasetCreateConfig': DATASET_CREATE_CONFIG,
-    'reportCreationMode': REPORT_CREATION_MODE
 }
 
 
 class TestQuickVisualizeConstructor:
     def test_quick_visualize_constructor(self):
         # Act
-        qv = QuickVisualize(auth=ACCESS_TOKEN,
-                            dataset_create_config=DATASET_CREATE_CONFIG)
+        qv = QuickVisualize(auth=ACCESS_TOKEN, dataset_create_config=DATASET_CREATE_CONFIG)
 
         # Assert
         assert qv._embed_config == EMBED_CONFIG
@@ -69,12 +64,8 @@ class TestUpdateEmbedConfig:
 
         # Assert - only access token is updated
         assert qv._embed_config == {
-            'type': 'quickCreate',
             'accessToken': new_access_token,
-            'embedUrl': QUICK_CREATE_EMBED_URL,
-            'tokenType': 0,
             'datasetCreateConfig': DATASET_CREATE_CONFIG,
-            'reportCreationMode': REPORT_CREATION_MODE
         }
         assert qv._embedded == False
 
@@ -94,12 +85,8 @@ class TestUpdateEmbedConfig:
 
         # Assert - only token_expiration is updated
         assert qv._embed_config == {
-            'type': 'quickCreate',
             'accessToken': ACCESS_TOKEN,
-            'embedUrl': QUICK_CREATE_EMBED_URL,
-            'tokenType': 0,
             'datasetCreateConfig': new_dataset_create_config,
-            'reportCreationMode': REPORT_CREATION_MODE
         }
         assert qv._embedded == False
 

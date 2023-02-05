@@ -9,6 +9,10 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 import { powerbi, setTokenExpirationListener, getTokenExpirationTimeout } from './utils';
 import '../css/report.css';
 
+const quickCreateEmbedUrl = "https://app.powerbi.com/quickCreate";
+const reportCreationMode = models.ReportCreationMode.QuickExplore;
+const quickCreateTokenType = models.TokenType.Aad;
+
 export class QuickVisualizeModel extends DOMWidgetModel {
   defaults(): any {
     return {
@@ -69,7 +73,19 @@ export class QuickVisualizeView extends DOMWidgetView {
 
   embedConfigChanged(): void {
     const embedConfig = this.model.get('_embed_config');
-    const quickCreateConfig = embedConfig as models.IQuickCreateConfiguration;
+    let quickCreateConfig = embedConfig as models.IQuickCreateConfiguration;
+
+    if (!quickCreateConfig) {
+      this.model.set('_init_error', 'Embed configuration is missing');
+      this.touch();
+      return;
+    }
+
+    // Populate fixed configuration
+    quickCreateConfig.type = 'quickCreate';
+    quickCreateConfig.tokenType = quickCreateTokenType;
+    quickCreateConfig.embedUrl = quickCreateEmbedUrl;
+    quickCreateConfig.reportCreationMode = reportCreationMode;
 
     if (this.quickCreate) {
       // To avoid re-embedding Quick Create

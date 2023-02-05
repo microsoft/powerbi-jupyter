@@ -15,8 +15,6 @@ from ._version import __version__
 from .models import TokenType, ReportCreationMode
 from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token_details
 
-QUICK_CREATE_EMBED_URL = "https://app.powerbi.com/quickCreate"
-
 
 class QuickVisualize(DOMWidget, HasTraits):
     """Power BI quick visualization widget"""
@@ -41,12 +39,8 @@ class QuickVisualize(DOMWidget, HasTraits):
 
     # Default values for widget traits
     EMBED_CONFIG_DEFAULT_STATE = {
-        'type': 'quickCreate',
         'accessToken': None,
-        'embedUrl': QUICK_CREATE_EMBED_URL,
-        'tokenType': TokenType.AAD.value,
         'datasetCreateConfig': None,
-        'reportCreationMode': ReportCreationMode.QUICK_EXPLORE.value
     }
     INIT_ERROR_DEFAULT_STATE = ''
     TOKEN_EXPIRED_DEFAULT_STATE = False
@@ -73,24 +67,12 @@ class QuickVisualize(DOMWidget, HasTraits):
     def _valid_embed_config(self, proposal):
         if proposal['value'] == self.EMBED_CONFIG_DEFAULT_STATE:
             return proposal['value']
-
-        if (type(proposal['value']['type']) is not str):
-            raise TraitError('Invalid type ', proposal['value']['type'])
         if ((type(proposal['value']['accessToken']) is not str) or (proposal['value']['accessToken'] == '')):
             raise TraitError('Invalid accessToken ',
                              proposal['value']['accessToken'])
-        if (type(proposal['value']['embedUrl']) is not str):
-            raise TraitError('Invalid embedUrl ',
-                             proposal['value']['embedUrl'])
-        if (type(proposal['value']['tokenType']) is not int):
-            raise TraitError('Invalid tokenType ',
-                             proposal['value']['tokenType'])
         if (not is_dataset_create_config_valid(proposal['value']['datasetCreateConfig'])):
             raise TraitError('Invalid datasetCreateConfig ',
                              proposal['value']['datasetCreateConfig'])
-        if (type(proposal['value']['reportCreationMode']) is not str):
-            raise TraitError('Invalid reportCreationMode ',
-                             proposal['value']['reportCreationMode'])
         return proposal['value']
 
     # Raise exception for errors when embedding the Power BI quick visualization
@@ -158,12 +140,8 @@ class QuickVisualize(DOMWidget, HasTraits):
             Set embed configuration parameters of Power BI quick visualization
         """
         self._embed_config = {
-            'type': 'quickCreate',
             'accessToken': access_token or self._embed_config['accessToken'],
-            'embedUrl': QUICK_CREATE_EMBED_URL,
-            'tokenType': TokenType.AAD.value,
             'datasetCreateConfig': dataset_create_config or self._embed_config['datasetCreateConfig'],
-            'reportCreationMode': ReportCreationMode.QUICK_EXPLORE.value
         }
         self._embedded = False
 
