@@ -355,6 +355,7 @@ export class ReportView extends DOMWidgetView {
       }
 
       this.model.set('_report_filters', filters);
+      this.model.set('_get_filters_request', false);
       this.touch();
     } catch (error) {
       let stringifiedError = JSON.stringify(error);

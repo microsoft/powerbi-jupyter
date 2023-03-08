@@ -28,7 +28,7 @@ variables:
   ${{ else }}:
     obpTemplate: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
 
-  WindowsContainerImage: 'cdpxwin1809.azurecr.io/global/obinfra/windows/1809/vs2019:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2019/vse2022:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
 
 resources:
   repositories:
@@ -79,6 +79,10 @@ extends:
             displayName: 'NPM Authenticate'
             inputs:
               workingFile: '$(Build.SourcesDirectory)\.npmrc'
+
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.9.7'
 
           - task: PowerShell@2
             displayName: 'Restore'

@@ -6,9 +6,12 @@
 
 import pytest
 import requests_mock
+import threading
+import time
+from unittest.mock import mock_open, patch
 
 from traitlets.traitlets import TraitError
-from ..report import Report
+from .. import report
 
 ACCESS_TOKEN = 'dummy_access_token'
 EMBED_URL = 'dummy_embed_url'
@@ -28,13 +31,10 @@ REPORT_FILTERS = ['dummy_report_filters']
 def create_test_report(embedded=True, permissions=None):
     with requests_mock.Mocker() as rm:
         request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{GROUP_ID}/reports/{REPORT_ID}"
-        rm.get(request_url, json={'embedUrl': EMBED_URL})
-        report = Report(group_id=GROUP_ID, report_id=REPORT_ID,
-                        auth=ACCESS_TOKEN, permissions=permissions)
-        report._embedded = embedded
+        rm.get(request_url, json={ 'embedUrl': EMBED_URL })
+        report_mock = report.Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
+        report_mock._embedded = embedded
         return report
-
-
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
         # Arrange
@@ -352,17 +352,28 @@ class TestGetFilters:
         with pytest.raises(Exception):
             report.get_filters()
 
-    def test_returned_data(self):
+
+    @patch(report.__name__+'.get_ipython')
+    @patch(report.__name__+'.ui_events', mock_open())
+    def test_returned_data(self, get_ipython_mock):
+        get_ipython_mock.return_value = True
+
+        def front_end_mock():
+            # Dummy delay to mock front-end
+            time.sleep(0.5)
+
+            report._report_filters = REPORT_FILTERS
+            report._get_filters_request = False
+
         # Arrange
         report = create_test_report()
 
-        # Data sent by frontend (Setting this upfront will prevent get_filters from waiting for list of report level filters)
-        report._report_filters = REPORT_FILTERS
+        front_end_mock_thread = threading.Thread(target=front_end_mock)
 
         # Act
-        returned_filters = report.get_filters()
+        front_end_mock_thread.start()
 
         # Assert
-        assert returned_filters == REPORT_FILTERS
+        assert report.get_filters() == REPORT_FILTERS
         assert report._get_filters_request == report.GET_FILTERS_REQUEST_DEFAULT_STATE
         assert report._report_filters == report.REPORT_FILTERS_DEFAULT_STATE

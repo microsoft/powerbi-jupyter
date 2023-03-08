@@ -485,7 +485,7 @@ class Report(DOMWidget, HasTraits):
             # Wait for client-side to send list of filters
             with ui_events() as ui_poll:
                 # While list of report filters is not received
-                while self._report_filters == self.REPORT_FILTERS_DEFAULT_STATE:
+                while self._get_filters_request:
                     ui_poll(self.PROCESS_EVENTS_ITERATION)
                     time.sleep(self.POLLING_INTERVAL)
                     if self._client_error:
@@ -493,9 +493,7 @@ class Report(DOMWidget, HasTraits):
 
         filters = self._report_filters
 
-        # Reset the _get_filters_request and _report_filters's value
-        self._get_filters_request = bool(
-            self.GET_FILTERS_REQUEST_DEFAULT_STATE)
+        # Reset the _report_filters's value
         self._report_filters = list(self.REPORT_FILTERS_DEFAULT_STATE)
 
         # Throw client side error
