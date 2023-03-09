@@ -34,7 +34,8 @@ def create_test_report(embedded=True, permissions=None):
         rm.get(request_url, json={ 'embedUrl': EMBED_URL })
         report_mock = report.Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
         report_mock._embedded = embedded
-        return report
+        return report_mock
+
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
         # Arrange
