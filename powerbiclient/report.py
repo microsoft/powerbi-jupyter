@@ -197,8 +197,9 @@ class Report(DOMWidget, HasTraits):
     # Raise exception for errors when embedding the report
     @observe('_init_error')
     def _on_error(self, change):
-        self._init_error = self.INIT_ERROR_DEFAULT_STATE
-        raise Exception(change['new'])
+        if (change['new'] is not self.INIT_ERROR_DEFAULT_STATE):
+            self._init_error = self.INIT_ERROR_DEFAULT_STATE
+            raise Exception(change['new'])
 
     # Methods
     def __init__(self, group_id=None, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=None, dataset_id=None, **kwargs):

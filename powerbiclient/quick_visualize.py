@@ -12,7 +12,6 @@ from ipywidgets import DOMWidget
 from traitlets import Bool, Dict, Float, HasTraits, Unicode, TraitError, validate, observe
 
 from ._version import __version__
-from .models import TokenType, ReportCreationMode
 from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token_details
 
 
@@ -78,8 +77,9 @@ class QuickVisualize(DOMWidget, HasTraits):
     # Raise exception for errors when embedding the Power BI quick visualization
     @observe('_init_error')
     def _on_error(self, change):
-        self._init_error = self.INIT_ERROR_DEFAULT_STATE
-        raise Exception(change['new'])
+        if (change['new'] is not self.INIT_ERROR_DEFAULT_STATE):
+            self._init_error = self.INIT_ERROR_DEFAULT_STATE
+            raise Exception(change['new'])
 
     # Methods
     def __init__(self, dataset_create_config, auth=None, **kwargs):

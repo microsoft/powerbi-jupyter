@@ -256,7 +256,11 @@ export class ReportView extends DOMWidgetView {
     });
 
     this.report.on('error', (errorMessage) => {
-      // Invoke error handling on kernel side
+      // Invoke error handling on kernel side if container isn't visible yet
+      if (this.reportContainer.style.visibility === "visible") {
+        return;
+      }
+
       const messageDetail = (errorMessage as any)?.detail;
       this.model.set('_init_error', `${messageDetail?.message} - ${messageDetail?.detailedMessage}`);
       this.touch();

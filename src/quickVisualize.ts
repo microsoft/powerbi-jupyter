@@ -145,13 +145,6 @@ export class QuickVisualizeView extends DOMWidgetView {
       console.error(error);
     }
 
-    this.quickCreate.on('error', (errorMessage: any) => {
-      // Invoke error handling on kernel side
-      const messageDetail = errorMessage?.detail;
-      this.model.set('_init_error', `${messageDetail?.message} - ${messageDetail?.detailedMessage}`);
-      this.touch();
-    });
-
     // Notify that report embedding has started
     this.model.set('_embedded', true);
 
