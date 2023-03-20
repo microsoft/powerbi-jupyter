@@ -104,22 +104,29 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
 class InteractiveLoginAuthentication(AuthenticationResult):
 
     # Methods
-    def __init__(self):
+    def __init__(self, tenant_id=None):
         """Acquire token interactively i.e. via a local browser
 
+        Args:
+            tenant_id (string): Optional.
+                Id of Power BI tenant where your report resides.
+                
         Returns:
             object: Interactive authentication object
         """
-        auth_result = self._acquire_token_interactive()
+        auth_result = self._acquire_token_interactive(tenant_id)
         super().__init__(auth_result)
 
-    def _acquire_token_interactive(self):
+    def _acquire_token_interactive(self, tenant_id=None):
         """Returns the authentication result captured using interactive login
 
         Returns:
             dict: authentication result
         """
-        app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        if not tenant_id:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        else:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID, authority=f"https://login.microsoftonline.com/{tenant_id}")
         print("A local browser window will open for interactive sign in.")
         result = app.acquire_token_interactive(scopes=DEFAULT_SCOPES)
 
