@@ -11,8 +11,8 @@ Authenticates a Power BI User and acquires an access token
 import json
 import msal
 
-# NOTE: The client id used below is for "Power BI Powershell" first party application
-CLIENT_ID = "23d8f6bd-1eb0-4cc2-a08c-7bf525c67bcd"
+# NOTE: The client id used below is for "Power BI Client Integrations" first party application
+CLIENT_ID = "1aea3f97-edc6-4453-a59b-b88b0b803711"
 
 # Using Power BI default permissions
 DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
