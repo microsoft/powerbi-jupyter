@@ -39,6 +39,9 @@ def get_dataset_config(df, locale='en-US'):
     table_name = 'Table'
     columns_schema = []
 
+    # NA values should be considered as empty strings
+    df = df.fillna('')
+
     for col in df.columns:
         # Find the correct DataType according to Pandas dtype
         dtype_key = str(df[col].dtype)
