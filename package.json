@@ -58,6 +58,7 @@
     "@phosphor/application": "^1.6.0",
     "@phosphor/widgets": "^1.6.0",
     "@types/expect.js": "^0.3.29",
+    "@types/lodash": "4.14.182",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.6",
     "@types/webpack-env": "^1.13.6",
@@ -86,7 +87,7 @@
     "source-map-loader": "^0.2.4",
     "style-loader": "^1.0.0",
     "ts-loader": "^5.2.1",
-    "typescript": "^3.8",
+    "typescript": "~3.8",
     "webpack": "^5.71.0",
     "webpack-cli": "^4.10.0"
   },
