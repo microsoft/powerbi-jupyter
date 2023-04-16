@@ -58,6 +58,7 @@
     "@phosphor/application": "^1.6.0",
     "@phosphor/widgets": "^1.6.0",
     "@types/expect.js": "^0.3.29",
+    "@types/lodash": "4.14.194",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.6",
     "@types/webpack-env": "^1.13.6",
