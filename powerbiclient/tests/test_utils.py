@@ -123,6 +123,11 @@ class TestGetDatasetCreateConfig:
         'mix': [1, 'a']
     }
 
+    DATA_WITH_NA_VALUES = {
+        'col1': pd.Series([None, 'b'], dtype='str'),
+        'col2': pd.Series([1], dtype='int'),
+    }
+
     def test_happy_path_get_dataset_config(self):
         all_types_df = pd.DataFrame(self.ALL_TYPES_DATA)
         dataset_create_config = get_dataset_config(all_types_df)
@@ -159,3 +164,8 @@ class TestGetDatasetCreateConfig:
         dataset_create_config = get_dataset_config(
             pd.DataFrame([1, 2, 3]), locale='he-IL')
         assert dataset_create_config['locale'] == 'he-IL'
+
+    def test_NAValuesInDataFrame(self):
+        na_values_df = pd.DataFrame(self.DATA_WITH_NA_VALUES)
+        dataset_create_config = get_dataset_config(na_values_df)
+        assert is_dataset_create_config_valid(dataset_create_config)
