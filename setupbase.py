@@ -23,7 +23,8 @@ import sys
 
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
-if os.path.exists('MANIFEST'): os.remove('MANIFEST')
+if os.path.exists('MANIFEST'):
+    os.remove('MANIFEST')
 
 
 from distutils.cmd import Command
@@ -86,24 +87,6 @@ def get_version(file, name='__version__'):
     return version_ns[name]
 
 
-def ensure_python(specs):
-    """Given a list of range specifiers for python, ensure compatibility.
-    """
-    if not isinstance(specs, (list, tuple)):
-        specs = [specs]
-    v = sys.version_info
-    part = '%s.%s' % (v.major, v.minor)
-    for spec in specs:
-        if part == spec:
-            return
-        try:
-            if eval(part + spec):
-                return
-        except SyntaxError:
-            pass
-    raise ValueError('Python version %s unsupported' % part)
-
-
 def find_packages(top=HERE):
     """
     Find all of the packages.
@@ -130,13 +113,14 @@ class bdist_egg_disabled(bdist_egg):
     Prevents setup.py install performing setuptools' default easy_install,
     which it should never ever do.
     """
+
     def run(self):
         sys.exit("Aborting implicit building of eggs. Use `pip install .` "
                  " to install from source.")
 
 
 def create_cmdclass(prerelease_cmd=None, package_data_spec=None,
-        data_files_spec=None):
+                    data_files_spec=None):
     """Create a command class with the given optional prerelease class.
 
     Parameters

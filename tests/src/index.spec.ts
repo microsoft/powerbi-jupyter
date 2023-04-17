@@ -2,36 +2,17 @@
 // Distributed under the terms of the Modified BSD License.
 
 import expect = require('expect.js');
-
-import {
-  // Add any needed widget imports here (or from controls)
-} from '@jupyter-widgets/base';
-
-import {
-  createTestModel
-} from './utils.spec';
-
-import {
-  ReportModel
-} from '../../src/'
+import { createTestModel } from './utils.spec';
+import { ReportModel, QuickVisualizeModel } from '../../src/'
 
 
 describe('Widget model tests', () => {
-
-  describe('ReportModel', () => {
-
-    it('should be creatable', () => {
-      const model = createTestModel(ReportModel);
-      expect(model).to.be.an(ReportModel);
-    });
-
-    it('should be creatable using embed_config', () => {
+  [ReportModel, QuickVisualizeModel].forEach(widgetModel => {
+    it(`${widgetModel.model_name}: should be creatable`, () => {
       const state = { _embed_config: {'accessToken': null, 'embedUrl': null} }
-      const model = createTestModel(ReportModel, state);
-      expect(model).to.be.an(ReportModel);
+      const model = createTestModel(widgetModel, state);
+      expect(model).to.be.an(widgetModel);
       expect(model.get('_embed_config')).to.be.equal(state._embed_config);
     });
-
   });
-
 });
