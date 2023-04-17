@@ -1,6 +1,6 @@
 {
   "name": "powerbi-jupyter-client",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "A Custom Jupyter Widget Library",
   "keywords": [
     "jupyter",
@@ -52,12 +52,13 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^4.1.0",
-    "powerbi-client": "^2.21.1"
+    "powerbi-client": "^2.22.0"
   },
   "devDependencies": {
     "@phosphor/application": "^1.6.0",
     "@phosphor/widgets": "^1.6.0",
     "@types/expect.js": "^0.3.29",
+    "@types/lodash": "4.14.182",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.6",
     "@types/webpack-env": "^1.13.6",

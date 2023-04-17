@@ -1,16 +1,14 @@
 <a name="powerbiclient"></a>
 # powerbiclient
 
-## Table of content
+## Table of contents
 
 * [**Quick start**](#Quick-start)
 * [**Authenticate to Power BI and acquire an access token**](#Authenticate-to-Power-BI-and-acquire-an-access-token)
   * [Authentication result](#Authentication-result)
-    * [Import powerbiclient.authentication](#Import-powerbiclient.authentication)
+    * [Import powerbiclient.authentication](#Import-powerbiclientauthentication)
     * [Create instance of Authentication](#\_\_init\_\_-AuthenticationResult)
     * [Get access token](#get\_access\_token)
-    * [Get authentication result](#get\_access\_token\_details)
-    * [Refresh token](#refresh\_token)
   * [Device Flow Authentication](#Device-Flow-Authentication)
     * [Import DeviceCodeLoginAuthentication](#Import-DeviceCodeLoginAuthentication)
     * [Create instance of Device Flow Authentication](#\_\_init\_\_-DeviceCodeLoginAuthentication)
@@ -33,15 +31,24 @@
   * [Remove all report level filters](#remove\_filters)
   * [Get the list of the report's bookmarks](#get\_bookmarks)
   * [Apply a bookmark by name on the report](#set\_bookmark)
+* [**Power BI quick visualization widget**](#Power-BI-quick-visualization-widget)
+  * [QuickVisualize class](#QuickVisualize-class)
+    * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
+    * [Set a new access token](#set\_access\_token)
+    * [Set width and height of the Power BI quick visualization container in pixels](#set\_size)
+  * [Get dataset create configuration](#Get-dataset-create-configuration)
+* [**Considerations and limitations**](#Considerations-and-limitations)
 <br>
+<br>
+
 # Quick start
 The below example shows how to:
-- Import Report class, models and authentication modules
+- Import Report class and authentication modules
 - Use device authentication to authenticate to Power BI
 - Embed report by group id and report id
 
 ```python
-# Import Report class and models
+# Import Report class
 from powerbiclient import Report
 
 # Import DeviceCodeLoginAuthentication class to authenticate to Power BI
@@ -54,7 +61,7 @@ device_auth = DeviceCodeLoginAuthentication()
 group_id="<YOUR_WORKSPACE_ID>"
 report_id="<YOUR_REPORT_ID>"
 
-# Create an instance of Power BI Report (Use either of the below instances)
+# Create an instance of Power BI Report
 # Use auth object
 report = Report(group_id=group_id, report_id=report_id, auth=device_auth)
 
@@ -90,17 +97,12 @@ class AuthenticationResult()
 Create instance of Authentication
 
 ```python
-__init__(self, access_token_result)
+__init__(self)
 ```
-
-**Arguments**:
-
-- `access_token_result` _dict_ - Authentication result. A dict representing the json response from AAD. A successful response would contain "access_token" key.
-
 
 **Returns**:
 
-- `object` - AuthenticationResult object
+- `object` - AuthenticationResult object. The authentication result object should be passed only to trusted code in your notebook.
 
 <br>
 
@@ -108,8 +110,12 @@ __init__(self, access_token_result)
 ### get\_access\_token
 
 ```python
-get_access_token()
+get_access_token(self, force_refresh=False)
 ```
+
+**Arguments**:
+
+- `force_refresh` - whether to force refresh a new token or not, default is False
 
 **Returns**:
 
@@ -119,44 +125,6 @@ get_access_token()
 ```python
 # Get the access token using authentication object
 access_token = auth.get_access_token()
-```
-
-<br>
-
-<a name="powerbiclient.authentication.AuthenticationResult.get_access_token_details"></a>
-### get\_access\_token\_details
-
-Returns the authentication result - a dict representing the json response from AAD.
-
-```python
-get_access_token_details()
-```
-
-
-**Returns**:
-
-- `dict` - authentication result
-
-**Example**:
-```python
-# Get the authentication result using authentication object
-auth_result = auth.get_access_token_details()
-```
-
-<br>
-
-<a name="powerbiclient.authentication.AuthenticationResult.refresh_token"></a>
-### refresh\_token
-Acquire a token based on the refresh token obtained from the authentication result
-
-```python
-refresh_token()
-```
-
-**Example**:
-```python
-# Acquire a new access token from refresh token using authentication object
-auth.refresh_token()
 ```
 
 <br>
@@ -185,7 +153,7 @@ __init__(self)
 ```
 
 **Returns**:
-- `object` - Device Flow object
+- `object` - Device flow object. The device flow object should be passed only to trusted code in your notebook.
 
 **Example**:
 ```python
@@ -221,7 +189,7 @@ __init__(self)
 
 **Returns**:
 
-- `object` - Interactive authentication object
+- `object` - Interactive authentication object. The interactive authentication object should be passed only to trusted code in your notebook.
 
 **Example**:
 ```python
@@ -256,7 +224,7 @@ from powerbiclient import Report
 
 <a name="powerbiclient.report.Report.__init__"></a>
 ### \_\_init\_\_ Report
-Create an instance of Power BI report
+Create an instance of a Power BI report. Provide a report ID for viewing or editing an existing report, or a dataset ID for creating a new report.
 
 ```python
 __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.value, permissions=None, dataset_id=None, **kwargs)
@@ -264,11 +232,11 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
 
 **Arguments**:
 
-- `group_id` _string_ - Required.
-  Id of Power BI Workspace where your report resides.
+- `group_id` _string_ - Optional.
+  Id of Power BI Workspace where your report resides. If value is not provided, My workspace will be used.
   
 - `report_id` _string_ - Optional.
-  Id of Power BI report. To be provided if user wants to view or edit a report.
+  Id of Power BI report. Must be provided to view or edit an existing report.
   
 - `auth` _object_ - Optional.
   We have 3 authentication options to embed a Power BI report:
@@ -290,8 +258,7 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
     - `ALL` - Users can create, view, edit, save, and save a copy of the report.
   
 - `dataset_id` _string_ - Optional.
-  Create report based on the dataset configured on Power BI workspace.
-  To be provided if user wants to create a report.
+  Create a new report using this dataset in the provided Power BI workspace. Must be provided to create a new report from an existing dataset if report_id is not provided.
   
 **Returns**:
 
@@ -337,9 +304,9 @@ report.set_access_token(access_token)
 
 <br>
 
-<a name="powerbiclient.report.Report.set_dimensions"></a>
+<a name="powerbiclient.report.Report.set_size"></a>
 ### set\_size
-Set width and height of the report container in pixels
+Set height and width of the report container in pixels
 
 ```python
 set_size(container_height, container_width)
@@ -481,7 +448,7 @@ export_visual_data(page_name, visual_name, rows=None, export_data_type=models.Ex
 exported_data = report.export_visual_data(page_name, visual_name, rows=50, export_data_type=models.ExportDataType.SUMMARIZED.value)
 
 # Get all rows of provided visual's summarized data
-exported_data = report.export_visual_data(page_name, visual_name, export_data_type=models.ExportDataType.SUMMARIZED.value)
+exported_data = report.export_visual_data(page_name, visual_name)
 ```
 
 <br>
@@ -586,6 +553,145 @@ set_bookmark(bookmark_name)
 
 **Example**:
 ```python
-# Apply a bookmark on the embedded report using report bookmark's name
+# Apply a bookmark on the embedded report using the bookmark's name
 report.set_bookmark(bookmark_name)
 ```
+
+<br>
+
+<a name="powerbiclient.quick_visualize"></a>
+# Power BI quick visualization widget
+
+The following section explains how to create a Power BI quick visualization widget in Jupyter Notebook.
+
+<a name="powerbiclient.quick_visualize.QuickVisualize"></a>
+## QuickVisualize class
+Embed a Power BI quick visualization.
+
+```python
+class QuickVisualize(DOMWidget)
+```
+
+<br>
+
+### Import QuickVisualize
+```python
+# Import QuickVisualize class
+from powerbiclient import QuickVisualize
+```
+
+<br>
+
+<a name="powerbiclient.quick_visualize.QuickVisualize.__init__"></a>
+### \_\_init\_\_ QuickVisualize
+Create an instance of Power BI quick visualization
+
+```python
+__init__(self, dataset_create_config, auth=None, **kwargs)
+```
+
+**Arguments**:
+
+- `dataset_create_config` _object_: Required.
+  A dict representing the data used to create the report, formatted as IDatasetCreateConfiguration (See: [Embed a quick report in a Power BI embedded analytics application](https://learn.microsoft.com/en-us/javascript/api/overview/powerbi/embed-quick-report#step-11---create-a-dataset-without-a-data-source))
+
+- `auth` _string or object_: Optional.
+    We have 3 authentication options to embed Power BI quick visualization:
+    - Access token (string)
+    - Authentication object (object) - instance of AuthenticationResult (DeviceCodeLoginAuthentication or InteractiveLoginAuthentication)
+    - If not provided, Power BI user will be authenticated using Device Flow authentication
+  
+**Returns**:
+
+- `QuickVisualize`: _object_
+
+**Examples**:
+```python
+# Instantiate quick visualization object with access token
+qv = QuickVisualize(dataset_create_config=dataset_create_config, auth=access_token)
+
+# Instantiate quick visualization object with authentication object (e.g DeviceCodeLoginAuthentication)
+qv = QuickVisualize(dataset_create_config=dataset_create_config, auth=device_auth)
+
+# Instantiate quick visualization object withouth auth (will trigger device flow authentication)
+qv = QuickVisualize(dataset_create_config=dataset_create_config)
+
+# Instantiate quick visualization object with pandas DataFrame
+qv = QuickVisualize(get_dataset_config(df), auth=auth)
+```
+
+<br>
+
+<a name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
+### set\_access\_token
+Set an access token for the Power BI quick visualization
+
+```python
+set_access_token(access_token)
+```
+
+**Arguments**:
+
+- `access_token` _string_
+
+**Example**:
+```python
+# Set a new access token to the Power BI quick visualization
+qv.set_access_token(access_token)
+```
+
+<br>
+
+<a name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
+### set\_size
+Set height and width of Power BI quick visualization in px
+
+```python
+set_size(container_height, container_width)
+```
+
+**Arguments**:
+
+- `container_height` _number_ - container height
+- `container_width` _number_ - container width
+
+**Example**:
+```python
+# Set Power BI quick visualization container's height and width
+qv.set_size(container_height, container_width)
+```
+
+<br>
+
+<a name="powerbiclient.utils.get_dataset_config"></a>
+## Get dataset create configuration
+Utility method to get the dataset create configuration dict from a [pandas DataFrame](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html). To be used as input for instantiating a quick visualization object.
+
+```python
+get_dataset_config(df, locale='en-US')
+```
+
+**Arguments**:
+  - `df` _object_: Required.
+    Pandas DataFrame instance
+  - `locale` _string_: Optional.
+    This value is used to evaluate the data and parse values of the given DataFrame. Supported locales can be found here: [supported locales](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN)
+
+**Returns**:
+  - `dataset_create_config`: _dict_
+
+**Example**:
+```python
+from powerbiclient import get_dataset_config
+
+# Create an example DataFrame using pandas
+df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
+
+# Use the dataset_create_config dict to instantiate a quick visualization object
+qv = QuickVisualize(get_dataset_config(df), auth=auth)
+```
+
+<br>
+
+# Considerations and limitations
+- Embedding and creating Power BI content in Jupyter notebooks is not available in sovereign and government clouds.

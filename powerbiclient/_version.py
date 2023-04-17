@@ -3,6 +3,6 @@
 
 # Copyright (c) Microsoft.
 
-version_info = (2, 0, 1)
+version_info = (3, 0, 0)
 
 __version__ = ".".join(map(str, version_info))

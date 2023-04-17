@@ -7,16 +7,14 @@ import { Widget } from '@phosphor/widgets';
 
 import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 
-import * as widgetExports from './report';
-
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
 const EXTENSION_ID = 'powerbi-jupyter-client:plugin';
 
 /**
- * The example plugin.
+ * Power BI Client plugin.
  */
-const examplePlugin: IPlugin<Application<Widget>, void> = ({
+const powerBIClientPlugin: IPlugin<Application<Widget>, void> = ({
   id: EXTENSION_ID,
   requires: [IJupyterWidgetRegistry],
   activate: activateWidgetExtension,
@@ -25,7 +23,7 @@ const examplePlugin: IPlugin<Application<Widget>, void> = ({
 // the "as unknown as ..." typecast above is solely to support JupyterLab 1
 // and 2 in the same codebase and should be removed when we migrate to Lumino.
 
-export default examplePlugin;
+export default powerBIClientPlugin;
 
 /**
  * Activate the widget extension.
@@ -34,6 +32,6 @@ function activateWidgetExtension(app: Application<Widget>, registry: IJupyterWid
   registry.registerWidget({
     name: MODULE_NAME,
     version: MODULE_VERSION,
-    exports: widgetExports,
+    exports: (): any => import('./index'),
   });
 }
