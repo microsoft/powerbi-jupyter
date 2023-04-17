@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 # Permissions for embedding Power BI report
 class Permissions(IntEnum):
@@ -29,3 +29,22 @@ class EmbedMode(IntEnum):
 class ExportDataType(IntEnum):
     SUMMARIZED = 0
     UNDERLYING = 1
+
+# Types of data to be exported
+class ReportCreationMode(Enum):
+    DEFAULT = "Default"
+    QUICK_EXPLORE = "QuickExplore"
+
+class DataType(Enum):
+    NUMBER = "Number"
+    CURRENCY = "Currency"
+    INT32 = "Int32"
+    PERCENTAGE = "Percentage"
+    DATE_TIME = "DateTime"
+    DATE_TIME_ZONE = "DateTimeZone"
+    DATE = "Date"
+    TIME = "Time"
+    DURATION = "Duration"
+    TEXT = "Text"
+    LOGICAL = "Logical"
+    BINARY = "Binary"
