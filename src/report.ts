@@ -433,8 +433,8 @@ export class ReportView extends DOMWidgetView {
 
       // Remove 'report' property from Page object to handle nested property loop
       const pagesWithoutReport = pages.map((page) => {
-        delete page.report;
-        return page;
+        const { report, ...newPage } = page;
+        return newPage;
       });
 
       this.model.set('_report_pages', pagesWithoutReport);
@@ -474,8 +474,8 @@ export class ReportView extends DOMWidgetView {
 
       // Remove 'page' property from Visual object to handle nested property loop
       const visualsWithoutPage = visuals.map((visual) => {
-        delete visual.page;
-        return visual;
+        const { page, ...newVisual } = visual;
+        return newVisual;
       });
 
       this.model.set('_page_visuals', visualsWithoutPage);
