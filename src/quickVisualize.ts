@@ -9,7 +9,7 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 import { powerbi, setTokenExpirationListener, getTokenExpirationTimeout } from './utils';
 import '../css/report.css';
 
-const quickCreateEmbedUrl = "https://app.powerbi.com/quickCreate";
+const quickCreateEmbedUrl = 'https://app.powerbi.com/quickCreate';
 const reportCreationMode = models.ReportCreationMode.QuickExplore;
 const quickCreateTokenType = models.TokenType.Aad;
 
@@ -24,13 +24,17 @@ export class QuickVisualizeModel extends DOMWidgetModel {
       _view_module: QuickVisualizeModel.view_module,
       _view_module_version: QuickVisualizeModel.view_module_version,
       _embed_config: {},
+      _event_data: {
+        event_name: null,
+        event_details: null,
+      },
       _embedded: false,
       _token_expired: false,
       _init_error: null,
       container_height: 0,
       container_width: 0,
     };
-  };
+  }
 
   static model_name = 'QuickVisualizeModel';
   static model_module = MODULE_NAME;
@@ -73,7 +77,7 @@ export class QuickVisualizeView extends DOMWidgetView {
 
   embedConfigChanged(): void {
     const embedConfig = this.model.get('_embed_config');
-    let quickCreateConfig = embedConfig as models.IQuickCreateConfiguration;
+    const quickCreateConfig = embedConfig as models.IQuickCreateConfiguration;
 
     if (!quickCreateConfig) {
       this.model.set('_init_error', 'Embed configuration is missing');
@@ -104,7 +108,10 @@ export class QuickVisualizeView extends DOMWidgetView {
       return;
     } else {
       // Refresh access token before embedding if token is expired
-      if (!quickCreateConfig.accessToken || getTokenExpirationTimeout(quickCreateConfig.accessToken) <= 0) {
+      if (
+        !quickCreateConfig.accessToken ||
+        getTokenExpirationTimeout(quickCreateConfig.accessToken) <= 0
+      ) {
         this.setTokenExpiredFlag();
         return;
       }
@@ -112,15 +119,15 @@ export class QuickVisualizeView extends DOMWidgetView {
 
     this.quickCreate = powerbi.quickCreate(this.quickCreateContainer, quickCreateConfig);
 
-    // TODO: show iframe when report is loaded once "loaded" event is implemented
-    try {
-      // this.el is updated with correct width when report is loaded. Using timeout until "loaded" event is implemented
-      setTimeout(() => {
-        if (quickCreateConfig.accessToken) {
-          // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-          setTokenExpirationListener(embedConfig.accessToken, this);
-        }
+    this.quickCreate.on('loaded', async () => {
+      console.log('Loaded');
 
+      if (quickCreateConfig.accessToken) {
+        // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
+        setTokenExpirationListener(embedConfig.accessToken, this);
+      }
+
+      try {
         // Set default aspect ratio
         const aspectRatio = 9 / 16;
 
@@ -140,10 +147,58 @@ export class QuickVisualizeView extends DOMWidgetView {
         this.quickCreateContainer.style.height = `${height}px`;
 
         this.quickCreateContainer.style.visibility = 'visible';
-      }, 500)
-    } catch (error) {
-      console.error(error);
-    }
+      } catch (error) {
+        console.error(error);
+      }
+
+      // Invoke loaded event handler on kernel side
+      this.model.set('_event_data', {
+        event_name: 'loaded',
+        event_details: null,
+      });
+
+      this.touch();
+    });
+
+    this.quickCreate.on('rendered', () => {
+      console.log('Rendered');
+      // Invoke rendered event handler on kernel side
+      this.model.set('_event_data', {
+        event_name: 'rendered',
+        event_details: null,
+      });
+
+      this.touch();
+    });
+
+    this.quickCreate.on('saved', (event_details: any) => {
+      console.log('Saved the report to PowerBI');
+      const reportDetails = {
+        reportObjectId: event_details.detail.reportObjectId,
+        reportName: event_details.detail.reportName,
+      };
+      // Invoke rendered event handler on kernel side
+      this.model.set('_event_data', {
+        event_name: 'saved',
+        event_details: reportDetails,
+      });
+
+      this.touch();
+    });
+
+    this.quickCreate.on('error', (errorMessage: any) => {
+      // Invoke error handling on kernel side if container isn't visible yet
+      if (this.quickCreateContainer.style.visibility === 'visible') {
+        return;
+      }
+
+      const messageDetail = (errorMessage as any)?.detail;
+      this.model.set(
+        '_init_error',
+        `${messageDetail?.message} - ${messageDetail?.detailedMessage}`
+      );
+      this.touch();
+    });
 
     // Notify that report embedding has started
     this.model.set('_embedded', true);
