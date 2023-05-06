@@ -14,6 +14,9 @@ import msal
 # NOTE: The client id used below is for "Power BI Powershell" first party application
 CLIENT_ID = "23d8f6bd-1eb0-4cc2-a08c-7bf525c67bcd"
 
+# Authority template string is used with tenant_id if defined within authentication
+AUTHORITY_STR = "https://login.microsoftonline.com/"
+
 # Using Power BI default permissions
 DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 
@@ -62,22 +65,29 @@ class AuthenticationResult:
 class DeviceCodeLoginAuthentication(AuthenticationResult):
 
     # Methods
-    def __init__(self):
+    def __init__(self, tenant_id=None):
         """ Initiate a Device Flow Auth instance
+
+        Args:
+            tenant_id (string): Optional.
+                Id of Power BI tenant where your report resides.
 
         Returns:
             object: Device Flow object
         """
-        auth_result = self._acquire_token_device_code()
+        auth_result = self._acquire_token_device_code(tenant_id)
         super().__init__(auth_result)
 
-    def _acquire_token_device_code(self):
+    def _acquire_token_device_code(self, tenant_id=None):
         """ Returns the authentication result captured using device flow
 
         Returns:
             dict: authentication result
         """
-        app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        if not tenant_id:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        else:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID, authority=AUTHORITY_STR+tenant_id)
         flow = app.initiate_device_flow(scopes=DEFAULT_SCOPES)
 
         if "user_code" not in flow:
@@ -126,7 +136,7 @@ class InteractiveLoginAuthentication(AuthenticationResult):
         if not tenant_id:
             app = msal.PublicClientApplication(client_id=CLIENT_ID)
         else:
-            app = msal.PublicClientApplication(client_id=CLIENT_ID, authority=f"https://login.microsoftonline.com/{tenant_id}")
+            app = msal.PublicClientApplication(client_id=CLIENT_ID, authority=AUTHORITY_STR+tenant_id)
         print("A local browser window will open for interactive sign in.")
         result = app.acquire_token_interactive(scopes=DEFAULT_SCOPES)
 
