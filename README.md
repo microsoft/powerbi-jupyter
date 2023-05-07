@@ -1,6 +1,6 @@
 # powerbi-jupyter
 
-Powerbi-jupyter is a python IPyWidget that enables customers to use many embedding capabilities in a Jupyter notebook seamlessly
+Powerbi-jupyter is a python IPyWidget that enables customers to use Power BI embedding and reporting capabilities in a Jupyter notebook seamlessly.
 
 ## Installation
 
@@ -10,7 +10,7 @@ You can install using `pip`:
 pip install powerbiclient
 ```
 
-Or if you use jupyterlab:
+If you are using jupyterlab:
 
 ```bash
 pip install powerbiclient
@@ -22,22 +22,23 @@ the nbextension:
 ```bash
 jupyter nbextension enable --py [--sys-prefix|--user|--system] powerbiclient
 ```
-For the list of features, refer [DOCUMENTATION](/DOCUMENTATION.md).
+For the full list of features, refer to the [DOCUMENTATION](/DOCUMENTATION.md).
 
-## [Demo Notebook](/demo/demo.ipynb)
-A Jupyter notebook that embeds a sample report.
-It demonstrates the complete flow of embedding and interacting with Power BI report i.e. embedding a Power BI report, setting report event handlers, get list of pages, get list of visuals, export and visualize visual data and apply filters.
+## [Demo Notebooks](/demo/)
+- `Power BI report demo.ipynb`: a Jupyter notebook that embeds a user's report.
+It demonstrates the complete flow of embedding and interacting with Power BI report i.e. embedding a Power BI report, setting report event handlers, getting a list of pages and visual, exporting and visualizing visual data and applying filters.
+- `Visualize with Power BI demo.ipynb`: a Jupyter notebook that creates a quick auto-generated Power BI report over pandas DataFrames. The created reports can be customized and saved to a Power BI workspace.
 
 ### Required python packages:
 - pandas
-- matplotlib
+- matplotlib - only for `report_demo.ipynb`
 
-To run the demo, run the following commands:
+To run the demo, first run the following commands:
 ```bash
 cd demo
 jupyter notebook
 ```
-Now, run demo.ipynb
+Then, open and run `report_demo.ipynb` or `quick_visualize_demo.ipynb`.
 
 ## Contributing
 

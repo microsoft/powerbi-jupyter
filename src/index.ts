@@ -3,3 +3,4 @@
 
 export * from './version';
 export * from './report';
+export * from './quickVisualize';
