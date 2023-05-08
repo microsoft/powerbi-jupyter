@@ -119,15 +119,14 @@ export class QuickVisualizeView extends DOMWidgetView {
 
     this.quickCreate = powerbi.quickCreate(this.quickCreateContainer, quickCreateConfig);
 
-    this.quickCreate.on('loaded', async () => {
-      console.log('Loaded');
+    try {
+      // this.el is updated with correct width when report is loaded. Using timeout until "loaded" event is implemented
+      setTimeout(() => {
+        if (quickCreateConfig.accessToken) {
+          // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
+          setTokenExpirationListener(embedConfig.accessToken, this);
+        }
 
-      if (quickCreateConfig.accessToken) {
-        // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-        setTokenExpirationListener(embedConfig.accessToken, this);
-      }
-
-      try {
         // Set default aspect ratio
         const aspectRatio = 9 / 16;
 
@@ -147,8 +146,17 @@ export class QuickVisualizeView extends DOMWidgetView {
         this.quickCreateContainer.style.height = `${height}px`;
 
         this.quickCreateContainer.style.visibility = 'visible';
-      } catch (error) {
-        console.error(error);
+      }, 500)
+    } catch (error) {
+      console.error(error);
+    }
+
+    this.quickCreate.on('loaded', () => {
+      console.log('Loaded');
+
+      if (quickCreateConfig.accessToken) {
+        // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
+        setTokenExpirationListener(embedConfig.accessToken, this);
       }
 
       // Invoke loaded event handler on kernel side
