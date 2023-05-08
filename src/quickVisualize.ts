@@ -180,7 +180,7 @@ export class QuickVisualizeView extends DOMWidgetView {
     });
 
     this.quickCreate.on('saved', (event_details: any) => {
-      console.log('Saved the report to PowerBI');
+      console.log('Saved the report to workspace');
       const reportDetails = {
         reportObjectId: event_details.detail.reportObjectId,
         reportName: event_details.detail.reportName,
