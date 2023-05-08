@@ -4,6 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+import pytest
 from ..quick_visualize import QuickVisualize
 
 ACCESS_TOKEN = 'dummy_access_token'
@@ -132,3 +133,97 @@ class TestChangingNewContainerSize:
             assert True
             return
         assert False
+
+class TestEventHandlers:
+    def test_throws_for_unsupported_event(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        event_name = 'tileClicked'
+
+        # Act
+        def tileClicked_callback():
+            pass
+
+        # Act + Assert
+        with pytest.raises(Exception):
+            qv.on(event_name, tileClicked_callback)
+
+        # Assert
+        assert event_name not in qv._registered_event_handlers.keys()
+        assert qv._observing_events == False
+
+    def test_setting_event_handler(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        event_name = 'loaded'
+
+        # Act
+        def loaded_callback():
+            pass
+
+        qv.on(event_name, loaded_callback)
+
+        # Assert
+        assert event_name in qv._registered_event_handlers.keys()
+        assert qv._registered_event_handlers[event_name] == loaded_callback
+        assert qv._observing_events == True
+
+    def test_setting_event_handler_again(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        event_name = 'loaded'
+
+        # Act
+        def loaded_callback():
+            # Dummy callback
+            pass
+
+        def loaded_callback2():
+            # Dummy callback
+            pass
+
+        qv.on(event_name, loaded_callback)
+        qv.on(event_name, loaded_callback2)
+
+        # Assert
+        assert event_name in qv._registered_event_handlers.keys()
+        # Check new handler is registered and old one is unregistered
+        assert qv._registered_event_handlers[event_name] == loaded_callback2
+        assert qv._observing_events == True
+
+    def test_not_setting_event_handler(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+
+        # Act
+        # Does not set any handler
+
+        # Assert
+        assert 'loaded' not in qv._registered_event_handlers
+
+    def test_unsetting_event_handler(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        event_name = 'loaded'
+
+        # Act
+        def loaded_callback():
+            pass
+
+        qv.on(event_name, loaded_callback)
+
+        # Assert
+        assert event_name in qv._registered_event_handlers.keys()
+        assert qv._registered_event_handlers[event_name] == loaded_callback
+        assert qv._observing_events == True
+
+        # Act
+        qv.off(event_name)
+
+        # Assert
+        assert event_name not in qv._registered_event_handlers.keys()
