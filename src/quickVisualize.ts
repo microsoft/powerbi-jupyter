@@ -170,6 +170,7 @@ export class QuickVisualizeView extends DOMWidgetView {
 
     this.quickCreate.on('rendered', () => {
       console.log('Rendered');
+
       // Invoke rendered event handler on kernel side
       this.model.set('_event_data', {
         event_name: 'rendered',
@@ -180,12 +181,12 @@ export class QuickVisualizeView extends DOMWidgetView {
     });
 
     this.quickCreate.on('saved', (saved_event_details: any) => {
-      console.log('Saved the report to workspace');
+      console.log('Report saved to workspace');
 
       // Create a reportDetails object so that we can only pass report id and report name
       const reportDetails = {
-        reportObjectId: saved_event_details.detail.reportObjectId,
-        reportName: saved_event_details.detail.reportName,
+        reportObjectId: saved_event_details?.detail?.reportObjectId,
+        reportName: saved_event_details?.detail?.reportName,
       };
 
       // Invoke rendered event handler on kernel side
