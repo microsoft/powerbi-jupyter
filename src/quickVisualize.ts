@@ -146,7 +146,7 @@ export class QuickVisualizeView extends DOMWidgetView {
         this.quickCreateContainer.style.height = `${height}px`;
 
         this.quickCreateContainer.style.visibility = 'visible';
-      }, 500)
+      }, 500);
     } catch (error) {
       console.error(error);
     }
@@ -179,12 +179,15 @@ export class QuickVisualizeView extends DOMWidgetView {
       this.touch();
     });
 
-    this.quickCreate.on('saved', (event_details: any) => {
+    this.quickCreate.on('saved', (saved_event_details: any) => {
       console.log('Saved the report to workspace');
+
+      // Create a reportDetails object so that we can only pass report id and report name
       const reportDetails = {
-        reportObjectId: event_details.detail.reportObjectId,
-        reportName: event_details.detail.reportName,
+        reportObjectId: saved_event_details.detail.reportObjectId,
+        reportName: saved_event_details.detail.reportName,
       };
+
       // Invoke rendered event handler on kernel side
       this.model.set('_event_data', {
         event_name: 'saved',
