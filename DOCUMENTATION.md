@@ -36,6 +36,8 @@
     * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
     * [Set a new access token](#set\_access\_token)
     * [Set width and height of the Power BI quick visualization container in pixels](#set\_size)
+    * [Register a callback to a quick visualize event](#on)
+    * [Unregister a callback for a quick visualize event](#off)
   * [Get dataset create configuration](#Get-dataset-create-configuration)
 * [**Considerations and limitations**](#Considerations-and-limitations)
 <br>
@@ -132,7 +134,7 @@ access_token = auth.get_access_token()
 <a name="powerbiclient.authentication.DeviceCodeLoginAuthentication"></a>
 ## Device Flow Authentication
 
-Inherits from AuthenticationResult class. Obtain token by a device flow object. 
+Inherits from AuthenticationResult class. Obtain token by a device flow object.
 
 ```python
 class DeviceCodeLoginAuthentication(AuthenticationResult)
@@ -146,7 +148,7 @@ from powerbiclient.authentication import DeviceCodeLoginAuthentication
 
 <a name="powerbiclient.authentication.DeviceCodeLoginAuthentication.__init__"></a>
 ### \_\_init\_\_ DeviceCodeLoginAuthentication
-Create instance of Device Flow Authentication. 
+Create instance of Device Flow Authentication.
 
 ```python
 __init__(self)
@@ -234,10 +236,10 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
 
 - `group_id` _string_ - Optional.
   Id of Power BI Workspace where your report resides. If value is not provided, My workspace will be used.
-  
+
 - `report_id` _string_ - Optional.
   Id of Power BI report. Must be provided to view or edit an existing report.
-  
+
 - `auth` _object_ - Optional.
   We have 3 authentication options to embed a Power BI report:
    - Access token (string)
@@ -248,7 +250,7 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
   Mode for embedding Power BI report (VIEW: 0, EDIT: 1, CREATE: 2).
   To be provided if user wants to edit or create a report.
   (Default = VIEW)
-  
+
 - `permissions` _number_ - Optional.
   Permissions required while embedding report in EDIT mode. Ignored in VIEW or CREATE mode.
 
@@ -256,10 +258,10 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
     - `READWRITE` - Users can view, edit, and save the report.
     - `COPY` - Users can save a copy of the report by using Save As.
     - `ALL` - Users can create, view, edit, save, and save a copy of the report.
-  
+
 - `dataset_id` _string_ - Optional.
   Create a new report using this dataset in the provided Power BI workspace. Must be provided to create a new report from an existing dataset if report_id is not provided.
-  
+
 **Returns**:
 
 - `object` - Report object
@@ -409,7 +411,7 @@ visuals_on_page(page_name)
 **Arguments**:
 
 - `page_name` _string_ - Page name of the embedded report
-  
+
 
 **Returns**:
 
@@ -600,7 +602,7 @@ __init__(self, dataset_create_config, auth=None, **kwargs)
     - Access token (string)
     - Authentication object (object) - instance of AuthenticationResult (DeviceCodeLoginAuthentication or InteractiveLoginAuthentication)
     - If not provided, Power BI user will be authenticated using Device Flow authentication
-  
+
 **Returns**:
 
 - `QuickVisualize`: _object_
@@ -689,6 +691,56 @@ df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
 
 # Use the dataset_create_config dict to instantiate a quick visualization object
 qv = QuickVisualize(get_dataset_config(df), auth=auth)
+```
+
+<br>
+
+
+<a name="powerbiclient.quick_visualize.QuickVisualize.on"></a>
+### on
+Register a callback to execute when the quick visualize emits the target event
+
+```python
+on(event, callback)
+```
+
+**Arguments**:
+
+- `event` _string_ - Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
+- `callback` _function_ - User defined function. Callback function is invoked with event details as parameter
+
+**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' quick visualize events_
+
+**Example**:
+```python
+# Create a method to be executed on quick visualize 'loaded' event to print 'Quick visualize has loaded'
+def loaded_callback(event_details):
+  print('Quick visualize has loaded')
+
+# Bind callback method with the quick visualize 'loaded' event
+qv.on('loaded', loaded_callback)
+```
+
+<br>
+
+<a name="powerbiclient.quick_visualize.QuickVisualize.off"></a>
+### off
+Unregister a callback for a quick visualize event
+
+```python
+off(event)
+```
+
+**Arguments**:
+
+- `event` _string_ - Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
+
+**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' quick visualize events_
+
+**Example**:
+```python
+# Unsubscribe the quick visualize 'loaded' event
+qv.off('loaded')
 ```
 
 <br>

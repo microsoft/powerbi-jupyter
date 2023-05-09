@@ -154,11 +154,6 @@ export class QuickVisualizeView extends DOMWidgetView {
     this.quickCreate.on('loaded', () => {
       console.log('Loaded');
 
-      if (quickCreateConfig.accessToken) {
-        // Set token expiration listener to update the token TOKEN_REFRESH_THRESHOLD minutes before expiration
-        setTokenExpirationListener(embedConfig.accessToken, this);
-      }
-
       // Invoke loaded event handler on kernel side
       this.model.set('_event_data', {
         event_name: 'loaded',

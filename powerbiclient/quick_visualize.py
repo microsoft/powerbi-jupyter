@@ -162,7 +162,7 @@ class QuickVisualize(DOMWidget, HasTraits):
         self._embedded = False
 
     def on(self, event, callback):
-        """Register a callback to execute when the quick_visualize emits the target event
+        """Register a callback to execute when the Power BI quick visualization emits the target event
 
         Args:
             event (string): Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
@@ -173,10 +173,16 @@ class QuickVisualize(DOMWidget, HasTraits):
         if event not in self.SUPPORTED_EVENTS:
             raise Exception(event + " event is not supported")
 
+        if callback is None:
+            raise Exception('callback cannot be None')
+
+        if not callable(callback):
+            raise Exception('callback must be a function')
+
+
         self._registered_event_handlers[event] = callback
 
         def get_event_data(change):
-
             event_data = change.new
             event_name = event_data['event_name']
             event_details = event_data['event_details']
@@ -195,7 +201,6 @@ class QuickVisualize(DOMWidget, HasTraits):
             # Reset the _event_data trait, so as to receive next event
             self._event_data = dict(self.EVENT_DATA_DEFAULT_STATE)
 
-        # Check if already observing events
         if not self._observing_events:
 
             # Prevents calling DOMWidget.observe() again
