@@ -4,7 +4,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-import pytest
+from typing import Callable
+from pytest import raises, mark
 from ..quick_visualize import QuickVisualize
 
 ACCESS_TOKEN = 'dummy_access_token'
@@ -52,6 +53,13 @@ class TestComm:
             'container_width': new_width
         }
 
+class TestCallbackRegistration:
+    @mark.skip(reason="Utils function to check if callback function is registered")
+    def check_if_registered(qv: QuickVisualize, event_name: str, callback: Callable):
+        # Assert
+        assert event_name in qv._registered_event_handlers.keys()
+        assert qv._registered_event_handlers[event_name] == callback
+        assert qv._observing_events == True
 
 class TestUpdateEmbedConfig:
     def test_update_access_token(self):
@@ -146,7 +154,7 @@ class TestEventHandlers:
             pass
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             qv.on(event_name, tileClicked_callback)
 
         # Assert
@@ -166,9 +174,7 @@ class TestEventHandlers:
         qv.on(event_name, loaded_callback)
 
         # Assert
-        assert event_name in qv._registered_event_handlers.keys()
-        assert qv._registered_event_handlers[event_name] == loaded_callback
-        assert qv._observing_events == True
+        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback)
 
     def test_setting_event_handler_again(self):
         # Arrange
@@ -186,13 +192,12 @@ class TestEventHandlers:
             pass
 
         qv.on(event_name, loaded_callback)
+        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback)
         qv.on(event_name, loaded_callback2)
 
         # Assert
-        assert event_name in qv._registered_event_handlers.keys()
         # Check new handler is registered and old one is unregistered
-        assert qv._registered_event_handlers[event_name] == loaded_callback2
-        assert qv._observing_events == True
+        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback2)
 
     def test_not_setting_event_handler(self):
         # Arrange
@@ -204,6 +209,7 @@ class TestEventHandlers:
 
         # Assert
         assert 'loaded' not in qv._registered_event_handlers
+        assert qv._registered_event_handlers == qv.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE
 
     def test_unsetting_event_handler(self):
         # Arrange
@@ -218,9 +224,7 @@ class TestEventHandlers:
         qv.on(event_name, loaded_callback)
 
         # Assert
-        assert event_name in qv._registered_event_handlers.keys()
-        assert qv._registered_event_handlers[event_name] == loaded_callback
-        assert qv._observing_events == True
+        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback)
 
         # Act
         qv.off(event_name)

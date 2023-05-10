@@ -36,8 +36,8 @@
     * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
     * [Set a new access token](#set\_access\_token)
     * [Set width and height of the Power BI quick visualization container in pixels](#set\_size)
-    * [Register a callback to a quick visualize event](#on)
-    * [Unregister a callback for a quick visualize event](#off)
+    * [Register a callback to a Power BI quick visualization event](#on)
+    * [Unregister a callback for a Power BI quick visualization event](#off)
   * [Get dataset create configuration](#Get-dataset-create-configuration)
 * [**Considerations and limitations**](#Considerations-and-limitations)
 <br>
@@ -698,7 +698,7 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 
 <a name="powerbiclient.quick_visualize.QuickVisualize.on"></a>
 ### on
-Register a callback to execute when the quick visualize emits the target event
+Register a callback to execute when the Power BI quick visualization emits the target event
 
 ```python
 on(event, callback)
@@ -709,15 +709,15 @@ on(event, callback)
 - `event` _string_ - Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
 - `callback` _function_ - User defined function. Callback function is invoked with event details as parameter
 
-**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' quick visualize events_
+**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' events_
 
 **Example**:
 ```python
-# Create a method to be executed on quick visualize 'loaded' event to print 'Quick visualize has loaded'
+# Create a method to be executed on Power BI quick visualization 'loaded' event
 def loaded_callback(event_details):
   print('Quick visualize has loaded')
 
-# Bind callback method with the quick visualize 'loaded' event
+# Bind callback method with the Power BI quick visualization 'loaded' event
 qv.on('loaded', loaded_callback)
 ```
 
@@ -725,7 +725,7 @@ qv.on('loaded', loaded_callback)
 
 <a name="powerbiclient.quick_visualize.QuickVisualize.off"></a>
 ### off
-Unregister a callback for a quick visualize event
+Unregister a callback for a Power BI quick visualization event
 
 ```python
 off(event)
@@ -735,11 +735,11 @@ off(event)
 
 - `event` _string_ - Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
 
-**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' quick visualize events_
+**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' events_
 
 **Example**:
 ```python
-# Unsubscribe the quick visualize 'loaded' event
+# Unsubscribe the Power BI quick visualization 'loaded' event
 qv.off('loaded')
 ```
 
