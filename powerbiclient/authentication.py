@@ -14,6 +14,9 @@ import msal
 # NOTE: The client id used below is for "Power BI Client Integrations" first party application
 CLIENT_ID = "1aea3f97-edc6-4453-a59b-b88b0b803711"
 
+# Authority template string is used with tenant_id if defined within authentication
+AUTHORITY_STR = "https://login.microsoftonline.com/"
+
 # Using Power BI default permissions
 DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 
@@ -58,19 +61,26 @@ class AuthenticationResult:
 class DeviceCodeLoginAuthentication(AuthenticationResult):
 
     # Methods
-    def __init__(self):
+    def __init__(self, tenant_id=None):
         """ Initiate a Device Flow Auth instance
+
+        Args:
+            tenant_id (string): Optional.
+                Id of Power BI tenant where your report resides.
 
         Returns:
             object: Device flow object. The device flow object should be passed only to trusted code in your notebook.
         """
         super().__init__()
-        self._acquire_token_device_code()
+        self._acquire_token_device_code(tenant_id)
 
-    def _acquire_token_device_code(self):
+    def _acquire_token_device_code(self, tenant_id=None):
         """ Acquires a token with device code flow and saves the public client application
         """
-        app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        if not tenant_id:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        else:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID, authority=AUTHORITY_STR+tenant_id)
         flow = app.initiate_device_flow(scopes=DEFAULT_SCOPES)
 
         if "user_code" not in flow:
@@ -100,19 +110,26 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
 class InteractiveLoginAuthentication(AuthenticationResult):
 
     # Methods
-    def __init__(self):
+    def __init__(self, tenant_id=None):
         """Acquire token interactively i.e. via a local browser
 
+        Args:
+            tenant_id (string): Optional.
+                Id of Power BI tenant where your report resides.
+                
         Returns:
             object: Interactive authentication object. The interactive authentication object should be passed only to trusted code in your notebook.
         """
         super().__init__()
-        self._acquire_token_interactive()
+        self._acquire_token_interactive(tenant_id)
 
-    def _acquire_token_interactive(self):
+    def _acquire_token_interactive(self, tenant_id=None):
         """ Acquires a token interactively i.e. via a local browser and saves the public client application
         """
-        app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        if not tenant_id:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID)
+        else:
+            app = msal.PublicClientApplication(client_id=CLIENT_ID, authority=AUTHORITY_STR+tenant_id)
         print("A local browser window will open for interactive sign in.")
         result = app.acquire_token_interactive(scopes=DEFAULT_SCOPES)
 
