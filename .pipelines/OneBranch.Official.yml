@@ -102,20 +102,6 @@ extends:
               filePath: '$(Build.SourcesDirectory)\.pipelines\build.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
-          - task: PowerShell@2
-            displayName: 'Package'
-            inputs:
-              targetType: 'filePath'
-              filePath: '$(Build.SourcesDirectory)\.pipelines\package.ps1'
-              workingDirectory: '$(Build.SourcesDirectory)'
-
-          - task: PowerShell@2
-            displayName: 'Test powerbi-jupyter'
-            inputs:
-              targetType: 'filePath'
-              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
-              workingDirectory: '$(Build.SourcesDirectory)'
-
           # Copying build artifacts to the Output folder
           - task: CopyFiles@2
             displayName: 'Copy Dist to Output folder'
@@ -148,6 +134,20 @@ extends:
                 !powerbiclient\tests\*
                 !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
+
+          - task: PowerShell@2
+            displayName: 'Package'
+            inputs:
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\package.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)'
+
+          - task: PowerShell@2
+            displayName: 'Test powerbi-jupyter'
+            inputs:
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)'
 
           # Copying tgz package and whl to Output folder
           - task: CopyFiles@2
