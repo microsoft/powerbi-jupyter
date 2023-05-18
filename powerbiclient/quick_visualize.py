@@ -161,6 +161,11 @@ class QuickVisualize(DOMWidget, HasTraits):
         }
         self._embedded = False
 
+    def _check_if_event_is_supported(self, event):
+        # Check if event is one of the QuickVisualize.SUPPORTED_EVENTS list
+        if event not in self.SUPPORTED_EVENTS:
+            raise Exception(event + " event is not supported")
+
     def on(self, event, callback):
         """Register a callback to execute when the Power BI quick visualization emits the target event
 
@@ -169,9 +174,8 @@ class QuickVisualize(DOMWidget, HasTraits):
             callback (function): User defined function. Callback function is invoked with event details as parameter
         """
 
-        # Check if event is one of the QuickVisualize.SUPPORTED_EVENTS list
-        if event not in self.SUPPORTED_EVENTS:
-            raise Exception(event + " event is not supported")
+        # Check if the passed event is supported by Power BI quick visualization
+        self._check_if_event_is_supported(event)
 
         if callback is None:
             raise Exception('callback cannot be None')
@@ -215,10 +219,8 @@ class QuickVisualize(DOMWidget, HasTraits):
         Args:
             event (string): Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
         """
-
-        # Check if event is one of the QuickVisualize.SUPPORTED_EVENTS list
-        if event not in self.SUPPORTED_EVENTS:
-            raise Exception(event + " event is not supported")
+        # Check if the passed event is supported by Power BI quick visualization
+        self._check_if_event_is_supported(event)
 
         # Remove handler if registered for the current event
         if event in self._registered_event_handlers:

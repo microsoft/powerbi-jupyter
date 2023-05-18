@@ -21,6 +21,11 @@ EMBED_CONFIG = {
     'datasetCreateConfig': DATASET_CREATE_CONFIG,
 }
 
+def check_if_registered(qv, event_name, callback):
+    # Assert
+    assert event_name in qv._registered_event_handlers.keys()
+    assert qv._registered_event_handlers[event_name] == callback
+    assert qv._observing_events == True
 
 class TestQuickVisualizeConstructor:
     def test_quick_visualize_constructor(self):
@@ -52,14 +57,6 @@ class TestComm:
         assert mock_comm.log_send[1][1]['data']['state'] == {
             'container_width': new_width
         }
-
-class TestCallbackRegistration:
-    @mark.skip(reason="Utils function to check if callback function is registered")
-    def check_if_registered(qv: QuickVisualize, event_name: str, callback: Callable):
-        # Assert
-        assert event_name in qv._registered_event_handlers.keys()
-        assert qv._registered_event_handlers[event_name] == callback
-        assert qv._observing_events == True
 
 class TestUpdateEmbedConfig:
     def test_update_access_token(self):
@@ -121,29 +118,21 @@ class TestChangingNewContainerSize:
         qv = QuickVisualize(auth=ACCESS_TOKEN,
                             dataset_create_config=DATASET_CREATE_CONFIG)
 
-        # Act
-        try:
+        # Act + Assert
+        with raises(Exception):
             qv.set_size(-1, 900)
-        except Exception:
-            assert True
-            return
-        assert False
 
     def test_invalid_width(self):
         # Arrange
         qv = QuickVisualize(auth=ACCESS_TOKEN,
                             dataset_create_config=DATASET_CREATE_CONFIG)
 
-        # Act
-        try:
+        # Act + Assert
+        with raises(Exception):
             qv.set_size(500, -1)
-        except Exception:
-            assert True
-            return
-        assert False
 
 class TestEventHandlers:
-    def test_throws_for_unsupported_event(self):
+    def test_on_api_throws_for_unsupported_event(self):
         # Arrange
         qv = QuickVisualize(auth=ACCESS_TOKEN,
                             dataset_create_config=DATASET_CREATE_CONFIG)
@@ -156,6 +145,20 @@ class TestEventHandlers:
         # Act + Assert
         with raises(Exception):
             qv.on(event_name, tileClicked_callback)
+
+        # Assert
+        assert event_name not in qv._registered_event_handlers.keys()
+        assert qv._observing_events == False
+
+    def test_off_api_throws_for_unsupported_event(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        event_name = 'tileClicked'
+
+        # Act + Assert
+        with raises(Exception):
+            qv.off(event_name)
 
         # Assert
         assert event_name not in qv._registered_event_handlers.keys()
@@ -174,7 +177,7 @@ class TestEventHandlers:
         qv.on(event_name, loaded_callback)
 
         # Assert
-        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback)
+        check_if_registered(qv, event_name, loaded_callback)
 
     def test_setting_event_handler_again(self):
         # Arrange
@@ -192,12 +195,12 @@ class TestEventHandlers:
             pass
 
         qv.on(event_name, loaded_callback)
-        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback)
+        check_if_registered(qv, event_name, loaded_callback)
         qv.on(event_name, loaded_callback2)
 
         # Assert
         # Check new handler is registered and old one is unregistered
-        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback2)
+        check_if_registered(qv, event_name, loaded_callback2)
 
     def test_not_setting_event_handler(self):
         # Arrange
@@ -208,7 +211,6 @@ class TestEventHandlers:
         # Does not set any handler
 
         # Assert
-        assert 'loaded' not in qv._registered_event_handlers
         assert qv._registered_event_handlers == qv.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE
 
     def test_unsetting_event_handler(self):
@@ -224,10 +226,23 @@ class TestEventHandlers:
         qv.on(event_name, loaded_callback)
 
         # Assert
-        TestCallbackRegistration.check_if_registered(qv, event_name, loaded_callback)
+        check_if_registered(qv, event_name, loaded_callback)
 
         # Act
         qv.off(event_name)
 
         # Assert
         assert event_name not in qv._registered_event_handlers.keys()
+
+    def test_unsetting_event_handler_without_setting(self):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        event_name = 'loaded'
+
+        # Act + Assert
+        qv.off(event_name)
+
+        # Assert
+        assert event_name not in qv._registered_event_handlers.keys()
+        assert qv._observing_events == False
