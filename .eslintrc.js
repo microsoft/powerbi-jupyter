@@ -24,6 +24,6 @@ module.exports = {
     curly: ['error', 'all'],
     eqeqeq: 'error',
     'prefer-arrow-callback': 'error',
-    'prettier/prettier': ['error', { 'endOfLine': 'auto' }]
+    'prettier/prettier': ['error', { 'endOfLine': 'crlf' }]
   }
 };
