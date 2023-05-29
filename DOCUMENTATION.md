@@ -21,8 +21,8 @@
   * [Create an instance of Power BI report](#\_\_init\_\_-Report)
   * [Set a new access token for the report](#set\_access\_token)
   * [Set width and height of the report container in pixels](#set\_size)
-  * [Register a callback to a report event](#on)
-  * [Unregister a callback for a report event](#off)
+  * [Register a callback to a report event](#report-on)
+  * [Unregister a callback for a report event](#report-off)
   * [Get a list of the report's pages](#get\_pages)
   * [Get visuals list of the given page of the report](#visuals\_on\_page)
   * [Export the data of a given visual of the report](#export\_visual\_data)
@@ -36,8 +36,8 @@
     * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
     * [Set a new access token](#set\_access\_token)
     * [Set width and height of the Power BI quick visualization container in pixels](#set\_size)
-    * [Register a callback to a Power BI quick visualization event](#on)
-    * [Unregister a callback for a Power BI quick visualization event](#off)
+    * [Register a callback to a Power BI quick visualization event](#qv-on)
+    * [Unregister a callback for a Power BI quick visualization event](#qv-off)
   * [Get dataset create configuration](#Get-dataset-create-configuration)
 * [**Considerations and limitations**](#Considerations-and-limitations)
 <br>
@@ -328,7 +328,7 @@ report.set_size(container_height, container_width)
 
 <br>
 
-<a name="powerbiclient.report.Report.on"></a>
+<a id="report-on" name="powerbiclient.report.Report.on"></a>
 ### on
 Register a callback to execute when the report emits the target event
 
@@ -355,7 +355,7 @@ report.on('loaded', loaded_callback)
 
 <br>
 
-<a name="powerbiclient.report.Report.off"></a>
+<a id="report-off" name="powerbiclient.report.Report.off"></a>
 ### off
 Unregister a callback for a report event
 
@@ -624,7 +624,7 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 
 <br>
 
-<a name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
+<a id="set\_access\_token" name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
 ### set\_access\_token
 Set an access token for the Power BI quick visualization
 
@@ -644,7 +644,7 @@ qv.set_access_token(access_token)
 
 <br>
 
-<a name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
+<a id="qv-set\_size" name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
 ### set\_size
 Set height and width of Power BI quick visualization in px
 
@@ -696,7 +696,7 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 <br>
 
 
-<a name="powerbiclient.quick_visualize.QuickVisualize.on"></a>
+<a id="qv-on" name="powerbiclient.quick_visualize.QuickVisualize.on"></a>
 ### on
 Register a callback to execute when the Power BI quick visualization emits the target event
 
@@ -723,7 +723,7 @@ qv.on('loaded', loaded_callback)
 
 <br>
 
-<a name="powerbiclient.quick_visualize.QuickVisualize.off"></a>
+<a id="qv-off" name="powerbiclient.quick_visualize.QuickVisualize.off"></a>
 ### off
 Unregister a callback for a Power BI quick visualization event
 
