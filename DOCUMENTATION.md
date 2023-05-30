@@ -19,8 +19,8 @@
   * [Report class](#Report-class)
   * [Import Report](#Import-Report)
   * [Create an instance of Power BI report](#\_\_init\_\_-Report)
-  * [Set a new access token for the report](#set\_access\_token)
-  * [Set width and height of the report container in pixels](#set\_size)
+  * [Set a new access token for the report](#report-set_access_token)
+  * [Set width and height of the report container in pixels](#report-set_size)
   * [Register a callback to a report event](#report-on)
   * [Unregister a callback for a report event](#report-off)
   * [Get a list of the report's pages](#get\_pages)
@@ -34,8 +34,8 @@
 * [**Power BI quick visualization widget**](#Power-BI-quick-visualization-widget)
   * [QuickVisualize class](#QuickVisualize-class)
     * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
-    * [Set a new access token](#set\_access\_token)
-    * [Set width and height of the Power BI quick visualization container in pixels](#set\_size)
+    * [Set a new access token](#qv-set_access_token)
+    * [Set width and height of the Power BI quick visualization container in pixels](#qv-set_size)
     * [Register a callback to a Power BI quick visualization event](#qv-on)
     * [Unregister a callback for a Power BI quick visualization event](#qv-off)
   * [Get dataset create configuration](#Get-dataset-create-configuration)
@@ -286,7 +286,7 @@ report_create = Report(group_id=group_id, auth=auth, view_mode=models.EmbedMode.
 
 <br>
 
-<a name="powerbiclient.report.Report.set_access_token"></a>
+<a id="report-set_access_token" name="powerbiclient.report.Report.set_access_token"></a>
 ### set\_access\_token
 Set a new access token for the report
 
@@ -306,7 +306,7 @@ report.set_access_token(access_token)
 
 <br>
 
-<a name="powerbiclient.report.Report.set_size"></a>
+<a id="report-set_size" name="powerbiclient.report.Report.set_size"></a>
 ### set\_size
 Set height and width of the report container in pixels
 
@@ -624,7 +624,7 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 
 <br>
 
-<a id="set\_access\_token" name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
+<a id="qv-set_access_token" name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
 ### set\_access\_token
 Set an access token for the Power BI quick visualization
 
@@ -644,7 +644,7 @@ qv.set_access_token(access_token)
 
 <br>
 
-<a id="qv-set\_size" name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
+<a id="qv-set_size"  name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
 ### set\_size
 Set height and width of Power BI quick visualization in px
 
