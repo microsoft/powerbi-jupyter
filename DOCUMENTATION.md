@@ -31,6 +31,7 @@
   * [Remove all report level filters](#remove\_filters)
   * [Get the list of the report's bookmarks](#get\_bookmarks)
   * [Apply a bookmark by name on the report](#set\_bookmark)
+  * [Set a page as active](#set\_active_page)
 * [**Power BI quick visualization widget**](#Power-BI-quick-visualization-widget)
   * [QuickVisualize class](#QuickVisualize-class)
     * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
@@ -555,6 +556,26 @@ set_bookmark(bookmark_name)
 ```python
 # Apply a bookmark on the embedded report using the bookmark's name
 report.set_bookmark(bookmark_name)
+```
+
+<br>
+
+<a name="powerbiclient.report.Report.set_active_page"></a>
+### set\_active\_page
+Set the input page as active
+
+```python
+set_active_page(page_name)
+```
+
+**Arguments**:
+
+  page_name (string): name of the page you want to set as active
+
+**Example**:
+```python
+# Set the input page as active
+report.set_active_page(page_name)
 ```
 
 <br>

@@ -61,6 +61,7 @@ export class ReportModel extends DOMWidgetModel {
       _report_bookmark_name: null,
       _get_bookmarks_request: false,
       _report_bookmarks: [],
+      _report_active_page: null,
       _token_expired: false,
       _client_error: null,
       _init_error: null
@@ -126,6 +127,7 @@ export class ReportView extends DOMWidgetView {
     this.model.on('change:_get_visuals_page_name', this.getVisualsPageNameChanged, this);
     this.model.on('change:_report_bookmark_name', this.reportBookmarkNameChanged, this);
     this.model.on('change:_get_bookmarks_request', this.getBookmarksRequestChanged, this);
+    this.model.on('change:_report_active_page', this.reportActivePageChanged, this);
   }
 
   containerSizeChanged(): void {
@@ -275,9 +277,7 @@ export class ReportView extends DOMWidgetView {
 
   async exportVisualDataRequestChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
-      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
-      this.touch();
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -297,9 +297,9 @@ export class ReportView extends DOMWidgetView {
     }
 
     if (!exportVisualDataRequest.pageName || !exportVisualDataRequest.visualName) {
-      console.error('Page and visual names are required');
-      this.model.set('_client_error', 'Page and visual names are required');
-      this.touch();
+      const errorMessage = 'Page and visual names are required';
+      this.logError(errorMessage);
+
       return;
     }
 
@@ -325,22 +325,13 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_visual_data', data.data);
       this.touch();
     } catch (error) {
-      let stringifiedError = JSON.stringify(error);
-      if (stringifiedError === '{}') {
-        stringifiedError = error.toString();
-      }
-
-      console.error(error);
-      this.model.set('_client_error', stringifiedError);
-      this.touch();
+      this.logError(error);
     }
   }
 
   async getFiltersRequestChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
-      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
-      this.touch();
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -362,22 +353,13 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_get_filters_request', false);
       this.touch();
     } catch (error) {
-      let stringifiedError = JSON.stringify(error);
-      if (stringifiedError === '{}') {
-        stringifiedError = error.toString();
-      }
-
-      console.error(error);
-      this.model.set('_client_error', stringifiedError);
-      this.touch();
+      this.logError(error);
     }
   }
 
   async reportFiltersChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
-      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
-      this.touch();
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -400,22 +382,13 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_report_filters_request', REPORT_FILTER_REQUEST_DEFAULT_STATE);
       this.touch();
     } catch (error) {
-      let stringifiedError = JSON.stringify(error);
-      if (stringifiedError === '{}') {
-        stringifiedError = error.toString();
-      }
-
-      console.error(error);
-      this.model.set('_client_error', stringifiedError);
-      this.touch();
+      this.logError(error);
     }
   }
 
   async getPagesRequestChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
-      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
-      this.touch();
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -440,22 +413,13 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_report_pages', pagesWithoutReport);
       this.touch();
     } catch (error) {
-      let stringifiedError = JSON.stringify(error);
-      if (stringifiedError === '{}') {
-        stringifiedError = error.toString();
-      }
-
-      console.error(error);
-      this.model.set('_client_error', stringifiedError);
-      this.touch();
+      this.logError(error);
     }
   }
 
   async getVisualsPageNameChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
-      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
-      this.touch();
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -481,20 +445,13 @@ export class ReportView extends DOMWidgetView {
       this.model.set('_page_visuals', visualsWithoutPage);
       this.touch();
     } catch (error) {
-      let stringifiedError = JSON.stringify(error);
-      if (stringifiedError === '{}') {
-        stringifiedError = error.toString();
-      }
-
-      console.error(error);
-      this.model.set('_client_error', stringifiedError);
-      this.touch();
+      this.logError(error);
     }
   }
 
   async reportBookmarkNameChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -504,15 +461,13 @@ export class ReportView extends DOMWidgetView {
       // Apply corresponding bookmark to the embedded report
       await this.report.bookmarksManager.apply(bookmarkName);
     } catch (error) {
-      console.error('Set bookmark error:', error);
+      this.logError(error);
     }
   }
 
   async getBookmarksRequestChanged(): Promise<void> {
     if (!this.report) {
-      console.error(REPORT_NOT_EMBEDDED_MESSAGE);
-      this.model.set('_client_error', REPORT_NOT_EMBEDDED_MESSAGE);
-      this.touch();
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
       return;
     }
 
@@ -534,14 +489,34 @@ export class ReportView extends DOMWidgetView {
         this.touch();
       }
     } catch (error) {
-      let stringifiedError = JSON.stringify(error);
-      if (stringifiedError === '{}') {
-        stringifiedError = error.toString();
-      }
-
-      console.error(error);
-      this.model.set('_client_error', stringifiedError);
-      this.touch();
+      this.logError(error);
     }
+  }
+
+  async reportActivePageChanged(): Promise<void> {
+    if (!this.report) {
+      this.logError(REPORT_NOT_EMBEDDED_MESSAGE);
+      return;
+    }
+
+    const pageName = this.model.get('_report_active_page') as string;
+
+    try {
+      // Set the provided page as active
+      await this.report.setPage(pageName);
+    } catch (error) {
+      this.logError(error);
+    }
+  }
+
+  private logError(errorMessage: any): void {
+    let stringifiedError = JSON.stringify(errorMessage);
+    if (stringifiedError === '{}') {
+      stringifiedError = errorMessage.toString();
+    }
+
+    console.error(errorMessage);
+    this.model.set('_client_error', stringifiedError);
+    this.touch();
   }
 }
