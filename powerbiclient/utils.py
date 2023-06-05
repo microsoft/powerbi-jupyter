@@ -35,6 +35,8 @@ def get_dataset_config(df, locale='en-US'):
     """
     if df is None:
         raise Exception("Parameter df is required")
+    elif len(df.columns) != len(set(df.columns)):
+        raise Exception("Duplicate column names found in the DataFrame")
 
     table_name = 'Table'
     columns_schema = []

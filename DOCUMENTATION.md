@@ -716,3 +716,6 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 
 # Considerations and limitations
 - Embedding and creating Power BI content in Jupyter notebooks is not available in sovereign and government clouds.
+- When creating a Power BI report with the quick visualization widget, the following limitations apply to your data:
+  - The table name can't be longer than 80 characters, and column names can't be longer than 512 characters.
+  - Column names must be unique.

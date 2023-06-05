@@ -6,6 +6,7 @@
 
 import pandas as pd
 from unittest.mock import MagicMock
+import pytest
 
 from ..authentication import AuthenticationResult
 from ..report import Report
@@ -169,3 +170,13 @@ class TestGetDatasetCreateConfig:
         na_values_df = pd.DataFrame(self.DATA_WITH_NA_VALUES)
         dataset_create_config = get_dataset_config(na_values_df)
         assert is_dataset_create_config_valid(dataset_create_config)
+
+    def test_duplicate_column_names(self):
+        df = {
+            'col1': pd.Series([None, 'b'], dtype='str'),
+            'col2': pd.Series([1], dtype='int'),
+            'col1': pd.Series([2], dtype='int'),
+        }
+
+        with pytest.raises(Exception):
+            get_dataset_config(df)
