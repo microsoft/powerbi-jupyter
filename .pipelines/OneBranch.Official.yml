@@ -80,6 +80,10 @@ extends:
             inputs:
               workingFile: '$(Build.SourcesDirectory)\.npmrc'
 
+          - task: PipAuthenticate@1
+            inputs:
+              artifactFeeds: 'Embedded/Embedded_PublicPackages'
+
           - task: UsePythonVersion@0
             inputs:
               versionSpec: '3.9.7'
@@ -96,20 +100,6 @@ extends:
             inputs:
               targetType: 'filePath'
               filePath: '$(Build.SourcesDirectory)\.pipelines\build.ps1'
-              workingDirectory: '$(Build.SourcesDirectory)'
-
-          - task: PowerShell@2
-            displayName: 'Package'
-            inputs:
-              targetType: 'filePath'
-              filePath: '$(Build.SourcesDirectory)\.pipelines\package.ps1'
-              workingDirectory: '$(Build.SourcesDirectory)'
-
-          - task: PowerShell@2
-            displayName: 'Test powerbi-jupyter'
-            inputs:
-              targetType: 'filePath'
-              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
               workingDirectory: '$(Build.SourcesDirectory)'
 
           # Copying build artifacts to the Output folder
@@ -145,6 +135,20 @@ extends:
                 !out\**\*
               TargetFolder: '$(OUTPUTROOT)\outputs\build\source'
 
+          - task: PowerShell@2
+            displayName: 'Package'
+            inputs:
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\package.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)'
+
+          - task: PowerShell@2
+            displayName: 'Test powerbi-jupyter'
+            inputs:
+              targetType: 'filePath'
+              filePath: '$(Build.SourcesDirectory)\.pipelines\test.ps1'
+              workingDirectory: '$(Build.SourcesDirectory)'
+
           # Copying tgz package and whl to Output folder
           - task: CopyFiles@2
             displayName: 'Copy tgz package and whl file to Output folder'
@@ -161,6 +165,6 @@ extends:
             inputs:
               command: 'sign'
               signing_environment: 'azure-ado'
-              signing_profile: 'internal_azure_service'
+              signing_profile: 'external_distribution'
               files_to_sign: '**'
               search_root: '$(OUTPUTROOT)'
