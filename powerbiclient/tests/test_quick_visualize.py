@@ -4,8 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from typing import Callable
-from pytest import raises, mark
+from pytest import raises
 from ..quick_visualize import QuickVisualize
 
 ACCESS_TOKEN = 'dummy_access_token'

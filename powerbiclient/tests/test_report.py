@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-import pytest
+from pytest import raises
 import requests_mock
 import threading
 import time
@@ -61,7 +61,7 @@ class TestCommAndTraitlets:
         report = create_test_report()
 
         # Act + Assert
-        with pytest.raises(TraitError):
+        with raises(TraitError):
             report.export_visual_data(PAGE_NAME, VISUAL_NAME, 'number')
 
     def test_report_filters_request_validators(self):
@@ -69,7 +69,7 @@ class TestCommAndTraitlets:
         report = create_test_report()
 
         # Act + Assert
-        with pytest.raises(TraitError):
+        with raises(TraitError):
             report.update_filters('filter')
 
     def test_embed_config_validators(self):
@@ -77,7 +77,7 @@ class TestCommAndTraitlets:
         report = None
 
         # Act + Assert
-        with pytest.raises(TraitError):
+        with raises(TraitError):
             report = create_test_report(permissions="INVALID_PERMISSIONS")
 
         assert report is None
@@ -150,7 +150,7 @@ class TestEventHandlers:
             pass
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.on(event_name, tileClicked_callback)
 
         # Assert
@@ -167,7 +167,7 @@ class TestEventHandlers:
             pass
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.on(event_name, saved_callback)
 
         # Assert
@@ -252,7 +252,7 @@ class TestExportData:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.export_visual_data('page', 'visual')
 
     def test_returned_data(self):
@@ -277,7 +277,7 @@ class TestGetPages:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_pages()
 
     def test_returned_data(self):
@@ -301,7 +301,7 @@ class TestGetVisuals:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_visuals('page')
 
     def test_returned_data(self):
@@ -325,7 +325,7 @@ class TestGetBookmarks:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_bookmarks()
 
     def test_returned_data(self):
@@ -350,7 +350,7 @@ class TestGetFilters:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_filters()
 
 
