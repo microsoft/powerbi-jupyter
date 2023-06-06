@@ -4,6 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+from pytest import raises
 import pandas as pd
 from unittest.mock import MagicMock
 import pytest
@@ -36,15 +37,10 @@ class TestGetAccessTokenDetails:
 
     def test_invalid_auth(self):
         invalid_auth = 1234
-        try:
+
+        # Act + Assert
+        with raises(Exception):
             get_access_token_details(powerbi_widget=Report, auth=invalid_auth)
-        except Exception as ex:
-            assert True
-            return
-
-        # should not get here
-        assert False
-
 
 class TestIsDatasetCreateConfigValid:
     def test_happy_path(self):
@@ -152,14 +148,10 @@ class TestGetDatasetCreateConfig:
         assert rows == expected_rows
 
     def test_df_is_None(self):
-        try:
-            get_dataset_config(None)
-        except Exception:
-            assert True
-            return
 
-        # should not get here
-        assert False
+        # Act + Assert
+        with raises(Exception):
+            get_dataset_config(None)
 
     def test_locale(self):
         dataset_create_config = get_dataset_config(
