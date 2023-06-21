@@ -42,7 +42,7 @@ extends:
   parameters:
     globalSdl:
       tsa:
-        enabled: false
+        enabled: true
       cg:
         failOnAlert: false
 
