@@ -58,7 +58,7 @@ from powerbiclient import Report
 from powerbiclient.authentication import DeviceCodeLoginAuthentication
 
 # Initiate device authentication
-device_auth = DeviceCodeLoginAuthentication()
+device_auth = DeviceCodeLoginAuthentication(tenant_id) # tenant_id is an optional argument
 
 # Set workspace Id and report Id
 group_id="<YOUR_WORKSPACE_ID>"
@@ -152,8 +152,13 @@ from powerbiclient.authentication import DeviceCodeLoginAuthentication
 Create instance of Device Flow Authentication.
 
 ```python
-__init__(self)
+__init__(self, tenant_id=None)
 ```
+
+**Arguments**:
+
+- `tenant_id` _string_ - Optional.
+  Id of Power BI tenant where your report resides. If not specified, the default tenant will be used.
 
 **Returns**:
 - `object` - Device flow object. The device flow object should be passed only to trusted code in your notebook.
@@ -161,7 +166,7 @@ __init__(self)
 **Example**:
 ```python
 # Initiate device flow authentication
-auth = DeviceCodeLoginAuthentication()
+auth = DeviceCodeLoginAuthentication(tenant_id)
 ```
 
 <br>
@@ -187,8 +192,13 @@ from powerbiclient.authentication import InteractiveLoginAuthentication
 Create instance of Interactive Authentication.
 
 ```python
-__init__(self)
+__init__(self, tenant_id=None)
 ```
+
+**Arguments**:
+
+- `tenant_id` _string_ - Optional.
+  Id of Power BI tenant where your report resides. If not specified, the default tenant will be used.
 
 **Returns**:
 
@@ -197,7 +207,7 @@ __init__(self)
 **Example**:
 ```python
 # Initiate interactive login authentication with default client Id and Power BI scopes
-auth = InteractiveLoginAuthentication()
+auth = InteractiveLoginAuthentication(tenant_id) # tenant_id is an optional argument
 ```
 
 <br>
