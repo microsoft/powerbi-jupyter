@@ -12,11 +12,8 @@ from unittest.mock import mock_open, patch
 
 from traitlets.traitlets import TraitError
 from .. import report
+from .utils import create_test_report, ACCESS_TOKEN, REPORT_ID, EMBED_URL, GROUP_ID
 
-ACCESS_TOKEN = 'dummy_access_token'
-EMBED_URL = 'dummy_embed_url'
-GROUP_ID = 'dummy_group_id'
-REPORT_ID = 'dummy_report_id'
 PAGE_NAME = 'dummy_page_name'
 VISUAL_NAME = 'dummy_visual_name'
 VISUAL_DATA = 'dummy_visual_data'
@@ -26,15 +23,6 @@ REPORT_PAGES = ['dummy_report_pages']
 PAGE_VISUALS = ['dummy_page_visuals']
 REPORT_BOOKMARKS = ['dummy_report_bookmarks']
 REPORT_FILTERS = ['dummy_report_filters']
-
-
-def create_test_report(embedded=True, permissions=None):
-    with requests_mock.Mocker() as rm:
-        request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{GROUP_ID}/reports/{REPORT_ID}"
-        rm.get(request_url, json={ 'embedUrl': EMBED_URL })
-        report_mock = report.Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
-        report_mock._embedded = embedded
-        return report_mock
 
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
@@ -92,7 +80,7 @@ class TestReportConstructor:
         assert report._embed_config == {
             'type': 'report',
             'accessToken': ACCESS_TOKEN,
-            'embedUrl': EMBED_URL,
+            'embedUrl': f"{EMBED_URL}/groups/{GROUP_ID}/reports/{REPORT_ID}",
             'tokenType': 0,
             'viewMode': 0,
             'permissions': None,

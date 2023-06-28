@@ -39,6 +39,7 @@
     * [Set width and height of the Power BI quick visualization container in pixels](#qv-set_size)
     * [Register a callback to a Power BI quick visualization event](#qv-on)
     * [Unregister a callback for a Power BI quick visualization event](#qv-off)
+    * [Get saved report](#get-saved-report)
   * [Get dataset create configuration](#Get-dataset-create-configuration)
 * [**Considerations and limitations**](#Considerations-and-limitations)
 <br>
@@ -772,6 +773,22 @@ off(event)
 ```python
 # Unsubscribe the Power BI quick visualization 'loaded' event
 qv.off('loaded')
+```
+
+<br>
+
+<a id="get-saved-report" name="powerbiclient.quick_visualize.QuickVisualize.get_saved_report"></a>
+### get_saved_report
+Retrieve the saved report associated with the Power BI quick visualization instance
+
+```python
+get_saved_report()
+```
+
+**Example**:
+```python
+# Returns the saved report associated with the Power BI quick visualization instance
+report = qv.get_saved_report()
 ```
 
 <br>

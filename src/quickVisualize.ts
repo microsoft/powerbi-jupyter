@@ -28,6 +28,7 @@ export class QuickVisualizeModel extends DOMWidgetModel {
         event_name: null,
         event_details: null,
       },
+      _saved_report_id: null,
       _embedded: false,
       _token_expired: false,
       _init_error: null,
@@ -189,6 +190,11 @@ export class QuickVisualizeView extends DOMWidgetView {
         event_name: 'saved',
         event_details: reportDetails,
       });
+
+      this.touch();
+
+      // Save report details
+      this.model.set('_saved_report_id', saved_event_details?.detail?.reportObjectId);
 
       this.touch();
     });

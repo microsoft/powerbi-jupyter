@@ -11,6 +11,7 @@ Power BI quick visualization widget
 from ipywidgets import DOMWidget
 from traitlets import Bool, Dict, Float, HasTraits, Unicode, TraitError, validate, observe
 
+from .report import Report
 from ._version import __version__
 from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token_details
 
@@ -47,6 +48,7 @@ class QuickVisualize(DOMWidget, HasTraits):
         'event_details': None
     }
     INIT_ERROR_DEFAULT_STATE = ''
+    SAVED_REPORT_ID_DEFAULT_STATE = ''
     TOKEN_EXPIRED_DEFAULT_STATE = False
 
     # Supported events list for quick_visualize widget
@@ -65,6 +67,8 @@ class QuickVisualize(DOMWidget, HasTraits):
     _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
     _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
     _init_error = Unicode(INIT_ERROR_DEFAULT_STATE).tag(sync=True)
+    _saved_report_id = Unicode(SAVED_REPORT_ID_DEFAULT_STATE).tag(sync=True)
+    _saved_report: Report = None
     container_height = Float(0).tag(sync=True)
     container_width = Float(0).tag(sync=True)
 
@@ -109,6 +113,8 @@ class QuickVisualize(DOMWidget, HasTraits):
             object: QuickVisualize object
         """
 
+        self.observe(self._on_saved_report_id_change, '_saved_report_id')
+
         access_token = get_access_token_details(
             powerbi_widget=QuickVisualize, auth=auth)
         self._update_embed_config(
@@ -125,6 +131,11 @@ class QuickVisualize(DOMWidget, HasTraits):
 
         # Init parent class DOMWidget
         super(QuickVisualize, self).__init__(**kwargs)
+
+    def _on_saved_report_id_change(self, change):
+        """update saved report object when saved report id changes"""
+        if self._saved_report is None or (self._saved_report_id != change['old']):
+            self._saved_report = Report(report_id=self._saved_report_id, auth=self._auth)
 
     def _update_access_token(self, change):
         if change.new == True:
@@ -165,6 +176,19 @@ class QuickVisualize(DOMWidget, HasTraits):
         # Check if event is one of the QuickVisualize.SUPPORTED_EVENTS list
         if event not in self.SUPPORTED_EVENTS:
             raise Exception(f"'{event}' event is not supported")
+
+    def get_saved_report(self):
+        """Returns the saved report associated with this QuickVisualize instance.
+
+        Returns:
+            Report: The saved report object.
+
+        Raises:
+            Exception: If no saved report is found.
+        """
+        if self._saved_report_id == self.SAVED_REPORT_ID_DEFAULT_STATE:
+            raise Exception("No saved report found")
+        return self._saved_report
 
     def on(self, event, callback):
         """Register a callback to execute when the Power BI quick visualization emits the target event

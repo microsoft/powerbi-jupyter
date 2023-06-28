@@ -5,9 +5,13 @@
 # Licensed under the MIT license.
 
 from pytest import raises
+import unittest
+from unittest.mock import patch
 from ..quick_visualize import QuickVisualize
+from ..report import Report
+from .utils import create_test_report, ACCESS_TOKEN, REPORT_ID, INITIAL_REPORT_ID
 
-ACCESS_TOKEN = 'dummy_access_token'
+
 DATASET_CREATE_CONFIG = {
     'locale': 'en-US',
     'tableSchemaList': [{'name': "Table", 'columns': [{'name': "Name", 'dataType': "Text"}]}],
@@ -130,7 +134,7 @@ class TestChangingNewContainerSize:
         with raises(Exception):
             qv.set_size(500, -1)
 
-class TestEventHandlers:
+class TestEventHandlers(unittest.TestCase):
     def test_on_api_throws_for_unsupported_event(self):
         # Arrange
         qv = QuickVisualize(auth=ACCESS_TOKEN,
@@ -245,3 +249,46 @@ class TestEventHandlers:
         # Assert
         assert event_name not in qv._registered_event_handlers.keys()
         assert qv._observing_events == False
+
+    @patch.object(QuickVisualize, '_on_saved_report_id_change', return_value=None)
+    def test_get_saved_report_throws_error(self, mock_on_saved_report_id_change):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        # Assert
+        self.assertRaises(Exception, qv.get_saved_report)
+
+    @patch.object(QuickVisualize, '_saved_report', return_value=create_test_report())
+    @patch.object(QuickVisualize, '_on_saved_report_id_change', return_value=None)
+    def test_get_saved_report_returns_report(self, mock_report, mock_on_saved_report_id_change):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        qv._saved_report_id = REPORT_ID
+
+        # Act
+        report = qv.get_saved_report().return_value
+        embedUrl = report._embed_config['embedUrl']
+        reportId = embedUrl.split('/')[-1]
+
+        # Assert
+        self.assertIsInstance(report, Report)
+        self.assertEqual(reportId, qv._saved_report_id)
+
+    @patch.object(QuickVisualize, '_saved_report', return_value=create_test_report())
+    @patch.object(QuickVisualize, '_on_saved_report_id_change', return_value=None)
+    def test_get_saved_report_returns_updated_report(self, mock_report, mock_on_saved_report_id_change):
+        # Arrange
+        qv = QuickVisualize(auth=ACCESS_TOKEN,
+                            dataset_create_config=DATASET_CREATE_CONFIG)
+        qv._saved_report_id = INITIAL_REPORT_ID
+
+        # Act
+        qv._saved_report_id = REPORT_ID
+        report = qv.get_saved_report().return_value
+        embedUrl = report._embed_config['embedUrl']
+        reportId = embedUrl.split('/')[-1]
+
+        # Assert
+        self.assertIsInstance(report, Report)
+        self.assertEqual(reportId, REPORT_ID)
