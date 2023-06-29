@@ -9,6 +9,7 @@ import re
 
 from .authentication import DeviceCodeLoginAuthentication, AuthenticationResult
 from .models import DataType
+from . import authentication
 
 MODULE_NAME = "powerbi-jupyter-client"
 data_types_map = {
@@ -139,6 +140,11 @@ def get_access_token_details(powerbi_widget, auth=None):
     Returns:
         string: access_token
     """
+
+    if authentication.AUTH:
+        if auth:
+            raise Exception("Current scenario does not support manual authentication, remove 'auth' parameter and try again.")
+        auth = authentication.AUTH
 
     # auth is the access token string
     if isinstance(auth, str):

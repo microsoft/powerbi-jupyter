@@ -20,6 +20,8 @@ AUTHORITY_STR = "https://login.microsoftonline.com/"
 # Using Power BI default permissions
 DEFAULT_SCOPES = ["https://analysis.windows.net/powerbi/api/.default"]
 
+# Global level authentication
+AUTH = None
 
 class AuthenticationResult:
 
@@ -72,6 +74,7 @@ class DeviceCodeLoginAuthentication(AuthenticationResult):
             object: Device flow object. The device flow object should be passed only to trusted code in your notebook.
         """
         super().__init__()
+        CheckGlobalAuth()
         self._acquire_token_device_code(tenant_id)
 
     def _acquire_token_device_code(self, tenant_id=None):
@@ -121,6 +124,7 @@ class InteractiveLoginAuthentication(AuthenticationResult):
             object: Interactive authentication object. The interactive authentication object should be passed only to trusted code in your notebook.
         """
         super().__init__()
+        CheckGlobalAuth()
         self._acquire_token_interactive(tenant_id)
 
     def _acquire_token_interactive(self, tenant_id=None):
@@ -139,3 +143,7 @@ class InteractiveLoginAuthentication(AuthenticationResult):
         else:
             error_message = f"Authentication failed. Try again.\nDetails: {result.get('error_description')}"
             raise RuntimeError(error_message)
+        
+def CheckGlobalAuth():
+    if AUTH is not None:
+        raise Exception("Current scenario does not require manual authentication, proceed to create your Power BI items without passing the 'auth' object.")

@@ -72,9 +72,6 @@ class QuickVisualize(DOMWidget, HasTraits):
     container_height = Float(0).tag(sync=True)
     container_width = Float(0).tag(sync=True)
 
-    # Authentication object
-    _auth = None
-
     @validate('_embed_config')
     def _valid_embed_config(self, proposal):
         if proposal['value'] == self.EMBED_CONFIG_DEFAULT_STATE:
