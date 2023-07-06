@@ -699,7 +699,7 @@ qv.set_size(container_height, container_width)
 
 <a name="powerbiclient.utils.get_dataset_config"></a>
 ## Get dataset create configuration
-Utility method to get the dataset create configuration dict from a [pandas DataFrame](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html). To be used as input for instantiating a quick visualization object.
+Utility method to get the dataset create configuration dict from a [pandas](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html) or [spark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html) DataFrame. To be used as input for instantiating a quick visualization object.
 
 ```python
 get_dataset_config(df, locale='en-US')
@@ -707,7 +707,7 @@ get_dataset_config(df, locale='en-US')
 
 **Arguments**:
   - `df` _object_: Required.
-    Pandas DataFrame instance
+    Pandas or Spark DataFrame instance
   - `locale` _string_: Optional.
     This value is used to evaluate the data and parse values of the given DataFrame. Supported locales can be found here: [supported locales](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN)
 
