@@ -19,10 +19,10 @@
   * [Report class](#Report-class)
   * [Import Report](#Import-Report)
   * [Create an instance of Power BI report](#\_\_init\_\_-Report)
-  * [Set a new access token for the report](#set\_access\_token)
-  * [Set width and height of the report container in pixels](#set\_size)
-  * [Register a callback to a report event](#on)
-  * [Unregister a callback for a report event](#off)
+  * [Set a new access token for the report](#report-set_access_token)
+  * [Set width and height of the report container in pixels](#report-set_size)
+  * [Register a callback to a report event](#report-on)
+  * [Unregister a callback for a report event](#report-off)
   * [Get a list of the report's pages](#get\_pages)
   * [Get visuals list of the given page of the report](#visuals\_on\_page)
   * [Export the data of a given visual of the report](#export\_visual\_data)
@@ -31,11 +31,15 @@
   * [Remove all report level filters](#remove\_filters)
   * [Get the list of the report's bookmarks](#get\_bookmarks)
   * [Apply a bookmark by name on the report](#set\_bookmark)
+  * [Set a page as active](#set\_active_page)
 * [**Power BI quick visualization widget**](#Power-BI-quick-visualization-widget)
   * [QuickVisualize class](#QuickVisualize-class)
     * [Create an instance of Power BI quick visualization](#\_\_init\_\_-QuickVisualize)
-    * [Set a new access token](#set\_access\_token)
-    * [Set width and height of the Power BI quick visualization container in pixels](#set\_size)
+    * [Set a new access token](#qv-set_access_token)
+    * [Set width and height of the Power BI quick visualization container in pixels](#qv-set_size)
+    * [Register a callback to a Power BI quick visualization event](#qv-on)
+    * [Unregister a callback for a Power BI quick visualization event](#qv-off)
+    * [Get saved report](#get-saved-report)
   * [Get dataset create configuration](#Get-dataset-create-configuration)
 * [**Considerations and limitations**](#Considerations-and-limitations)
 <br>
@@ -55,7 +59,7 @@ from powerbiclient import Report
 from powerbiclient.authentication import DeviceCodeLoginAuthentication
 
 # Initiate device authentication
-device_auth = DeviceCodeLoginAuthentication()
+device_auth = DeviceCodeLoginAuthentication(tenant_id) # tenant_id is an optional argument
 
 # Set workspace Id and report Id
 group_id="<YOUR_WORKSPACE_ID>"
@@ -132,7 +136,7 @@ access_token = auth.get_access_token()
 <a name="powerbiclient.authentication.DeviceCodeLoginAuthentication"></a>
 ## Device Flow Authentication
 
-Inherits from AuthenticationResult class. Obtain token by a device flow object. 
+Inherits from AuthenticationResult class. Obtain token by a device flow object.
 
 ```python
 class DeviceCodeLoginAuthentication(AuthenticationResult)
@@ -146,11 +150,16 @@ from powerbiclient.authentication import DeviceCodeLoginAuthentication
 
 <a name="powerbiclient.authentication.DeviceCodeLoginAuthentication.__init__"></a>
 ### \_\_init\_\_ DeviceCodeLoginAuthentication
-Create instance of Device Flow Authentication. 
+Create instance of Device Flow Authentication.
 
 ```python
-__init__(self)
+__init__(self, tenant_id=None)
 ```
+
+**Arguments**:
+
+- `tenant_id` _string_ - Optional.
+  Id of Power BI tenant where your report resides. If not specified, the default tenant will be used.
 
 **Returns**:
 - `object` - Device flow object. The device flow object should be passed only to trusted code in your notebook.
@@ -158,7 +167,7 @@ __init__(self)
 **Example**:
 ```python
 # Initiate device flow authentication
-auth = DeviceCodeLoginAuthentication()
+auth = DeviceCodeLoginAuthentication(tenant_id)
 ```
 
 <br>
@@ -184,8 +193,13 @@ from powerbiclient.authentication import InteractiveLoginAuthentication
 Create instance of Interactive Authentication.
 
 ```python
-__init__(self)
+__init__(self, tenant_id=None)
 ```
+
+**Arguments**:
+
+- `tenant_id` _string_ - Optional.
+  Id of Power BI tenant where your report resides. If not specified, the default tenant will be used.
 
 **Returns**:
 
@@ -194,7 +208,7 @@ __init__(self)
 **Example**:
 ```python
 # Initiate interactive login authentication with default client Id and Power BI scopes
-auth = InteractiveLoginAuthentication()
+auth = InteractiveLoginAuthentication(tenant_id) # tenant_id is an optional argument
 ```
 
 <br>
@@ -234,10 +248,10 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
 
 - `group_id` _string_ - Optional.
   Id of Power BI Workspace where your report resides. If value is not provided, My workspace will be used.
-  
+
 - `report_id` _string_ - Optional.
   Id of Power BI report. Must be provided to view or edit an existing report.
-  
+
 - `auth` _object_ - Optional.
   We have 3 authentication options to embed a Power BI report:
    - Access token (string)
@@ -248,7 +262,7 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
   Mode for embedding Power BI report (VIEW: 0, EDIT: 1, CREATE: 2).
   To be provided if user wants to edit or create a report.
   (Default = VIEW)
-  
+
 - `permissions` _number_ - Optional.
   Permissions required while embedding report in EDIT mode. Ignored in VIEW or CREATE mode.
 
@@ -256,10 +270,10 @@ __init__(self, group_id, report_id=None, auth=None, view_mode=EmbedMode.VIEW.val
     - `READWRITE` - Users can view, edit, and save the report.
     - `COPY` - Users can save a copy of the report by using Save As.
     - `ALL` - Users can create, view, edit, save, and save a copy of the report.
-  
+
 - `dataset_id` _string_ - Optional.
   Create a new report using this dataset in the provided Power BI workspace. Must be provided to create a new report from an existing dataset if report_id is not provided.
-  
+
 **Returns**:
 
 - `object` - Report object
@@ -284,7 +298,7 @@ report_create = Report(group_id=group_id, auth=auth, view_mode=models.EmbedMode.
 
 <br>
 
-<a name="powerbiclient.report.Report.set_access_token"></a>
+<a id="report-set_access_token" name="powerbiclient.report.Report.set_access_token"></a>
 ### set\_access\_token
 Set a new access token for the report
 
@@ -304,7 +318,7 @@ report.set_access_token(access_token)
 
 <br>
 
-<a name="powerbiclient.report.Report.set_size"></a>
+<a id="report-set_size" name="powerbiclient.report.Report.set_size"></a>
 ### set\_size
 Set height and width of the report container in pixels
 
@@ -326,7 +340,7 @@ report.set_size(container_height, container_width)
 
 <br>
 
-<a name="powerbiclient.report.Report.on"></a>
+<a id="report-on" name="powerbiclient.report.Report.on"></a>
 ### on
 Register a callback to execute when the report emits the target event
 
@@ -353,7 +367,7 @@ report.on('loaded', loaded_callback)
 
 <br>
 
-<a name="powerbiclient.report.Report.off"></a>
+<a id="report-off" name="powerbiclient.report.Report.off"></a>
 ### off
 Unregister a callback for a report event
 
@@ -409,7 +423,7 @@ visuals_on_page(page_name)
 **Arguments**:
 
 - `page_name` _string_ - Page name of the embedded report
-  
+
 
 **Returns**:
 
@@ -559,6 +573,26 @@ report.set_bookmark(bookmark_name)
 
 <br>
 
+<a name="powerbiclient.report.Report.set_active_page"></a>
+### set\_active\_page
+Set the input page as active
+
+```python
+set_active_page(page_name)
+```
+
+**Arguments**:
+
+  page_name (string): name of the page you want to set as active
+
+**Example**:
+```python
+# Set the input page as active
+report.set_active_page(page_name)
+```
+
+<br>
+
 <a name="powerbiclient.quick_visualize"></a>
 # Power BI quick visualization widget
 
@@ -600,7 +634,7 @@ __init__(self, dataset_create_config, auth=None, **kwargs)
     - Access token (string)
     - Authentication object (object) - instance of AuthenticationResult (DeviceCodeLoginAuthentication or InteractiveLoginAuthentication)
     - If not provided, Power BI user will be authenticated using Device Flow authentication
-  
+
 **Returns**:
 
 - `QuickVisualize`: _object_
@@ -622,7 +656,7 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 
 <br>
 
-<a name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
+<a id="qv-set_access_token" name="powerbiclient.quick_visualize.QuickVisualize.set_access_token"></a>
 ### set\_access\_token
 Set an access token for the Power BI quick visualization
 
@@ -642,7 +676,7 @@ qv.set_access_token(access_token)
 
 <br>
 
-<a name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
+<a id="qv-set_size"  name="powerbiclient.quick_visualize.QuickVisualize.set_size"></a>
 ### set\_size
 Set height and width of Power BI quick visualization in px
 
@@ -665,7 +699,7 @@ qv.set_size(container_height, container_width)
 
 <a name="powerbiclient.utils.get_dataset_config"></a>
 ## Get dataset create configuration
-Utility method to get the dataset create configuration dict from a [pandas DataFrame](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html). To be used as input for instantiating a quick visualization object.
+Utility method to get the dataset create configuration dict from a [pandas](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html) or [spark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html) DataFrame. To be used as input for instantiating a quick visualization object.
 
 ```python
 get_dataset_config(df, locale='en-US')
@@ -673,7 +707,7 @@ get_dataset_config(df, locale='en-US')
 
 **Arguments**:
   - `df` _object_: Required.
-    Pandas DataFrame instance
+    Pandas or Spark DataFrame instance
   - `locale` _string_: Optional.
     This value is used to evaluate the data and parse values of the given DataFrame. Supported locales can be found here: [supported locales](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN)
 
@@ -693,5 +727,74 @@ qv = QuickVisualize(get_dataset_config(df), auth=auth)
 
 <br>
 
+
+<a id="qv-on" name="powerbiclient.quick_visualize.QuickVisualize.on"></a>
+### on
+Register a callback to execute when the Power BI quick visualization emits the target event
+
+```python
+on(event, callback)
+```
+
+**Arguments**:
+
+- `event` _string_ - Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
+- `callback` _function_ - User defined function. Callback function is invoked with event details as parameter
+
+**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' events_
+
+**Example**:
+```python
+# Create a method to be executed on Power BI quick visualization 'loaded' event
+def loaded_callback(event_details):
+  print('Quick visualize has loaded')
+
+# Bind callback method with the Power BI quick visualization 'loaded' event
+qv.on('loaded', loaded_callback)
+```
+
+<br>
+
+<a id="qv-off" name="powerbiclient.quick_visualize.QuickVisualize.off"></a>
+### off
+Unregister a callback for a Power BI quick visualization event
+
+```python
+off(event)
+```
+
+**Arguments**:
+
+- `event` _string_ - Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
+
+**Note:** _Currently supports only 'loaded' ,'rendered' and 'saved' events_
+
+**Example**:
+```python
+# Unsubscribe the Power BI quick visualization 'loaded' event
+qv.off('loaded')
+```
+
+<br>
+
+<a id="get-saved-report" name="powerbiclient.quick_visualize.QuickVisualize.get_saved_report"></a>
+### get_saved_report
+Retrieve the saved report associated with the Power BI quick visualization instance
+
+```python
+get_saved_report()
+```
+
+**Example**:
+```python
+# Returns the saved report associated with the Power BI quick visualization instance
+report = qv.get_saved_report()
+```
+
+<br>
+
 # Considerations and limitations
 - Embedding and creating Power BI content in Jupyter notebooks is not available in sovereign and government clouds.
+- When creating a Power BI report with the quick visualization widget, the following limitations apply to your data:
+  - The table name can't be longer than 80 characters, and column names can't be longer than 512 characters.
+  - Column names must be unique.

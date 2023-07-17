@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-import pytest
+from pytest import raises
 import requests_mock
 import threading
 import time
@@ -12,11 +12,8 @@ from unittest.mock import mock_open, patch
 
 from traitlets.traitlets import TraitError
 from .. import report
+from .utils import create_test_report, ACCESS_TOKEN, REPORT_ID, EMBED_URL, GROUP_ID
 
-ACCESS_TOKEN = 'dummy_access_token'
-EMBED_URL = 'dummy_embed_url'
-GROUP_ID = 'dummy_group_id'
-REPORT_ID = 'dummy_report_id'
 PAGE_NAME = 'dummy_page_name'
 VISUAL_NAME = 'dummy_visual_name'
 VISUAL_DATA = 'dummy_visual_data'
@@ -26,22 +23,6 @@ REPORT_PAGES = ['dummy_report_pages']
 PAGE_VISUALS = ['dummy_page_visuals']
 REPORT_BOOKMARKS = ['dummy_report_bookmarks']
 REPORT_FILTERS = ['dummy_report_filters']
-
-def create_test_report(embedded=True, permissions=None):
-    with requests_mock.Mocker() as rm:
-        request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{GROUP_ID}/reports/{REPORT_ID}"
-        rm.get(request_url, json={ 'embedUrl': EMBED_URL })
-        report = Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
-        report._embedded = embedded
-        return report
-
-def create_test_report(embedded=True, permissions=None):
-    with requests_mock.Mocker() as rm:
-        request_url = f"https://api.powerbi.com/v1.0/myorg/groups/{GROUP_ID}/reports/{REPORT_ID}"
-        rm.get(request_url, json={ 'embedUrl': EMBED_URL })
-        report_mock = report.Report(group_id=GROUP_ID, report_id=REPORT_ID, auth=ACCESS_TOKEN, permissions=permissions)
-        report_mock._embedded = embedded
-        return report_mock
 
 class TestCommAndTraitlets:
     def test_sending_message(self, mock_comm):
@@ -68,7 +49,7 @@ class TestCommAndTraitlets:
         report = create_test_report()
 
         # Act + Assert
-        with pytest.raises(TraitError):
+        with raises(TraitError):
             report.export_visual_data(PAGE_NAME, VISUAL_NAME, 'number')
 
     def test_report_filters_request_validators(self):
@@ -76,7 +57,7 @@ class TestCommAndTraitlets:
         report = create_test_report()
 
         # Act + Assert
-        with pytest.raises(TraitError):
+        with raises(TraitError):
             report.update_filters('filter')
 
     def test_embed_config_validators(self):
@@ -84,7 +65,7 @@ class TestCommAndTraitlets:
         report = None
 
         # Act + Assert
-        with pytest.raises(TraitError):
+        with raises(TraitError):
             report = create_test_report(permissions="INVALID_PERMISSIONS")
 
         assert report is None
@@ -99,7 +80,7 @@ class TestReportConstructor:
         assert report._embed_config == {
             'type': 'report',
             'accessToken': ACCESS_TOKEN,
-            'embedUrl': EMBED_URL,
+            'embedUrl': f"{EMBED_URL}/groups/{GROUP_ID}/reports/{REPORT_ID}",
             'tokenType': 0,
             'viewMode': 0,
             'permissions': None,
@@ -157,7 +138,7 @@ class TestEventHandlers:
             pass
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.on(event_name, tileClicked_callback)
 
         # Assert
@@ -174,7 +155,7 @@ class TestEventHandlers:
             pass
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.on(event_name, saved_callback)
 
         # Assert
@@ -259,7 +240,7 @@ class TestExportData:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.export_visual_data('page', 'visual')
 
     def test_returned_data(self):
@@ -284,7 +265,7 @@ class TestGetPages:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_pages()
 
     def test_returned_data(self):
@@ -308,7 +289,7 @@ class TestGetVisuals:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_visuals('page')
 
     def test_returned_data(self):
@@ -332,7 +313,7 @@ class TestGetBookmarks:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_bookmarks()
 
     def test_returned_data(self):
@@ -357,7 +338,7 @@ class TestGetFilters:
         report = create_test_report(embedded=False)
 
         # Act + Assert
-        with pytest.raises(Exception):
+        with raises(Exception):
             report.get_filters()
 
 
