@@ -80,6 +80,7 @@ class Report(DOMWidget, HasTraits):
     TOKEN_EXPIRED_DEFAULT_STATE = False
     CLIENT_ERROR_DEFAULT_STATE = ''
     INIT_ERROR_DEFAULT_STATE = ''
+    REPORT_ACTIVE_PAGE_DEFAULT_NAME = ''
 
     # Other constants
     REPORT_NOT_EMBEDDED_MESSAGE = "Power BI report is not embedded"
@@ -136,6 +137,9 @@ class Report(DOMWidget, HasTraits):
     _report_bookmarks = List(REPORT_BOOKMARKS_DEFAULT_STATE).tag(sync=True)
     _get_bookmarks_request = Bool(
         GET_BOOKMARKS_REQUEST_DEFAULT_STATE).tag(sync=True)
+
+    _report_active_page = Unicode(
+        REPORT_ACTIVE_PAGE_DEFAULT_NAME).tag(sync=True)
 
     _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
 
@@ -693,3 +697,18 @@ class Report(DOMWidget, HasTraits):
             raise Exception(error_message)
 
         return bookmarks
+
+    def set_active_page(self, page_name):
+        """Sets the provided page as active
+
+        Args:
+            page_name (string): name of the page you want to set as active
+
+        Raises:
+            Exception: When report is not embedded
+        """
+
+        if not self._embedded:
+            raise Exception(self.REPORT_NOT_EMBEDDED_MESSAGE)
+
+        self._report_active_page = page_name

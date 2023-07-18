@@ -11,6 +11,7 @@ Power BI quick visualization widget
 from ipywidgets import DOMWidget
 from traitlets import Bool, Dict, Float, HasTraits, Unicode, TraitError, validate, observe
 
+from .report import Report
 from ._version import __version__
 from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token_details
 
@@ -41,8 +42,17 @@ class QuickVisualize(DOMWidget, HasTraits):
         'accessToken': None,
         'datasetCreateConfig': None,
     }
+    REGISTERED_EVENT_HANDLERS_DEFAULT_STATE = {}
+    EVENT_DATA_DEFAULT_STATE = {
+        'event_name': None,
+        'event_details': None
+    }
     INIT_ERROR_DEFAULT_STATE = ''
+    SAVED_REPORT_ID_DEFAULT_STATE = ''
     TOKEN_EXPIRED_DEFAULT_STATE = False
+
+    # Supported events list for quick_visualize widget
+    SUPPORTED_EVENTS = ['loaded', 'rendered', 'saved']
 
     # Authentication object
     _auth = None
@@ -55,12 +65,12 @@ class QuickVisualize(DOMWidget, HasTraits):
     _embed_config = Dict(EMBED_CONFIG_DEFAULT_STATE).tag(sync=True)
     _embedded = Bool(False).tag(sync=True)
     _token_expired = Bool(TOKEN_EXPIRED_DEFAULT_STATE).tag(sync=True)
+    _event_data = Dict(EVENT_DATA_DEFAULT_STATE).tag(sync=True)
     _init_error = Unicode(INIT_ERROR_DEFAULT_STATE).tag(sync=True)
+    _saved_report_id = Unicode(SAVED_REPORT_ID_DEFAULT_STATE).tag(sync=True)
+    _saved_report: Report = None
     container_height = Float(0).tag(sync=True)
     container_width = Float(0).tag(sync=True)
-
-    # Authentication object
-    _auth = None
 
     @validate('_embed_config')
     def _valid_embed_config(self, proposal):
@@ -100,15 +110,29 @@ class QuickVisualize(DOMWidget, HasTraits):
             object: QuickVisualize object
         """
 
+        self.observe(self._on_saved_report_id_change, '_saved_report_id')
+
         access_token = get_access_token_details(
             powerbi_widget=QuickVisualize, auth=auth)
         self._update_embed_config(
             access_token=access_token, dataset_create_config=dataset_create_config)
 
+        # Registered Power BI event handlers methods
+        self._registered_event_handlers = dict(
+            self.REGISTERED_EVENT_HANDLERS_DEFAULT_STATE)
+
+        # Tells if Power BI events are being observed
+        self._observing_events = False
+
         self.observe(self._update_access_token, '_token_expired')
 
         # Init parent class DOMWidget
         super(QuickVisualize, self).__init__(**kwargs)
+
+    def _on_saved_report_id_change(self, change):
+        """update saved report object when saved report id changes"""
+        if self._saved_report is None or (self._saved_report_id != change['old']):
+            self._saved_report = Report(report_id=self._saved_report_id, auth=self._auth)
 
     def _update_access_token(self, change):
         if change.new == True:
@@ -144,6 +168,82 @@ class QuickVisualize(DOMWidget, HasTraits):
             'datasetCreateConfig': dataset_create_config or self._embed_config['datasetCreateConfig'],
         }
         self._embedded = False
+
+    def _is_event_supported(self, event):
+        # Check if event is one of the QuickVisualize.SUPPORTED_EVENTS list
+        if event not in self.SUPPORTED_EVENTS:
+            raise Exception(f"'{event}' event is not supported")
+
+    def get_saved_report(self):
+        """Returns the saved report associated with this QuickVisualize instance.
+
+        Returns:
+            Report: The saved report object.
+
+        Raises:
+            Exception: If no saved report is found.
+        """
+        if self._saved_report_id == self.SAVED_REPORT_ID_DEFAULT_STATE:
+            raise Exception("No saved report found")
+        return self._saved_report
+
+    def on(self, event, callback):
+        """Register a callback to execute when the Power BI quick visualization emits the target event
+
+        Args:
+            event (string): Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
+            callback (function): User defined function. Callback function is invoked with event details as parameter
+        """
+
+        self._is_event_supported(event)
+
+        if callback is None:
+            raise Exception('callback cannot be None')
+
+        if not callable(callback):
+            raise Exception('callback must be a function')
+
+        self._registered_event_handlers[event] = callback
+
+        def get_event_data(change):
+            event_data = change.new
+            event_name = event_data['event_name']
+            event_details = event_data['event_details']
+
+            # Do not invoke callback when _event_data trait is reset
+            if event_name is None:
+                return
+
+            # Check if a handler is registered for the current event
+            if event_name not in self._registered_event_handlers:
+                return
+
+            event_handler = self._registered_event_handlers[event_name]
+            event_handler(event_details)
+
+            # Reset the _event_data trait, so as to receive next event
+            self._event_data = dict(self.EVENT_DATA_DEFAULT_STATE)
+
+        if not self._observing_events:
+
+            # Prevents calling DOMWidget.observe() again
+            self._observing_events = True
+
+            # Start observing Power BI events
+            self.observe(get_event_data, '_event_data')
+
+    def off(self, event):
+        """Unregisters a callback on target event
+
+        Args:
+            event (string): Name of Power BI event (supported events: 'loaded', 'rendered', 'saved')
+        """
+        # Check if the passed event is supported by Power BI quick visualization
+        self._is_event_supported(event)
+
+        # Remove handler if registered for the current event
+        if event in self._registered_event_handlers:
+            self._registered_event_handlers.pop(event)
 
     def set_size(self, container_height, container_width):
         """Set height and width of Power BI quick visualization in px

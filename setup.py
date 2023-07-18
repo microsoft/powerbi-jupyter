@@ -92,7 +92,8 @@ setup_args = dict(
         'jupyter-ui-poll>=0.1.2',
         'msal>=1.8.0',
         'requests>=2.25.1',
-        'pandas'
+        'pandas',
+        'pyspark'
     ],
     extras_require={
         'test': [

@@ -5,13 +5,18 @@
 # Licensed under the MIT license.
 
 from pandas.api.types import is_numeric_dtype
+from pyspark.sql.functions import col
+from pyspark.sql.types import NumericType
+import pandas as pd
+import pyspark
 import re
 
 from .authentication import DeviceCodeLoginAuthentication, AuthenticationResult
 from .models import DataType
+from . import authentication
 
 MODULE_NAME = "powerbi-jupyter-client"
-data_types_map = {
+data_types_map_pandas = {
     'string': DataType.TEXT.value,
     'int32': DataType.INT32.value,
     'bool': DataType.LOGICAL.value,
@@ -19,6 +24,14 @@ data_types_map = {
     'object': DataType.TEXT.value  # default
 }
 
+data_types_map_spark = {
+    'string': DataType.TEXT.value,
+    'bigint': DataType.INT32.value,
+    'boolean': DataType.LOGICAL.value,
+    'timestamp': DataType.DATE_TIME.value,
+    'date': DataType.DATE.value,
+    'object': DataType.TEXT.value  # default
+}
 
 def get_dataset_config(df, locale='en-US'):
     """ Utility method to get the dataset create configuration dict from a pandas. To be used as input for instantiating a quick visualization object.
@@ -30,23 +43,71 @@ def get_dataset_config(df, locale='en-US'):
             This value is used to evaluate the data and parse values of the given DataFrame. 
             Supported locales can be found here: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/a9eac961-e77d-41a6-90a5-ce1a8b0cdb9c?redirectedfrom=MSDN
 
-    Returns: 
+    Returns:
         dict: dataset_create_config
     """
     if df is None:
         raise Exception("Parameter df is required")
+    elif len(df.columns) != len(set(df.columns)):
+        raise Exception("Duplicate column names found in the DataFrame")
 
     table_name = 'Table'
     columns_schema = []
+    rows = []
 
     # NA values should be considered as empty strings
     df = df.fillna('')
 
+    if isinstance(df, pd.DataFrame):
+        columns_schema, rows = pandas_get_data_and_schema(df)
+    elif isinstance(df, pyspark.sql.dataframe.DataFrame):
+        columns_schema, rows = pyspark_get_data_and_schema(df)
+    else:
+        raise Exception("Unsupported DataFrame type")
+
+    return {
+        'locale': locale,
+        'tableSchemaList': [
+            {
+                'name': table_name,
+                'columns': columns_schema
+            }
+        ],
+        'data': [
+            {
+                'name': table_name,
+                'rows': rows
+            }
+        ]
+    }
+
+def pyspark_get_data_and_schema(df):
+    columns_schema = []
+
+    for col_name, dtype_key in df.dtypes:
+        # Find the correct DataType according to Spark dtype
+        if dtype_key in data_types_map_spark:
+            data_type = data_types_map_spark[dtype_key]
+        elif isinstance(df.schema[col_name].dataType, NumericType):
+            data_type = DataType.NUMBER.value
+        else:
+            data_type = DataType.TEXT.value
+
+        columns_schema.append({'name': col_name, 'dataType': data_type})
+
+    # Cast all dataframe values as string
+    string_df = df.select([col(col_name).cast("string") for col_name in df.columns])
+
+    return columns_schema, string_df.rdd.map(list).collect()
+
+def pandas_get_data_and_schema(df):
+    columns_schema = []
+
     for col in df.columns:
         # Find the correct DataType according to Pandas dtype
         dtype_key = str(df[col].dtype)
-        if dtype_key in data_types_map:
-            data_type = data_types_map[dtype_key]
+        if dtype_key in data_types_map_pandas:
+            data_type = data_types_map_pandas[dtype_key]
         elif is_numeric_dtype(df[col]):
             data_type = DataType.NUMBER.value
         elif re.search(r"datetime64\[ns, .*\]", dtype_key):
@@ -60,22 +121,7 @@ def get_dataset_config(df, locale='en-US'):
 
         columns_schema.append({'name': col, 'dataType': data_type})
 
-    return {
-        'locale': locale,
-        'tableSchemaList': [
-            {
-                'name': table_name,
-                'columns': columns_schema
-            }
-        ],
-        'data': [
-            {
-                'name': table_name,
-                'rows': df.astype('string').values.tolist()
-            }
-        ]
-    }
-
+    return columns_schema, df.astype('string').values.tolist()
 
 def is_dataset_create_config_valid(dataset_create_config):
     """ Validate dataset_create_config
@@ -137,6 +183,11 @@ def get_access_token_details(powerbi_widget, auth=None):
     Returns:
         string: access_token
     """
+
+    if authentication.AUTH:
+        if auth:
+            raise Exception("Current scenario does not support manual authentication, remove 'auth' parameter and try again.")
+        auth = authentication.AUTH
 
     # auth is the access token string
     if isinstance(auth, str):
