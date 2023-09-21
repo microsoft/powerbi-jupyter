@@ -11,6 +11,7 @@ Power BI quick visualization widget
 from ipywidgets import DOMWidget
 from traitlets import Bool, Dict, Float, HasTraits, Unicode, TraitError, validate, observe
 
+from . import authentication
 from .report import Report
 from ._version import __version__
 from .utils import MODULE_NAME, is_dataset_create_config_valid, get_access_token_details
@@ -132,7 +133,10 @@ class QuickVisualize(DOMWidget, HasTraits):
     def _on_saved_report_id_change(self, change):
         """update saved report object when saved report id changes"""
         if self._saved_report is None or (self._saved_report_id != change['old']):
-            self._saved_report = Report(report_id=self._saved_report_id, auth=self._auth)
+            if authentication.AUTH:
+                self._saved_report = Report(report_id=self._saved_report_id)
+            else:
+                self._saved_report = Report(report_id=self._saved_report_id, auth=self._auth)
 
     def _update_access_token(self, change):
         if change.new == True:
