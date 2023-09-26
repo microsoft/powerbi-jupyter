@@ -9,6 +9,7 @@ import unittest
 from unittest.mock import patch
 from ..quick_visualize import QuickVisualize
 from ..report import Report
+from .. import authentication
 from .utils import create_test_report, ACCESS_TOKEN, REPORT_ID, INITIAL_REPORT_ID
 
 
@@ -23,6 +24,8 @@ EMBED_CONFIG = {
     'accessToken': ACCESS_TOKEN,
     'datasetCreateConfig': DATASET_CREATE_CONFIG,
 }
+
+authentication.AUTH = None
 
 def check_if_registered(qv, event_name, callback):
     # Assert
@@ -292,3 +295,23 @@ class TestEventHandlers(unittest.TestCase):
         # Assert
         self.assertIsInstance(report, Report)
         self.assertEqual(reportId, REPORT_ID)
+
+    @patch.object(QuickVisualize, '_saved_report', return_value=create_test_report())
+    @patch.object(QuickVisualize, '_on_saved_report_id_change', return_value=None)
+    def test_get_saved_report_returns_report_with_authentication(self, mock_report, mock_on_saved_report_id_change):
+        # Arrange
+        authentication.AUTH = ACCESS_TOKEN
+        qv = QuickVisualize(dataset_create_config=DATASET_CREATE_CONFIG)
+        qv._saved_report_id = REPORT_ID
+
+        # Act
+        report = qv.get_saved_report().return_value
+        embedUrl = report._embed_config['embedUrl']
+        reportId = embedUrl.split('/')[-1]
+
+        # Assert
+        self.assertIsInstance(report, Report)
+        self.assertEqual(reportId, qv._saved_report_id)
+
+        # Reset
+        authentication.AUTH = None
